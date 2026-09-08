@@ -17,4 +17,17 @@ export default defineConfig({
       // '@/components/Button.vue' → 'src/components/Button.vue'
     },
   },
+
+  server: {
+    proxy: {
+      // Forward any request starting with /api to the Spring Boot backend.
+      // Lets the frontend call `api.get('/vehicles')` (baseURL: '/api') during
+      // `npm run dev` without CORS issues, since the browser only ever talks
+      // to the Vite dev server.
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
+  },
 })
