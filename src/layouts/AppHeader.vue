@@ -1,12 +1,9 @@
 <script setup>
 import { RouterLink, useRouter } from "vue-router";
 import useAuthStore from "@/stores/auth.store";
+import NotificationBell from "@/components/layout/NotificationBell.vue";
 
 const router = useRouter();
-// NOTE: isAuthenticated() is confirmed used this way in router/index.js's
-// beforeEach guard. logout() is assumed to exist on the store (common
-// convention for clearing the persisted session) — if your auth.store.js
-// exposes a different method name, swap it in handleLogout() below.
 const { isAuthenticated, logout } = useAuthStore();
 
 const navLinkClass =
@@ -66,11 +63,29 @@ function handleLogout() {
           >
             My Rentals
           </RouterLink>
+          <RouterLink
+            to="/my-invoices"
+            :class="navLinkClass"
+            :active-class="navLinkActiveClass"
+          >
+            Invoices
+          </RouterLink>
         </template>
       </nav>
 
       <div class="flex shrink-0 items-center gap-3">
         <template v-if="isAuthenticated()">
+          <NotificationBell />
+          <RouterLink
+            to="/profile"
+            class="flex h-9 w-9 items-center justify-center rounded-full bg-[#E9EDFB] text-xs font-semibold text-[#3D5FE0] hover:bg-[#E9EDFB]/70"
+            aria-label="Profile"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-4 w-4">
+              <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/>
+              <path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/>
+            </svg>
+          </RouterLink>
           <button
             type="button"
             @click="handleLogout"
@@ -100,6 +115,8 @@ function handleLogout() {
         <RouterLink to="/favorites" :class="navLinkClass" :active-class="navLinkActiveClass">Favorites</RouterLink>
         <RouterLink to="/my-reservations" :class="navLinkClass" :active-class="navLinkActiveClass">Reservations</RouterLink>
         <RouterLink to="/my-rentals" :class="navLinkClass" :active-class="navLinkActiveClass">Rentals</RouterLink>
+        <RouterLink to="/my-invoices" :class="navLinkClass" :active-class="navLinkActiveClass">Invoices</RouterLink>
+        <RouterLink to="/profile" :class="navLinkClass" :active-class="navLinkActiveClass">Profile</RouterLink>
       </template>
     </div>
   </header>

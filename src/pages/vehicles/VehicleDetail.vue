@@ -37,7 +37,7 @@
               class="h-full w-full object-cover"
             />
             <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-20 w-20 text-white/30">
-              <path fill="currentColor" d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11m-14 0h14m-14 0a2 2 0 0 0-2 2v4a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h12v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-4a2 2 0 0 0-2-2M7.5 15a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm11 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
+              <path fill="currentColor" d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11m-14 0h14m-14 0a2 2 0 0 0-2 2v4a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h12v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-4a2 2 0 0 0-2-2M7.5 15a1 1 0 1 1-2 01 1 0 0 1 2 0Zm11 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
             </svg>
           </div>
           <span class="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[#1A2036]">
@@ -106,6 +106,14 @@
 
         <!-- Reviews -->
         <h2 class="mt-10 text-lg font-bold text-[#1A2036]">Reviews</h2>
+
+        <ReviewForm
+          v-if="isAuthenticated()"
+          :vehicle-id="route.params.id"
+          class="mt-4"
+          @submitted="loadReviews"
+        />
+
         <div v-if="reviewsLoading" class="mt-3 space-y-2">
           <div class="h-16 animate-pulse rounded-2xl bg-[#F3F4F6]"></div>
           <div class="h-16 animate-pulse rounded-2xl bg-[#F3F4F6]"></div>
@@ -137,6 +145,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import useAuthStore from '@/stores/auth.store'
+import ReviewForm from '@/components/reviews/ReviewForm.vue'
 import {
   fetchVehicleById,
   fetchVehicleImages,

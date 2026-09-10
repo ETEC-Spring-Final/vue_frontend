@@ -56,6 +56,8 @@ import Favorites from '@/pages/favorites/Favorites.vue'
 import RentalHistory from '@/pages/rentals/RentalHistory.vue'
 import InvoiceList from '@/pages/invoices/InvoiceList.vue'
 import InvoiceDetail from '@/pages/invoices/InvoiceDetail.vue'
+import Notifications from '@/pages/notifications/Notifications.vue'
+import Profile from '@/pages/profile/Profile.vue'
 import OAuth2Redirect from '@/pages/auth/OAuth2Redirect.vue'
 import NotFound from '@/pages/NotFound.vue'
 
@@ -174,6 +176,17 @@ const routes = [
   {
     path: '/my-invoices/:id',
     component: InvoiceDetail,
+    meta: { requiresAuth: true },
+  },
+
+  {
+    path: '/notifications',
+    component: Notifications,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile',
+    component: Profile,
     meta: { requiresAuth: true },
   },
 
