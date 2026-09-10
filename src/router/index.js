@@ -54,6 +54,8 @@ import ReservationForm from '@/pages/reservations/ReservationForm.vue'
 import MyReservations from '@/pages/reservations/MyReservations.vue'
 import Favorites from '@/pages/favorites/Favorites.vue'
 import RentalHistory from '@/pages/rentals/RentalHistory.vue'
+import InvoiceList from '@/pages/invoices/InvoiceList.vue'
+import InvoiceDetail from '@/pages/invoices/InvoiceDetail.vue'
 import OAuth2Redirect from '@/pages/auth/OAuth2Redirect.vue'
 import NotFound from '@/pages/NotFound.vue'
 
@@ -161,6 +163,17 @@ const routes = [
   {
     path: '/my-rentals',
     component: RentalHistory,
+    meta: { requiresAuth: true },
+  },
+
+  {
+    path: '/my-invoices',
+    component: InvoiceList,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/my-invoices/:id',
+    component: InvoiceDetail,
     meta: { requiresAuth: true },
   },
 
