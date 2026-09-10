@@ -50,6 +50,10 @@ import ReservationManagement from '@/pages/dashboard/ReservationManagement.vue'
 import RentalManagement from '@/pages/dashboard/RentalManagement.vue'
 import CustomerManagement from '@/pages/dashboard/CustomerManagement.vue'
 import DiscountManagement from '@/pages/dashboard/DiscountManagement.vue'
+import InvoiceManagement from '@/pages/dashboard/InvoiceManagement.vue'
+import ReviewManagement from '@/pages/dashboard/ReviewManagement.vue'
+import NotificationManagement from '@/pages/dashboard/NotificationManagement.vue'
+import MaintenanceManagement from '@/pages/dashboard/MaintenanceManagement.vue'
 
 // page components client-facing
 import Login from '@/pages/auth/Login.vue'
@@ -104,6 +108,10 @@ const routes = [
       { path: 'rentals', component: RentalManagement },
       { path: 'customers', component: CustomerManagement, meta: { roles: ['ADMIN'] } },
       { path: 'discounts', component: DiscountManagement, meta: { roles: ['ADMIN'] } },
+      { path: 'invoices', component: InvoiceManagement },
+      { path: 'reviews', component: ReviewManagement },
+      { path: 'notifications', component: NotificationManagement },
+      { path: 'maintenance', component: MaintenanceManagement },
       
 
       
