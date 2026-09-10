@@ -45,7 +45,7 @@ import useAuthStore from '@/stores/auth.store'
 import BackLayout from '@/layouts/BackLayout.vue'
 import Dashboard from '@/pages/dashboard/Dashboard.vue'
 import VehicleManagement from '@/pages/dashboard/VehicleManagement.vue'
-
+import LocationManagement from '@/pages/dashboard/LocationManagement.vue'
 
 // page components client-facing
 import Login from '@/pages/auth/Login.vue'
@@ -95,6 +95,7 @@ const routes = [
     children: [
       { path: '', component: Dashboard },
       { path: 'vehicles', component: VehicleManagement },
+      { path: 'locations', component: LocationManagement },
 
       
       // បន្ថែម child route ថ្មីនៅទីនេះ សម្រាប់ locations, reservations, rentals, ...
