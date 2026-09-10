@@ -40,8 +40,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import useAuthStore from '@/stores/auth.store'
 
-// Page components
+// Page components dashboard-facing (staff/admin) — all require auth and a role in ['ADMIN', 'MANAGER', 'STAFF'] to access. The dashboard layout wraps these.
+
+import BackLayout from '@/layouts/BackLayout.vue'
 import Dashboard from '@/pages/dashboard/Dashboard.vue'
+import VehicleManagement from '@/pages/dashboard/VehicleManagement.vue'
+
+
+// page components client-facing
 import Login from '@/pages/auth/Login.vue'
 import Register from '@/pages/auth/Register.vue'
 import ForgotPassword from '@/pages/auth/ForgotPassword.vue'
@@ -84,8 +90,15 @@ const routes = [
    */
   {
     path: '/dashboard',
-    component: Dashboard,
+    component: BackLayout,
     meta: { requiresAuth: true, roles: ['ADMIN', 'MANAGER', 'STAFF'] },
+    children: [
+      { path: '', component: Dashboard },
+      { path: 'vehicles', component: VehicleManagement },
+
+      
+      // បន្ថែម child route ថ្មីនៅទីនេះ សម្រាប់ locations, reservations, rentals, ...
+    ],
   },
 
   /**
