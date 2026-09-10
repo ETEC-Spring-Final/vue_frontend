@@ -38,6 +38,7 @@ import ResetPassword from '@/pages/auth/ResetPassword.vue'
 import Preview from '@/pages/preview/Preview.vue'
 import Home from '@/pages/home/Home.vue'
 import NotFound from '@/pages/NotFound.vue'
+import OAuthRedirect from '@/pages/auth/OAuthRedirect.vue'
 
 /**
  * Route definitions
@@ -83,6 +84,7 @@ const routes = [
    * again to /home if the user's role wasn't in /dashboard's allowed roles.
    */
   { path: '/reset-password', component: ResetPassword },
+  { path: '/oauth2/redirect', component: OAuthRedirect },
 
   /**
    * Optional home route (disabled for now)
