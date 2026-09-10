@@ -23,215 +23,221 @@ npm run preview   # preview the build
 - **Build:** Vite 8 (`@vitejs/plugin-vue`)
 - **Styling:** Tailwind CSS 4 via `@tailwindcss/vite`
 - **Routing:** Vue Router (history mode) — `@` alias → `src/`
-- **HTTP:** Axios (central `services/api.js`, `baseURL: "/api"`, proxy → `http://localhost:8080`)
-- **State:** reactive store (`stores/auth.store.js`) — not Pinia yet
+- **HTTP:** Axios base instance `services/api.js` (`baseURL: "/api"`, Vite proxy → `http://localhost:8080`),
+  plus per-feature service files in `services/`
+- **State:** reactive store `stores/auth.store.js` (localStorage-backed) — not Pinia yet
 
 ---
 
-## Folder structure
+## Folder structure (current)
 
 ```
 vue_frontend/src/
-├── App.vue                      # root, just <RouterView />
-├── main.js                      # createApp + router
-├── style.css                    # Tailwind + Google Fonts
+├── App.vue                       # <AppHeader /> + <RouterView /> (header is global)
+├── main.js                       # createApp + router
+├── style.css                     # Tailwind + Google Fonts
 ├── components/
-│   ├── base/                    # BaseButton.vue, BaseInput.vue
-│   ├── layout/                  # (empty — build AppHeader/AppSidebar/AppFooter/AppNavbar here)
-│   └── ui/                      # (empty — build Modal, Toast, Badge, StatCard, DataTable here)
-├── composables/                 # useFetch.js
+│   ├── base/                     # BaseButton.vue, BaseInput.vue
+│   ├── layout/                   # AppHeader.vue, AppSidebar.vue, NotificationBell.vue
+│   ├── ui/                       # DataTable.vue, Modal.vue
+│   ├── vehicles/                 # VehicleCard.vue
+│   └── reviews/                  # StarRating.vue, ReviewList.vue, ReviewForm.vue
 ├── layouts/
-│   ├── FrontLayout.vue          # public pages wrapper (placeholder — needs real header/footer)
-│   └── BackLayout.vue           # admin layout (empty template — needs sidebar + header)
-├── modules/                     # recommended feature structure (see modules/NOTE.md)
+│   ├── BackLayout.vue            # admin shell: AppSidebar + header(title) + NotificationBell + <RouterView/>
+│   ├── FrontLayout.vue           # 🟡 unused placeholder — header is global in App.vue
+│   └── AppHeader.vue             # 🟡 duplicate of components/layout/AppHeader.vue — delete it
 ├── pages/
-│   ├── auth/                    # Login, Register, ForgotPassword, ResetPassword (all wired ✅)
-│   ├── dashboard/               # Dashboard.vue (placeholder — admin panel)
-│   ├── home/                    # Home.vue (mock data), home/Card.vue
-│   ├── preview/                 # demo landing (preview/components/LeftPannel, RightPannel, PreText)
+│   ├── auth/                     # Login, Register, ForgotPassword, ResetPassword, OAuth2Redirect
+│   ├── dashboard/                # Dashboard, VehicleManagement, LocationManagement
+│   ├── explore/                  # Explore
+│   ├── vehicles/                 # VehicleDetail
+│   ├── reservations/             # ReservationForm, MyReservations
+│   ├── favorites/                # Favorites
+│   ├── rentals/                  # RentalHistory
+│   ├── invoices/                 # InvoiceList, InvoiceDetail
+│   ├── notifications/            # Notifications
+│   ├── profile/                  # Profile
+│   ├── home/                     # Home (+ home/Card.vue)
+│   ├── preview/                  # demo landing (Preview + components)
 │   └── NotFound.vue
-├── router/index.js              # routes + auth guard (requiresAuth / roles / guestOnly)
-├── services/api.js              # Axios instance + JWT interceptor + 401 handling
-└── stores/auth.store.js         # session state, persists to localStorage
+├── router/index.js               # routes + auth/role guards + /oauth2/redirect
+├── services/                     # api.js + feature services (see below)
+└── stores/auth.store.js          # login/logout/isAuthenticated/hasRole/defaultRedirect
 ```
+
+### Services (`src/services/`)
+
+- **api.js** — axios instance, JWT interceptor, `401 → /login` (clears session)
+- **vehicles.js** — list/detail/images/reviews + favorites, and normalizers
+  (`normalizeVehicle`, `normalizeVehicleDetail`, `normalizeImage`, `normalizeReview`)
+- **reservations.js** — create/list/cancel + `calculatePriceBreakdown` + location/service/discount lookups
+- **rentals.js** — my rentals, doc upload, inspection + `RENTAL_STATUS_STEPS` / `rentalStatusStepIndex`
+- **invoices.js** — myInvoices, getById, generateQr, checkPayment (Bakong shapes TODO)
+- **favorites.js** — getFavorites
+- **reviews.js** — forVehicle, countByRating, myReviews, create/update/remove
+- **notifications.js** — inbox
+- **profile.js** — me, updateMe, loginHistory
+- **dashboard.js** — fetchDashboardStats (client-side from /vehicles + /reservations + /rentals)
 
 ---
 
-## Design system
-
-### Brand colors (always reuse these)
-
-| Token | Hex | Usage |
-|-------|-----|-------|
-| primary | `#3D5FE0` | buttons, links, active pills, accents |
-| primary-hover | `#3350C0` | hover states |
-| primary-light | `#E9EDFB` | avatar circles, icon containers |
-| dark | `#1A2036` | headings, card grid backgrounds |
-| input-bg | `#F3F4F6` | pill input backgrounds |
-| hover-bg | `#F9FAFB` | subtle card/button hover |
-| border | `#E5E7EB` | card borders, dividers |
-| muted | `#9CA3AF` | placeholder text, muted icons |
-| secondary-text | `#6B7280` | descriptions, secondary labels |
-| danger | `#EF4444` / `#DC2626` | favorite heart, errors, deletes |
-| success | `#22C55E` | paid/success badges |
-
-### Component style recipes
-
-**Pill input** (auth pages use this; reuse the pattern, not duplicated markup):
-```html
-<div class="flex items-center gap-3 rounded-full bg-[#F3F4F6] px-5 py-3.5">
-  <svg class="h-5 w-5 shrink-0 text-[#9CA3AF]">...</svg>
-  <input class="w-full bg-transparent text-sm text-[#1A2036] placeholder:text-[#9CA3AF] outline-none" />
-</div>
-```
-
-**Primary pill button**:
-```html
-<button class="w-full rounded-full bg-[#3D5FE0] py-3.5 text-sm font-semibold text-white
-               transition hover:bg-[#3350C0] disabled:cursor-not-allowed disabled:opacity-50">
-```
-
-**Card:**
-```html
-<article class="overflow-hidden rounded-2xl border border-[#E5E7EB]">
-  <div class="p-4">...</div>
-</article>
-```
-
-**Badge:**
-```html
-<span class="inline-block rounded-full px-3 py-1 text-xs font-semibold text-white bg-[#3D5FE0]">
-```
-
-**Error banner:**
-```html
-<div class="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">{{ message }}</div>
-```
-
-**Avatar circle:**
-```html
-<div class="flex h-11 w-11 items-center justify-center rounded-full bg-[#E9EDFB] text-sm font-semibold text-[#3D5FE0]">
-  AB
-</div>
-```
-
-### Layout widths & spacing
-
-- Container: `max-w-6xl mx-auto px-4 sm:px-6 lg:px-8`
-- Page padding: `py-6` … `py-12`
-- Card grid: `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5`
-- Section divider: `mt-6` … `mt-8`
-
----
-
-## Page design specs
-
-### Home (`/home`) — `pages/home/Home.vue`
-
-Already styled. Replace the **mock `cars` ref** with live data:
-- `api.get('/vehicles')` → list
-- `api.get('/vehicle-images/{vehicleId}')` → images
-- `api.get('/locations')` → pickup/return branches
-
-### Vehicle detail (`/vehicles/:id`) — NEW
-
-- Image gallery (vehicle images API)
-- Specs grid: brand, model, year, color, type, transmission, fuel, seats, mileage
-- Price/day card, availability badge, "Rent now" + favorite toggle
-- Reviews: `GET /api/reviews/vehicle/{id}?page=0&size=8`
-
-### Reservation (`/reservations`) — NEW
-
-- Date pickers + location selectors (from `/api/locations`)
-- Price breakdown: `(price × days) + insurance + services − discount`
-- Submit via `POST /api/reservations`
-- My Reservations list with cancel → `PATCH /api/reservations/{id}/cancel`
-
-### Rental history (`/my-rentals`) — NEW
-
-- Sections: current / upcoming / completed via `GET /api/rentals/my-rentals`
-- Status timeline (Pending → Confirmed → Picked Up → Active Rental → Returned → Completed)
-- Document upload → `POST /api/rental-documents/{rentalId}/upload`
-- My documents → `GET /api/rental-documents/my-rental-document`
-
-### Payments / invoices (`/my-invoices`) — NEW
-
-- Invoice list → `GET /api/invoices/my-invoices`
-- Discount input, Bakong QR → `POST /api/v1/bakong/generate-qr`
-- Poll payment → `POST /api/v1/bakong/check-payment`
-
-### Notifications (`/notifications`) — NEW
-
-- Inbox → `GET /api/notifications/me/inbox`
-- Bell icon with unread badge on header
-
-### Profile (`/profile`) — NEW
-
-- Edit profile → `GET/PUT /api/user-profiles/me`
-- Login history → `GET /api/user-profiles/me/login-history`
-- My reviews → `GET /api/reviews/my-reviews`
-- Favorites → `GET /api/favorites`, delete → `DELETE /api/favorites/{vehicleId}`
-
-### Admin dashboard (`/dashboard`) — placeholder, build fully
-
-- **BackLayout.vue:** sidebar nav + header (user info, logout)
-- Stat cards (total vehicles, available, rented, today's revenue, total customers)
-- CRUD management tables per resource (list/create/edit/delete)
-- Status PATCH actions for reservations/rentals
-- Sidebar items: Dashboard, Vehicles, Locations, Reservations, Rentals, Customers,
-  Invoices, Discounts, Reviews, Notifications, Maintenance, Services, Audit Logs,
-  Login History
-
----
-
-## Routing & auth
-
-Current routes in `router/index.js`:
+## Routes (router/index.js)
 
 | Path | Component | Guard |
 |------|-----------|-------|
 | `/` | → `/preview` | — |
 | `/preview` | Preview | — |
-| `/home` | Home | — |
+| `/home` | Home | — (fetches real vehicles) |
+| `/explore` | Explore | — (`?q=` seeds search) |
+| `/vehicles/:id` | VehicleDetail | — (Rent/favorite check auth) |
 | `/login` | Login | guestOnly |
 | `/register` | Register | guestOnly |
 | `/forgot-password` | ForgotPassword | guestOnly |
 | `/reset-password` | ResetPassword | — |
-| `/dashboard` | Dashboard | requiresAuth + roles ADMIN/MANAGER/STAFF |
-| `/:pathMatch(.*)*` | NotFound | — |
-
-**New routes to add** (align naming with existing style):
-
-| Path | Component | Guard |
-|------|-----------|-------|
-| `/vehicles/:id` | VehicleDetail | — |
-| `/explore` | VehicleList | — |
+| `/oauth2/redirect` | OAuth2Redirect | — (Google callback, decodes `?token=`) |
+| `/reservations` | ReservationForm | requiresAuth (`?vehicleId=`) |
 | `/my-reservations` | MyReservations | requiresAuth |
+| `/favorites` | Favorites | requiresAuth |
 | `/my-rentals` | RentalHistory | requiresAuth |
 | `/my-invoices` | InvoiceList | requiresAuth |
+| `/my-invoices/:id` | InvoiceDetail | requiresAuth |
 | `/notifications` | Notifications | requiresAuth |
 | `/profile` | Profile | requiresAuth |
-| `/favorites` | Favorites | requiresAuth |
+| `/dashboard` (BackLayout) | children below | requiresAuth + roles [ADMIN, MANAGER, STAFF] |
+| `/dashboard` | Dashboard (stat cards) | roles |
+| `/dashboard/vehicles` | VehicleManagement | roles |
+| `/dashboard/locations` | LocationManagement | roles |
+| `/:pathMatch(.*)*` | NotFound | — |
 
-Auth is fully wired: JWT interceptor in `services/api.js`, session in
-`stores/auth.store.js`, guards in `router/index.js`. No work needed there unless adding roles.
+**Missing admin children** (sidebar already links to them, but routes aren't registered — they
+currently fall to 404): reservations, rentals, customers*(ADMIN)*, discounts*(ADMIN)*, invoices,
+reviews, notifications, maintenance, services, audit-logs*(ADMIN/MANAGER)*, login-history*(ADMIN/MANAGER)*.
+Add each as a child of the `/dashboard` BackLayout route, copying the VehicleManagement pattern.
+
+---
+
+## Design system
+
+### Brand colors (reuse these — don't invent a new palette)
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| primary | `#3D5FE0` | buttons, links, active pill, sidebar active bg text, accents |
+| primary-hover | `#3350C0` | hover |
+| primary-light | `#E9EDFB` | avatar circles, active sidebar item bg |
+| dark | `#1A2036` | headings, card gradient start |
+| input-bg | `#F3F4F6` | pill inputs, subtle fills, logout button |
+| hover-bg | `#F9FAFB` | card/row hover, table header, admin bg |
+| border | `#E5E7EB` | card/borders, dividers |
+| muted | `#9CA3AF` | placeholders, uppercase labels, disabled text |
+| secondary | `#6B7280` | body descriptions, nav links (inactive) |
+| danger | `#DC2626` | errors, delete, notification badge |
+| favorite | `#EF4444` | heart fill |
+| success | `#22C55E` | positive status |
+| white | `#FFFFFF` | cards, admin header, sidebar |
+
+### Reusable components to use (don't rewrite)
+
+- **`components/ui/DataTable.vue`** — admin lists: `columns`, `rows`, `loading`; override cells
+  with `#cell-<key>`, add row actions with `#actions`.
+- **`components/ui/Modal.vue`** — `open`, `title`, `close` emit; used for create/edit forms.
+- **`components/vehicles/VehicleCard.vue`** — vehicle grid card (emits `toggle-favorite`, `rent`).
+- **`components/reviews/*`** — `StarRating`, `ReviewList`, `ReviewForm`.
+- **`components/base/BaseButton.vue` / `BaseInput.vue`** — primitives.
+- **`components/layout/AppHeader.vue` / `AppSidebar.vue` / `NotificationBell.vue`** — shell pieces.
+
+### Style recipes (standard across the app)
+
+```html
+<!-- Pill input -->
+<div class="flex items-center gap-3 rounded-full bg-[#F3F4F6] px-5 py-3.5">
+  <svg class="h-5 w-5 shrink-0 text-[#9CA3AF]">…</svg>
+  <input class="w-full bg-transparent text-sm text-[#1A2036] placeholder:text-[#9CA3AF] outline-none" />
+</div>
+
+<!-- Primary pill button -->
+<button class="w-full rounded-full bg-[#3D5FE0] py-3.5 text-sm font-semibold text-white transition hover:bg-[#3350C0] disabled:opacity-50">
+  Action
+</button>
+
+<!-- Card -->
+<article class="overflow-hidden rounded-2xl border border-[#E5E7EB]"><div class="p-4">…</div></article>
+
+<!-- Error banner -->
+<div class="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">{{ message }}</div>
+
+<!-- Status badge -->
+<span class="rounded-full px-2.5 py-0.5 text-xs font-semibold bg-[#E9EDFB] text-[#3D5FE0]">Confirmed</span>
+
+<!-- Loading skeleton -->
+<div class="h-28 animate-pulse rounded-2xl bg-[#F3F4F6]"></div>
+```
+
+### Layout notes
+
+- **Global header:** mounted in `App.vue`, so pages don't wrap themselves. Nav: Home / Explore
+  (+ Favorites / My Reservations / My Rentals when auth). Invoices & Profile also exist as routes.
+- **Admin shell (`BackLayout`):** sidebar (`w-64`) + header (`h-16`, title auto-derived from route
+  path) + NotificationBell + `<RouterView />`. Register new admin pages as **children** of the
+  `/dashboard` BackLayout route so the shell wraps them automatically.
+- Container conventions: public pages `max-w-6xl mx-auto px-4 sm:px-6 lg:px-8`;
+  customer pages (invoices/profile) `max-w-3xl mx-auto`; admin pages left-padded, content in
+  DataTable cards.
 
 ---
 
 ## Conventions
 
-- 💡 **Design language is already established** — `#3D5FE0` primary, pill inputs, rounded-full
-  buttons, `rounded-2xl` cards, `#1A2036` headings, `#6B7280` secondary text. Match the
-  existing auth / home pages — don't introduce a new look.
-- Build all HTTP through `services/api.js` (add per-feature service files under
-  `src/modules/<feature>/services/` when features grow).
-- Reuse `components/base/BaseButton.vue` / `BaseInput.vue`; add shared pieces to
-  `components/ui/` (Modal, Toast, Badge) and `components/layout/` (Header, Sidebar, Footer).
-- Group related UI by feature/module per `modules/NOTE.md` — don't dump everything flat under
-  `pages/`.
-- Route public pages through `layouts/FrontLayout.vue`; protected/admin pages through
-  `layouts/BackLayout.vue`. Both currently need real implementations.
-- Follow the `page path = route path` naming: e.g. `/my-reservations` → `pages/my-reservations/`;
-  keep components local to their page folder unless shared.
-- Use `defineProps` / `defineEmits` / `defineModel` explicitly; Composition API only.
-- Verify with `npm run build` before considering a change complete.
+- **Design language is fixed:** `#3D5FE0` primary, pill inputs, rounded-full buttons,
+  `rounded-2xl` cards, `#1A2036` headings. Match existing pages exactly.
+- **HTTP** goes through `services/api.js`; feature calls get their own file in `services/`
+  instead of scattering `api.*` calls in pages. Reuse existing functions — don't duplicate.
+- **Normalizers** (`vehicles.js`) exist because several backend DTO field names were assumed —
+  if a page breaks, first check the real response shape in Swagger, then fix the normalizer
+  rather than patching templates.
+- **Page naming:** `pages/<feature>/<Name>.vue` mirroring the route (`MyReservations.vue` ↔
+  `/my-reservations`). Route component imports must match.
+- **Admin CRUD pages:** always start from the `VehicleManagement.vue` pattern (DataTable + Modal
+  + `api` calls + error banner + saving state). Register the route in the `/dashboard` children.
+- **Auth:** read session via `useAuthStore()` — `isAuthenticated()`, `hasRole(...)`, `login`,
+  `logout`, `defaultRedirect()`. Hook new protected routes to `meta.requiresAuth` /
+  `meta.roles` — don't hand-roll guards in pages.
+- **Don't duplicate components:** check `components/` before writing a new one; move reusable
+  pieces there instead of inlining.
+- Verify with `npm run build` (or `npm run dev`) before considering a change complete.
+
+---
+
+## "To do next" on the frontend
+
+### 1. Admin management pages (biggest gap) — 11 sidebar routes currently 404
+
+Copy the `VehicleManagement.vue` pattern (DataTable + Modal + CRUD) and register each as a child
+route under `/dashboard`:
+
+- **Reservations** — `GET /api/reservations` list + `PATCH /{id}/status`
+- **Rentals** — `GET /api/rentals` list + `PATCH /{id}/status` (lifecycle)
+- **Customers** (ADMIN) — `GET /api/users`, activate/deactivate, roles
+- **Discounts** (ADMIN) — CRUD `/api/discounts`
+- **Invoices** — `GET /api/invoices` + status management
+- **Reviews** — `GET /api/reviews`, delete inappropriate
+- **Notifications mgmt** — `POST /api/notifications/{userId}/notify`
+- **Maintenance** — CRUD maintenance records
+- **Services** — CRUD `/api/services`
+- **Audit Logs** (ADMIN/MANAGER) — `GET /api/admin/audit-logs`
+- **Login History** (ADMIN/MANAGER) — `GET /api/admin/login-history`
+
+### 2. Cleanup
+
+- Delete duplicate `src/layouts/AppHeader.vue` (unused; `App.vue` uses `components/layout/AppHeader.vue`)
+- Delete or implement unused `src/layouts/FrontLayout.vue`
+- Finish Bake Kong payment wiring — confirm request/response vs `BakongController`, complete QR +
+  polling in InvoiceList/InvoiceDetail
+- Wire real vehicle images into `VehicleCard.vue` (currently SVG placeholder) once image DTO confirmed
+- Change `/` redirect from `/preview` → `/home` for production
+
+### 3. Polish
+
+- Success feedback (toast) for mutations; currently only inline errors
+- Consistent empty/loading/error states across all pages
+- Field-level validation + server error mapping
