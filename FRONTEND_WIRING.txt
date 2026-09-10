@@ -1,0 +1,39 @@
+1) router/index.js — add the import and one route:
+
+    import OAuthRedirect from '@/pages/auth/OAuthRedirect.vue'
+
+    { path: '/oauth2/redirect', component: OAuthRedirect },
+
+   (Same guestOnly caution as reset-password: do NOT mark this guestOnly —
+   it must work regardless of any existing session state.)
+
+
+2) Login.vue — add below the existing password field / above "Don't have an
+   account?", or wherever fits your layout. These hit Spring Security's
+   default OAuth2 authorization endpoints directly, so no JS logic is
+   needed — plain links/buttons that navigate the full page (not SPA
+   router-push, since this leaves your app to go to Google/Facebook):
+
+    <div class="mt-4 space-y-3">
+      <a
+        href="http://localhost:8080/oauth2/authorization/google"
+        class="flex w-full items-center justify-center gap-2 rounded-full border border-[#E5E7EB] py-3 text-sm font-semibold text-[#1A2036] hover:bg-[#F9FAFB]"
+      >
+        Continue with Google
+      </a>
+      <a
+        href="http://localhost:8080/oauth2/authorization/facebook"
+        class="flex w-full items-center justify-center gap-2 rounded-full border border-[#E5E7EB] py-3 text-sm font-semibold text-[#1A2036] hover:bg-[#F9FAFB]"
+      >
+        Continue with Facebook
+      </a>
+    </div>
+
+   In production, replace the hardcoded localhost:8080 with an env var
+   (e.g. import.meta.env.VITE_API_BASE_URL) once you have one wired up.
+
+
+3) auth.store.js — no changes needed IF `login(data)` already accepts
+   { id, email, role, token } and stores/persists them the same way the
+   existing email/password login does. Double check that assumption once
+   you wire this up — paste auth.store.js here if you want me to confirm.
