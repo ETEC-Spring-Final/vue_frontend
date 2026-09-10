@@ -46,6 +46,10 @@ import BackLayout from '@/layouts/BackLayout.vue'
 import Dashboard from '@/pages/dashboard/Dashboard.vue'
 import VehicleManagement from '@/pages/dashboard/VehicleManagement.vue'
 import LocationManagement from '@/pages/dashboard/LocationManagement.vue'
+import ReservationManagement from '@/pages/dashboard/ReservationManagement.vue'
+import RentalManagement from '@/pages/dashboard/RentalManagement.vue'
+import CustomerManagement from '@/pages/dashboard/CustomerManagement.vue'
+import DiscountManagement from '@/pages/dashboard/DiscountManagement.vue'
 
 // page components client-facing
 import Login from '@/pages/auth/Login.vue'
@@ -96,6 +100,11 @@ const routes = [
       { path: '', component: Dashboard },
       { path: 'vehicles', component: VehicleManagement },
       { path: 'locations', component: LocationManagement },
+      { path: 'reservations', component: ReservationManagement },
+      { path: 'rentals', component: RentalManagement },
+      { path: 'customers', component: CustomerManagement, meta: { roles: ['ADMIN'] } },
+      { path: 'discounts', component: DiscountManagement, meta: { roles: ['ADMIN'] } },
+      
 
       
       // បន្ថែម child route ថ្មីនៅទីនេះ សម្រាប់ locations, reservations, rentals, ...
