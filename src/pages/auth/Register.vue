@@ -77,6 +77,44 @@
         </button>
       </form>
 
+      <!-- Divider -->
+      <div class="mt-6 flex items-center gap-3">
+        <div class="h-px flex-1 bg-[#E5E7EB]"></div>
+        <span class="text-xs font-medium uppercase text-[#9CA3AF]">or continue with</span>
+        <div class="h-px flex-1 bg-[#E5E7EB]"></div>
+      </div>
+
+      <!-- OAuth2 providers — same Google entry point as Login.vue. Signing up
+           and signing in hit the same backend route: CustomOAuth2UserService
+           creates the account on first login, so there's no separate
+           "OAuth register" endpoint to wire up. -->
+      <div class="mt-4 space-y-3">
+        <a
+          href="http://localhost:8080/oauth2/authorization/google"
+          class="flex w-full items-center justify-center gap-2 rounded-full border border-[#E5E7EB] py-3 text-sm font-semibold text-[#1A2036] hover:bg-[#F9FAFB]"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="h-5 w-5">
+            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
+            <path fill="#4CAF50" d="M24 44c5.5 0 10.4-2.1 14.2-5.5l-6.5-5.5C29.6 34.9 26.9 36 24 36c-5.3 0-9.7-3.4-11.3-8l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/>
+            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.5 5.5C40.9 36.5 44 30.9 44 24c0-1.3-.1-2.7-.4-3.5z"/>
+          </svg>
+          Continue with Google
+        </a>
+
+        <!-- TODO: Facebook OAuth — see Login.vue for why this is commented out.
+        <a
+          href="http://localhost:8080/oauth2/authorization/facebook"
+          class="flex w-full items-center justify-center gap-2 rounded-full border border-[#E5E7EB] py-3 text-sm font-semibold text-[#1A2036] hover:bg-[#F9FAFB]"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
+            <path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.96h-1.51c-1.49 0-1.95.93-1.95 1.89v2.26h3.32l-.53 3.49h-2.79V24C19.61 23.1 24 18.1 24 12.07Z"/>
+          </svg>
+          Continue with Facebook
+        </a>
+        -->
+      </div>
+
       <!-- Footer -->
       <p class="mt-6 mb-4 text-center text-sm text-[#6B7280]">
         Already have an account?
@@ -145,16 +183,6 @@ const ICONS = {
   phone: 'M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 3c0-.6.4-1 1-1h3.4c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8Z',
 }
 
-// FIX: the previous version tried `attrs.onUpdate_modelValue` (underscore) as
-// a fallback for `props['onUpdate:modelValue']` (also wrong — that listener
-// is never a declared prop, so it never lives on `props`). Neither branch
-// ever matched the real key Vue passes for a v-model listener, which is
-// `attrs['onUpdate:modelValue']` (colon). Because that call never fired,
-// typing into any PillInput field never wrote into the reactive `form`
-// object — the browser showed your keystrokes only because the native
-// input kept its own uncontrolled value, while `form.firstName`, `email`,
-// etc. silently stayed empty strings forever. That's why `isFormValid` was
-// always false and "Create account" stayed permanently disabled.
 const PillInput = (props, { attrs }) =>
   h('div', { class: 'flex items-center gap-3 rounded-full bg-[#F3F4F6] px-5 py-3.5' }, [
     h('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', class: 'h-5 w-5 shrink-0 text-[#9CA3AF]' }, [
@@ -172,6 +200,9 @@ const PillInput = (props, { attrs }) =>
   ])
 PillInput.props = ['modelValue', 'type', 'placeholder', 'icon', 'required']
 
+// Eye-icon toggle, matching Login.vue's password field exactly (was a
+// text "Show/Hide" link before — switched for visual consistency between
+// the two auth screens).
 const PasswordPillInput = {
   props: ['modelValue', 'placeholder', 'required'],
   emits: ['update:modelValue'],
@@ -191,7 +222,21 @@ const PasswordPillInput = {
           class: 'w-full bg-transparent text-sm text-[#1A2036] placeholder:text-[#9CA3AF] outline-none',
           onInput: (e) => emit('update:modelValue', e.target.value),
         }),
-        h('button', { type: 'button', class: 'shrink-0 text-[#9CA3AF]', onClick: () => (show.value = !show.value) }, show.value ? 'Hide' : 'Show'),
+        h('button', { type: 'button', class: 'shrink-0 text-[#9CA3AF]', onClick: () => (show.value = !show.value) }, [
+          show.value
+            ? h('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', class: 'h-5 w-5' }, [
+                h('path', { stroke: 'currentColor', 'stroke-width': 1.6, d: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z' }),
+                h('circle', { cx: 12, cy: 12, r: 3, stroke: 'currentColor', 'stroke-width': 1.6 }),
+              ])
+            : h('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', class: 'h-5 w-5' }, [
+                h('path', {
+                  stroke: 'currentColor',
+                  'stroke-width': 1.6,
+                  'stroke-linecap': 'round',
+                  d: 'M3 3l18 18M10.6 10.7a3 3 0 0 0 4.2 4.2M6.6 6.9C4.5 8.3 3 12 3 12s3.5 7 10 7c1.8 0 3.3-.5 4.6-1.2M17.7 17.6C19.8 16.1 21 12 21 12s-1.1-2.2-3.1-4',
+                }),
+              ]),
+        ]),
       ])
   },
 }

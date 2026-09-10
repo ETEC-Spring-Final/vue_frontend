@@ -23,6 +23,17 @@
 | - `/reset-password` is intentionally NOT guestOnly: a user should be able
 |   to open a reset link from email even if they (or someone else) happen
 |   to be logged in on this browser/session at the time.
+| - `/vehicles/:id` and `/explore` are intentionally NOT requiresAuth:
+|   vehicle browsing is public (GET /api/vehicles has no auth guard on the
+|   backend either). Only "Rent now" / favorite actions inside those pages
+|   check auth before navigating onward.
+| - `/reservations`, `/my-reservations`, and `/favorites` ARE requiresAuth:
+|   creating/viewing reservations and managing favorites always needs a
+|   logged-in user on the backend (POST /api/reservations,
+|   GET /api/reservations/my-reservations, GET /api/favorites, and
+|   DELETE /api/favorites/{vehicleId} all require a JWT), so the guard
+|   bounces logged-out users to /login with ?redirect= back to where they
+|   came from.
 |
 */
 
@@ -37,6 +48,13 @@ import ForgotPassword from '@/pages/auth/ForgotPassword.vue'
 import ResetPassword from '@/pages/auth/ResetPassword.vue'
 import Preview from '@/pages/preview/Preview.vue'
 import Home from '@/pages/home/Home.vue'
+import Explore from '@/pages/explore/Explore.vue'
+import VehicleDetail from '@/pages/vehicles/VehicleDetail.vue'
+import ReservationForm from '@/pages/reservations/ReservationForm.vue'
+import MyReservations from '@/pages/reservations/MyReservations.vue'
+import Favorites from '@/pages/favorites/Favorites.vue'
+import RentalHistory from '@/pages/rentals/RentalHistory.vue'
+import OAuth2Redirect from '@/pages/auth/OAuth2Redirect.vue'
 import NotFound from '@/pages/NotFound.vue'
 
 /**
@@ -90,6 +108,71 @@ const routes = [
    */
   // { path: '/', component: Home },
   { path: '/home', component: Home },
+
+  /**
+   * Browse/search all vehicles — search bar on Home links here with ?q=.
+   */
+  { path: '/explore', component: Explore },
+
+  /**
+   * Vehicle detail — public browsing page. GET /api/vehicles/{id} on the
+   * backend has no auth guard, so this route doesn't either; only actions
+   * taken from this page (Rent now, favorite) check auth individually.
+   */
+  { path: '/vehicles/:id', component: VehicleDetail },
+
+  /**
+   * Reservation form — reached from VehicleDetail's "Rent now" button via
+   * /reservations?vehicleId=123. Requires auth: POST /api/reservations
+   * needs a JWT on the backend.
+   */
+  {
+    path: '/reservations',
+    component: ReservationForm,
+    meta: { requiresAuth: true },
+  },
+
+  /**
+   * My Reservations — list + cancel. Requires auth: both
+   * GET /api/reservations/my-reservations and
+   * PATCH /api/reservations/{id}/cancel need a JWT on the backend.
+   */
+  {
+    path: '/my-reservations',
+    component: MyReservations,
+    meta: { requiresAuth: true },
+  },
+
+  /**
+   * Favorites — list + remove. Requires auth: GET /api/favorites and
+   * DELETE /api/favorites/{vehicleId} both need a JWT on the backend.
+   */
+  {
+    path: '/favorites',
+    component: Favorites,
+    meta: { requiresAuth: true },
+  },
+
+  /**
+   * My Rentals — status timeline + document upload. Requires auth:
+   * GET /api/rentals/my-rentals, POST /api/rental-documents/{id}/upload,
+   * and GET /api/rental-documents/my-rental-document all need a JWT.
+   */
+  {
+    path: '/my-rentals',
+    component: RentalHistory,
+    meta: { requiresAuth: true },
+  },
+
+  /**
+   * Google OAuth callback target. The backend's
+   * OAuth2AuthenticationSuccessHandler redirects here with ?token=... after
+   * a successful Google sign-in; this page decodes the JWT, calls
+   * authStore.login(), and forwards the user to /home or /dashboard.
+   * No requiresAuth here — the user isn't logged in yet when they land on
+   * this page, this route is what logs them in.
+   */
+  { path: '/oauth2/redirect', component: OAuth2Redirect },
 
   /**
    * Catch-all route
