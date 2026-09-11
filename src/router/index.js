@@ -54,6 +54,9 @@ import InvoiceManagement from '@/pages/dashboard/InvoiceManagement.vue'
 import ReviewManagement from '@/pages/dashboard/ReviewManagement.vue'
 import NotificationManagement from '@/pages/dashboard/NotificationManagement.vue'
 import MaintenanceManagement from '@/pages/dashboard/MaintenanceManagement.vue'
+import ServiceManagement from '@/pages/dashboard/ServiceManagement.vue'
+import AuditLogManagement from '@/pages/dashboard/AuditLogManagement.vue'
+import LoginHistoryManagement from '@/pages/dashboard/LoginHistoryManagement.vue'
 
 // page components client-facing
 import Login from '@/pages/auth/Login.vue'
@@ -112,6 +115,9 @@ const routes = [
       { path: 'reviews', component: ReviewManagement },
       { path: 'notifications', component: NotificationManagement },
       { path: 'maintenance', component: MaintenanceManagement },
+      { path: 'services', component: ServiceManagement },
+      { path: 'audit-logs', component: AuditLogManagement, meta: { roles: ['ADMIN', 'MANAGER'] } },
+      { path: 'login-history', component: LoginHistoryManagement, meta: { roles: ['ADMIN', 'MANAGER'] } },
       
 
       
