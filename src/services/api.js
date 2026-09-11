@@ -30,7 +30,7 @@
    * Used for all API requests in the application
    */
   const api = axios.create({
-    baseURL: '/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   })
 
   /**
