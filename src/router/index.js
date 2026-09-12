@@ -44,6 +44,7 @@ import useAuthStore from '@/stores/auth.store'
 
 import BackLayout from '@/layouts/BackLayout.vue'
 import Dashboard from '@/pages/dashboard/Dashboard.vue'
+import AdminProfile from '@/pages/dashboard/AdminProfile.vue'
 import VehicleManagement from '@/pages/dashboard/VehicleManagement.vue'
 import LocationManagement from '@/pages/dashboard/LocationManagement.vue'
 import ReservationManagement from '@/pages/dashboard/ReservationManagement.vue'
@@ -102,9 +103,10 @@ const routes = [
   {
     path: '/dashboard',
     component: BackLayout,
-    meta: { requiresAuth: true, roles: ['ADMIN', 'MANAGER', 'STAFF'] },
+    meta: { requiresAuth: true, roles: ['ADMIN', 'MANAGER', 'STAFF'], hideGlobalHeader: true },
     children: [
       { path: '', component: Dashboard },
+      { path: 'profile', component: AdminProfile },
       { path: 'vehicles', component: VehicleManagement },
       { path: 'locations', component: LocationManagement },
       { path: 'reservations', component: ReservationManagement },
