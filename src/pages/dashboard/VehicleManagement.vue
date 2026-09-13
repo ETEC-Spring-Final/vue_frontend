@@ -66,6 +66,11 @@
         </div>
 
         <div class="grid grid-cols-2 gap-3">
+          <input v-model.number="form.doors" required type="number" min="1" :placeholder="$t('vehicles.doors')" class="input-field" :style="inputStyle" />
+          <input v-model.number="form.luggages" required type="number" min="0" :placeholder="$t('vehicles.luggages')" class="input-field" :style="inputStyle" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
           <input v-model.number="form.pricePerDay" required type="number" step="0.01" :placeholder="$t('vehicles.price')" class="input-field" :style="inputStyle" />
           <input v-model.number="form.mileAge" required type="number" step="0.01" :placeholder="$t('vehicles.mileAge')" class="input-field" :style="inputStyle" />
         </div>
@@ -126,6 +131,8 @@ const columns = computed(() => [
   { key: 'model', label: t('vehicles.model') },
   { key: 'licensePlate', label: t('vehicles.plate') },
   { key: 'type', label: t('vehicles.type') },
+  { key: 'seats', label: t('vehicles.seats') },
+  { key: 'doors', label: t('vehicles.doors') },
   { key: 'pricePerDay', label: t('vehicles.priceDay') },
   { key: 'status', label: t('vehicles.status') },
 ])
@@ -154,6 +161,8 @@ function emptyForm() {
     transmission: '',
     fuelType: '',
     seats: null,
+    doors: null,
+    luggages: null,
     pricePerDay: null,
     mileAge: 0,
     description: '',
@@ -204,6 +213,8 @@ function openEdit(row) {
     transmission: row.transmission,
     fuelType: row.fuelType,
     seats: row.seats,
+    doors: row.doors,
+    luggages: row.luggages,
     pricePerDay: row.pricePerDay,
     mileAge: row.mileAge,
     description: row.description,

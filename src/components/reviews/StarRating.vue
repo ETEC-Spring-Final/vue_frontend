@@ -1,38 +1,30 @@
 <template>
-  <div class="flex items-center gap-1" :class="{ 'cursor-pointer': editable }">
+  <div class="flex items-center gap-1" :aria-label="`${modelValue} out of 5 stars`">
     <svg
-      v-for="star in 5"
-      :key="star"
+      v-for="i in 5"
+      :key="i"
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      class="h-5 w-5"
-      :class="star <= displayValue ? 'text-yellow-500' : 'text-[#E5E7EB]'"
-      :fill="star <= displayValue ? 'currentColor' : 'none'"
-      stroke="currentColor"
+      viewBox="0 0 20 20"
+      :width="size"
+      :height="size"
+      :fill="i <= modelValue ? '#F59E0B' : 'none'"
+      :stroke="i <= modelValue ? '#F59E0B' : 'var(--color-border)'"
       stroke-width="1.5"
-      @mouseenter="editable && (hover = star)"
-      @mouseleave="editable && (hover = 0)"
-      @click="editable && $emit('update:modelValue', star)"
     >
       <path
-        d="M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.8 6.7 19.6l1-5.8-4.2-4.1 5.9-.9L12 3.5Z"
-        stroke-linejoin="round"
+        d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1 1 5.8L10 14.9l-5.21 2.74 1-5.8-4.21-4.1 5.82-.85L10 1.5z"
       />
     </svg>
-    <span v-if="!editable && showValue" class="ml-1 text-xs text-[#6B7280]">{{ modelValue?.toFixed(1) }}</span>
+    <span v-if="showValue" class="text-xs font-medium ml-1" style="color: var(--color-text-secondary);">
+      {{ Number(modelValue).toFixed(1) }}
+    </span>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-
-const props = defineProps({
-  modelValue: { type: Number, default: 0 },
-  editable: { type: Boolean, default: false },
+defineProps({
+  modelValue: { type: [Number, String], default: 0 },
+  size: { type: Number, default: 16 },
   showValue: { type: Boolean, default: false },
 })
-defineEmits(['update:modelValue'])
-
-const hover = ref(0)
-const displayValue = computed(() => (props.editable && hover.value ? hover.value : props.modelValue))
 </script>
