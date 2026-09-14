@@ -1,216 +1,472 @@
 <template>
-  <div class="max-w-3xl">
-    <h2 class="text-2xl font-bold" style="color: var(--color-text);">{{ $t('adminProfile.title') }}</h2>
+  <div class="mx-auto max-w-3xl space-y-6">
+    <h1 class="text-xl font-bold" style="color: var(--color-text);">{{ $t('profile.title') }}</h1>
 
-    <!-- Tabs -->
-    <div class="mt-6 flex gap-2 border-b" style="border-color: var(--color-border);">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        class="px-4 py-2.5 text-sm font-semibold transition"
-        :style="activeTab === tab.id
-          ? `border-bottom: 2px solid var(--color-primary); color: var(--color-primary); margin-bottom: -1px;`
-          : `color: var(--color-text-secondary);`"
-        @click="activeTab = tab.id"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
+    <!-- ===== Edit info card ===== -->
+    <section
+      class="rounded-2xl border p-5 md:p-6"
+      style="background-color: var(--color-surface); border-color: var(--color-border);"
+    >
+      <h2 class="mb-4 text-base font-semibold" style="color: var(--color-text);">{{ $t('profile.editInfo') }}</h2>
 
-    <!-- Profile info -->
-    <div v-if="activeTab === 'info'" class="mt-6">
-      <div v-if="loadingProfile" class="h-48 animate-pulse rounded-2xl" style="background-color: var(--color-border);"></div>
-
-      <div v-else class="rounded-2xl border p-6" style="background-color: var(--color-surface); border-color: var(--color-border);">
-        <!-- Avatar -->
-        <div class="flex items-center gap-4 mb-6">
-          <span
-            class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full text-lg font-semibold"
-            style="background-color: var(--color-primary-light); color: var(--color-primary);"
-          >
-            <img v-if="avatarUrl && !avatarError" :src="avatarUrl" alt="" class="h-full w-full object-cover" @error="avatarError = true" />
-            <span v-else>{{ initials }}</span>
-          </span>
-          <div>
-            <p class="text-sm font-semibold" style="color: var(--color-text);">{{ form.firstName }} {{ form.lastName }}</p>
-            <p class="text-xs" style="color: var(--color-text-secondary);">{{ roleLabel }}</p>
-          </div>
-        </div>
-
-        <form class="space-y-4" @submit.prevent="onSaveProfile">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="text-xs font-semibold uppercase" style="color: var(--color-text-secondary);">{{ $t('adminProfile.firstName') }}</label>
-              <input
-                v-model="form.firstName"
-                class="mt-1 w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition focus:ring-2"
-                style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-              />
-            </div>
-            <div>
-              <label class="text-xs font-semibold uppercase" style="color: var(--color-text-secondary);">{{ $t('adminProfile.lastName') }}</label>
-              <input
-                v-model="form.lastName"
-                class="mt-1 w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition focus:ring-2"
-                style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-              />
-            </div>
-            <div>
-              <label class="text-xs font-semibold uppercase" style="color: var(--color-text-secondary);">{{ $t('adminProfile.phone') }}</label>
-              <input
-                v-model="form.phone"
-                class="mt-1 w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition focus:ring-2"
-                style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-              />
-            </div>
-            <div>
-              <label class="text-xs font-semibold uppercase" style="color: var(--color-text-secondary);">{{ $t('adminProfile.email') }}</label>
-              <input
-                :value="form.email"
-                disabled
-                class="mt-1 w-full rounded-xl border px-4 py-2.5 text-sm outline-none"
-                style="background-color: var(--color-border); border-color: var(--color-border); color: var(--color-text-secondary);"
-              />
-            </div>
-          </div>
-
-          <p v-if="saveError" class="text-sm" style="color: #DC2626;">{{ saveError }}</p>
-          <p v-if="saveSuccess" class="text-sm" style="color: #16A34A;">{{ $t('adminProfile.saved') }}</p>
-
-          <button
-            type="submit"
-            :disabled="saving"
-            class="rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
-            style="background-color: var(--color-primary);"
-          >
-            {{ saving ? $t('adminProfile.saving') : $t('adminProfile.save') }}
-          </button>
-        </form>
+      <div v-if="loadingProfile" class="py-8 text-center text-sm" style="color: var(--color-text-secondary);">
+        …
       </div>
-    </div>
 
-    <!-- Login history -->
-    <div v-else-if="activeTab === 'history'" class="mt-6">
-      <div class="rounded-2xl border p-6" style="background-color: var(--color-surface); border-color: var(--color-border);">
-        <div v-if="loadingHistory" class="space-y-2">
-          <div v-for="i in 4" :key="i" class="h-10 animate-pulse rounded-lg" style="background-color: var(--color-border);"></div>
+      <form v-else class="space-y-4" @submit.prevent="onSaveProfile">
+        <!-- Avatar (click to pick a local image, uploads to Cloudinary) -->
+        <div class="flex items-center gap-4">
+          <button
+            type="button"
+            class="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full text-lg font-semibold"
+            style="background-color: var(--color-primary-light); color: var(--color-primary);"
+            :disabled="uploadingAvatar"
+            @click="fileInput?.click()"
+          >
+            <img
+              v-if="form.profilePicture && !avatarError"
+              :src="form.profilePicture"
+              alt=""
+              class="h-full w-full object-cover"
+              @error="avatarError = true"
+            />
+            <span v-else>{{ initials }}</span>
+
+            <span
+              class="absolute inset-0 flex items-center justify-center bg-black/40 text-[10px] font-medium text-white opacity-0 transition group-hover:opacity-100"
+            >
+              {{ uploadingAvatar ? '…' : 'Change' }}
+            </span>
+          </button>
+
+          <div class="flex-1">
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              class="hidden"
+              @change="onPickAvatar"
+            />
+            <button
+              type="button"
+              class="rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-60"
+              style="border-color: var(--color-border); color: var(--color-text);"
+              :disabled="uploadingAvatar"
+              @click="fileInput?.click()"
+            >
+              {{ uploadingAvatar ? 'Uploading…' : 'Upload photo' }}
+            </button>
+            <p v-if="avatarUploadError" class="mt-1 text-xs text-[#DC2626]">{{ avatarUploadError }}</p>
+            <p class="mt-1 text-xs" style="color: var(--color-text-secondary);">JPG, PNG or WEBP.</p>
+          </div>
         </div>
-        <div v-else-if="loginHistory.length === 0" class="text-sm" style="color: var(--color-text-secondary);">
-          {{ $t('adminProfile.noHistory') }}
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-xs font-medium" style="color: var(--color-text-secondary);">
+              {{ $t('profile.firstName') }}
+            </label>
+            <input
+              v-model="form.firstName"
+              type="text"
+              required
+              maxlength="50"
+              class="w-full rounded-lg border px-3 py-2 text-sm"
+              style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
+            />
+          </div>
+
+          <div>
+            <label class="mb-1 block text-xs font-medium" style="color: var(--color-text-secondary);">
+              {{ $t('profile.lastName') }}
+            </label>
+            <input
+              v-model="form.lastName"
+              type="text"
+              required
+              maxlength="50"
+              class="w-full rounded-lg border px-3 py-2 text-sm"
+              style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
+            />
+          </div>
+
+          <div>
+            <label class="mb-1 block text-xs font-medium" style="color: var(--color-text-secondary);">
+              {{ $t('profile.phone') }}
+            </label>
+            <input
+              v-model="form.phone"
+              type="tel"
+              required
+              minlength="9"
+              maxlength="10"
+              class="w-full rounded-lg border px-3 py-2 text-sm"
+              style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
+            />
+          </div>
+
+          <div>
+            <label class="mb-1 block text-xs font-medium" style="color: var(--color-text-secondary);">
+              {{ $t('profile.email') }}
+            </label>
+            <input
+              :value="profile?.email"
+              type="email"
+              disabled
+              class="w-full cursor-not-allowed rounded-lg border px-3 py-2 text-sm opacity-60"
+              style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
+            />
+          </div>
         </div>
-        <table v-else class="w-full text-sm">
+
+        <p v-if="profileMessage" class="text-sm" :style="{ color: profileMessageIsError ? '#DC2626' : '#16A34A' }">
+          {{ profileMessage }}
+        </p>
+
+        <button
+          type="submit"
+          :disabled="savingProfile || uploadingAvatar"
+          class="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60"
+          style="background-color: var(--color-primary);"
+        >
+          {{ savingProfile ? $t('profile.saving') : $t('profile.save') }}
+        </button>
+      </form>
+    </section>
+
+    <!-- ===== Change password card (LOCAL accounts only) ===== -->
+    <section
+      v-if="profile && profile.authProvider === 'LOCAL'"
+      class="rounded-2xl border p-5 md:p-6"
+      style="background-color: var(--color-surface); border-color: var(--color-border);"
+    >
+      <h2 class="mb-4 text-base font-semibold" style="color: var(--color-text);">{{ $t('profile.changePassword') }}</h2>
+
+      <form class="space-y-4" @submit.prevent="onChangePassword">
+        <div>
+          <label class="mb-1 block text-xs font-medium" style="color: var(--color-text-secondary);">
+            {{ $t('profile.currentPassword') }}
+          </label>
+          <input
+            v-model="passwordForm.currentPassword"
+            type="password"
+            required
+            class="w-full rounded-lg border px-3 py-2 text-sm"
+            style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-xs font-medium" style="color: var(--color-text-secondary);">
+              {{ $t('profile.newPassword') }}
+            </label>
+            <input
+              v-model="passwordForm.newPassword"
+              type="password"
+              required
+              minlength="8"
+              maxlength="100"
+              class="w-full rounded-lg border px-3 py-2 text-sm"
+              style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
+            />
+          </div>
+
+          <div>
+            <label class="mb-1 block text-xs font-medium" style="color: var(--color-text-secondary);">
+              {{ $t('profile.confirmPassword') }}
+            </label>
+            <input
+              v-model="passwordForm.confirmPassword"
+              type="password"
+              required
+              class="w-full rounded-lg border px-3 py-2 text-sm"
+              style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
+            />
+          </div>
+        </div>
+
+        <p v-if="passwordMessage" class="text-sm" :style="{ color: passwordMessageIsError ? '#DC2626' : '#16A34A' }">
+          {{ passwordMessage }}
+        </p>
+
+        <button
+          type="submit"
+          :disabled="savingPassword"
+          class="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60"
+          style="background-color: var(--color-primary);"
+        >
+          {{ savingPassword ? $t('profile.saving') : $t('profile.updatePassword') }}
+        </button>
+      </form>
+    </section>
+
+    <!-- ===== My login history ===== -->
+    <section
+      class="rounded-2xl border p-5 md:p-6"
+      style="background-color: var(--color-surface); border-color: var(--color-border);"
+    >
+      <h2 class="mb-4 text-base font-semibold" style="color: var(--color-text);">{{ $t('profile.myLoginHistory') }}</h2>
+
+      <div v-if="loadingHistory" class="py-8 text-center text-sm" style="color: var(--color-text-secondary);">
+        …
+      </div>
+
+      <div v-else-if="!historyRows.length" class="py-8 text-center text-sm" style="color: var(--color-text-secondary);">
+        —
+      </div>
+
+      <div v-else class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
           <thead>
-            <tr class="text-left text-xs font-semibold uppercase" style="color: var(--color-text-secondary);">
-              <th class="pb-2">{{ $t('adminProfile.date') }}</th>
-              <th class="pb-2">{{ $t('adminProfile.ip') }}</th>
-              <th class="pb-2">{{ $t('adminProfile.browser') }}</th>
-              <th class="pb-2">{{ $t('adminProfile.status') }}</th>
+            <tr class="border-b" style="border-color: var(--color-border);">
+              <th class="px-3 py-2 font-medium" style="color: var(--color-text-secondary);">{{ $t('profile.ip') }}</th>
+              <th class="px-3 py-2 font-medium" style="color: var(--color-text-secondary);">{{ $t('profile.device') }}</th>
+              <th class="px-3 py-2 font-medium" style="color: var(--color-text-secondary);">{{ $t('profile.status') }}</th>
+              <th class="px-3 py-2 font-medium" style="color: var(--color-text-secondary);">{{ $t('profile.loginTime') }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="entry in loginHistory" :key="entry.id" class="border-t" style="border-color: var(--color-border);">
-              <td class="py-2" style="color: var(--color-text);">{{ formatDate(entry.loginTime || entry.createdAt) }}</td>
-              <td class="py-2" style="color: var(--color-text-secondary);">{{ entry.ipAddress }}</td>
-              <td class="py-2" style="color: var(--color-text-secondary);">{{ entry.userAgent || entry.browser }}</td>
-              <td class="py-2">
-                <span :style="`color: ${entry.success ? '#16A34A' : '#DC2626'}`">
-                  {{ entry.success ? $t('adminProfile.success') : $t('adminProfile.failed') }}
+            <tr v-for="row in historyRows" :key="row.id" class="border-b last:border-0" style="border-color: var(--color-border);">
+              <td class="px-3 py-2" style="color: var(--color-text);">{{ row.ipAddress }}</td>
+              <td class="max-w-[220px] truncate px-3 py-2" style="color: var(--color-text);" :title="row.device">{{ row.device }}</td>
+              <td class="px-3 py-2">
+                <span
+                  class="rounded-full px-2 py-0.5 text-xs font-medium"
+                  :style="row.success
+                    ? 'background-color: rgba(22,163,74,0.12); color: #16A34A;'
+                    : 'background-color: rgba(220,38,38,0.12); color: #DC2626;'"
+                >
+                  {{ row.success ? $t('profile.success') : $t('profile.failed') }}
                 </span>
               </td>
+              <td class="px-3 py-2 whitespace-nowrap" style="color: var(--color-text-secondary);">{{ formatDate(row.loggedInAt) }}</td>
             </tr>
           </tbody>
         </table>
+
+        <div v-if="historyTotalPages > 1" class="mt-4 flex items-center justify-between text-sm">
+          <button
+            type="button"
+            :disabled="historyPage === 0"
+            class="rounded-lg border px-3 py-1.5 disabled:opacity-40"
+            style="border-color: var(--color-border); color: var(--color-text);"
+            @click="historyPage--"
+          >
+            ‹
+          </button>
+          <span style="color: var(--color-text-secondary);">{{ historyPage + 1 }} / {{ historyTotalPages }}</span>
+          <button
+            type="button"
+            :disabled="historyPage >= historyTotalPages - 1"
+            class="rounded-lg border px-3 py-1.5 disabled:opacity-40"
+            style="border-color: var(--color-border); color: var(--color-text);"
+            @click="historyPage++"
+          >
+            ›
+          </button>
+        </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { reactive, ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import useAuthStore from '@/stores/auth.store'
-import profileApi from '@/services/profile'
+import {
+  getMyProfile,
+  updateMyProfile,
+  changeMyPassword,
+  getMyLoginHistory,
+} from '@/services/profile.service'
 
-const { user } = useAuthStore()
-const { t: t_ } = useI18n()
+const { t } = useI18n()
+const { fetchProfile } = useAuthStore()
 
-const tabs = computed(() => [
-  { id: 'info', label: t_('adminProfile.profileTab') },
-  { id: 'history', label: t_('adminProfile.historyTab') },
-])
-
-const activeTab = ref('info')
-
-const avatarError = ref(false)
-const avatarUrl = computed(() => user?.avatarUrl || '')
-const initials = computed(() => (user?.name || user?.email || 'A').slice(0, 2).toUpperCase())
-const roleLabel = computed(() => user?.role || '')
-
-// Profile info
+// ===== Profile info =====
+const profile = ref(null)
 const loadingProfile = ref(true)
-const saving = ref(false)
-const saveError = ref('')
-const saveSuccess = ref(false)
-const form = reactive({ firstName: '', lastName: '', phone: '', email: '' })
+const savingProfile = ref(false)
+const profileMessage = ref('')
+const profileMessageIsError = ref(false)
+const avatarError = ref(false)
+
+const form = reactive({
+  firstName: '',
+  lastName: '',
+  phone: '',
+  profilePicture: '',
+})
+
+const initials = ref('') // filled once profile loads
 
 async function loadProfile() {
   loadingProfile.value = true
   try {
-    const { data } = await profileApi.me()
-    Object.assign(form, {
-      firstName: data.firstName ?? '',
-      lastName: data.lastName ?? '',
-      phone: data.phone ?? '',
-      email: data.email ?? '',
-    })
+    const data = await getMyProfile()
+    profile.value = data
+    form.firstName = data.firstName || ''
+    form.lastName = data.lastName || ''
+    form.phone = data.phone || ''
+    form.profilePicture = data.profilePicture || ''
+    const fromName = (data.firstName?.[0] || '') + (data.lastName?.[0] || '')
+    initials.value = (fromName || data.email || 'A').slice(0, 2).toUpperCase()
+  } catch (err) {
+    console.error('Failed to load profile:', err)
+    profileMessage.value = t('profile.saveError')
+    profileMessageIsError.value = true
   } finally {
     loadingProfile.value = false
   }
 }
 
-async function onSaveProfile() {
-  saving.value = true
-  saveError.value = ''
-  saveSuccess.value = false
+// ===== Avatar upload (direct-to-Cloudinary, unsigned preset) =====
+const fileInput = ref(null)
+const uploadingAvatar = ref(false)
+const avatarUploadError = ref('')
+
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+
+async function onPickAvatar(e) {
+  const file = e.target.files?.[0]
+  e.target.value = '' // allow re-selecting the same file later
+  if (!file) return
+
+  avatarUploadError.value = ''
+
+  if (!CLOUD_NAME || !UPLOAD_PRESET) {
+    avatarUploadError.value = 'Cloudinary is not configured (missing VITE_CLOUDINARY_* env vars).'
+    return
+  }
+
+  // Instant local preview while the upload is in flight.
+  const localPreviewUrl = URL.createObjectURL(file)
+  const previousPicture = form.profilePicture
+  form.profilePicture = localPreviewUrl
+  avatarError.value = false
+
+  uploadingAvatar.value = true
   try {
-    await profileApi.updateMe({ firstName: form.firstName, lastName: form.lastName, phone: form.phone })
-    saveSuccess.value = true
+    const body = new FormData()
+    body.append('file', file)
+    body.append('upload_preset', UPLOAD_PRESET)
+    body.append('folder', 'admin-profiles') // optional: keep Cloudinary tidy
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body,
+    })
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => null)
+      throw new Error(errBody?.error?.message || `Upload failed (${res.status})`)
+    }
+
+    const data = await res.json()
+    form.profilePicture = data.secure_url // real Cloudinary URL replaces the local preview
   } catch (err) {
-    saveError.value = err.response?.data?.message || t_('adminProfile.saveError')
+    console.error('Avatar upload failed:', err)
+    avatarUploadError.value = err.message || 'Could not upload the image.'
+    form.profilePicture = previousPicture // roll back to the last saved picture
   } finally {
-    saving.value = false
+    URL.revokeObjectURL(localPreviewUrl)
+    uploadingAvatar.value = false
   }
 }
 
-// Login history
+async function onSaveProfile() {
+  savingProfile.value = true
+  profileMessage.value = ''
+  try {
+    const updated = await updateMyProfile({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      phone: form.phone,
+      profilePicture: form.profilePicture || undefined,
+    })
+    profile.value = updated
+    profileMessage.value = t('profile.saveSuccess')
+    profileMessageIsError.value = false
+    // Refresh the shared auth store (sidebar/header) with the new values.
+    await fetchProfile()
+  } catch (err) {
+    console.error('Failed to update profile:', err)
+    profileMessage.value = t('profile.saveError')
+    profileMessageIsError.value = true
+  } finally {
+    savingProfile.value = false
+  }
+}
+
+// ===== Change password =====
+const passwordForm = reactive({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+})
+const savingPassword = ref(false)
+const passwordMessage = ref('')
+const passwordMessageIsError = ref(false)
+
+async function onChangePassword() {
+  passwordMessage.value = ''
+
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    passwordMessage.value = t('profile.passwordMismatch')
+    passwordMessageIsError.value = true
+    return
+  }
+
+  savingPassword.value = true
+  try {
+    await changeMyPassword({ ...passwordForm })
+    passwordMessage.value = t('profile.passwordSuccess')
+    passwordMessageIsError.value = false
+    passwordForm.currentPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+  } catch (err) {
+    console.error('Failed to change password:', err)
+    passwordMessage.value = err?.response?.data?.message || t('profile.passwordError')
+    passwordMessageIsError.value = true
+  } finally {
+    savingPassword.value = false
+  }
+}
+
+// ===== Login history =====
+const historyRows = ref([])
 const loadingHistory = ref(true)
-const loginHistory = ref([])
-let historyLoaded = false
+const historyPage = ref(0)
+const historyTotalPages = ref(1)
 
 async function loadHistory() {
   loadingHistory.value = true
   try {
-    const { data } = await profileApi.loginHistory()
-    loginHistory.value = Array.isArray(data) ? data : data?.content ?? []
+    const pageData = await getMyLoginHistory({ page: historyPage.value, size: 8 })
+    historyRows.value = pageData.content || []
+    historyTotalPages.value = pageData.totalPages ?? 1
+  } catch (err) {
+    console.error('Failed to load login history:', err)
+    historyRows.value = []
   } finally {
     loadingHistory.value = false
   }
 }
 
-watch(activeTab, (tab) => {
-  if (tab === 'history' && !historyLoaded) {
-    historyLoaded = true
-    loadHistory()
-  }
-})
+watch(historyPage, loadHistory)
 
 function formatDate(value) {
-  if (!value) return ''
-  return new Date(value).toLocaleString(undefined, {
-    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-  })
+  if (!value) return '—'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }
 
-onMounted(loadProfile)
+onMounted(() => {
+  loadProfile()
+  loadHistory()
+})
 </script>

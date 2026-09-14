@@ -50,11 +50,16 @@
           <div class="relative" ref="menuRef">
             <button
               type="button"
-              class="flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold transition hover:opacity-80"
+              class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full text-xs font-semibold transition hover:opacity-80"
               style="background-color: var(--color-primary-light); color: var(--color-primary);"
               @click="menuOpen = !menuOpen"
             >
-              {{ initials }}
+              <!-- FIXED: was `user?.profilePicture` where `user` was an
+                   undefined destructure (see script below) — always fell
+                   through to the initials-only span, never showing the
+                   real uploaded photo. Now reads reactive `authState.user`. -->
+              <img v-if="authState.user?.profilePicture" :src="authState.user.profilePicture" alt="" class="h-full w-full object-cover" />
+              <span v-else>{{ initials }}</span>
             </button>
 
             <transition name="fade-slide">
@@ -64,8 +69,8 @@
                 style="background-color: var(--color-surface); border-color: var(--color-border);"
               >
                 <div class="px-4 py-2 border-b" style="border-color: var(--color-border);">
-                  <p class="truncate text-sm font-semibold" style="color: var(--color-text);">{{ user?.email }}</p>
-                  <p class="text-xs" style="color: var(--color-text-secondary);">{{ user?.role }}</p>
+                  <p class="truncate text-sm font-semibold" style="color: var(--color-text);">{{ displayName }}</p>
+                  <p class="text-xs" style="color: var(--color-text-secondary);">{{ authState.user?.role }}</p>
                 </div>
                 <RouterLink
                   to="/dashboard/profile"
@@ -124,7 +129,15 @@ import { setLocale } from '@/i18n'
 
 const route = useRoute()
 const router = useRouter()
-const { user, logout } = useAuthStore()
+
+// FIXED: useAuthStore() returns { state, login, logout, ... } — there is
+// NO top-level `user` key, only `state.user`. The old code destructured
+// `const { user, logout } = useAuthStore()`, so `user` was silently
+// `undefined` forever — this wasn't a caching bug, the header avatar/name
+// never worked at all. `state` is the reactive() object from the store,
+// so `authState.user` below stays reactive and updates the moment
+// Profile.vue calls fetchProfile() after a successful save.
+const { state: authState, logout } = useAuthStore()
 const { isDark, toggleTheme } = useTheme()
 const { locale } = useI18n()
 const { toggleMobile } = useSidebar()
@@ -137,7 +150,18 @@ const pageTitle = computed(() => {
   return segment.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 })
 
-const initials = computed(() => (user?.email || '').slice(0, 2).toUpperCase())
+const displayName = computed(() => {
+  const user = authState.user
+  if (user?.firstName || user?.lastName) {
+    return `${user.firstName || ''} ${user.lastName || ''}`.trim()
+  }
+  return user?.email || ''
+})
+const initials = computed(() => {
+  const user = authState.user
+  const fromName = (user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')
+  return (fromName || user?.email || 'A').slice(0, 2).toUpperCase()
+})
 
 function toggleLocale() {
   setLocale(locale.value === 'en' ? 'km' : 'en')

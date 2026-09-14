@@ -35,7 +35,11 @@
     <Modal :open="modalOpen" :title="editing ? $t('vehicles.editTitle') : $t('vehicles.addTitle')" @close="modalOpen = false">
       <form class="space-y-3" @submit.prevent="onSave">
         <div class="grid grid-cols-2 gap-3">
-          <input v-model="form.brand" required :placeholder="$t('vehicles.brand')" class="input-field" :style="inputStyle" />
+          <!-- FIXED: brand is now a dropdown bound to brandId, populated from /api/brands -->
+          <select v-model.number="form.brandId" required class="input-field" :style="inputStyle">
+            <option value="" disabled>{{ $t('vehicles.brand') }}</option>
+            <option v-for="b in brands" :key="b.id" :value="b.id">{{ b.name }}</option>
+          </select>
           <input v-model="form.model" required :placeholder="$t('vehicles.model')" class="input-field" :style="inputStyle" />
         </div>
 
@@ -126,8 +130,10 @@ const transmissions = ['AUTOMATIC', 'MANUAL', 'CVT']
 const fuelTypes = ['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID']
 const statuses = ['AVAILABLE', 'RESERVED', 'RENTED', 'MAINTENANCE', 'UNAVAILABLE']
 
+// FIXED: display column now reads 'brandName' (matches VehicleResponseDTO),
+// not 'brand' which the backend never sends.
 const columns = computed(() => [
-  { key: 'brand', label: t('vehicles.brand') },
+  { key: 'brandName', label: t('vehicles.brand') },
   { key: 'model', label: t('vehicles.model') },
   { key: 'licensePlate', label: t('vehicles.plate') },
   { key: 'type', label: t('vehicles.type') },
@@ -144,15 +150,19 @@ const inputStyle = {
 }
 
 const vehicles = ref([])
+const brands = ref([])
 const loading = ref(true)
 const modalOpen = ref(false)
 const editing = ref(null)
 const saving = ref(false)
 const saveError = ref('')
 
+// FIXED: form now stores brandId (a Long the backend expects), not a brand
+// name string. VehicleRequestDTO.brandId is what VehicleServiceImpl.
+// createVehicle()/updateVehicle() actually reads via brandRepository.findById().
 function emptyForm() {
   return {
-    brand: '',
+    brandId: '',
     model: '',
     yearOfManufacture: null,
     licensePlate: '',
@@ -194,6 +204,12 @@ async function loadVehicles() {
   }
 }
 
+// NEW: fetch brand list for the dropdown (GET /api/brands is public).
+async function loadBrands() {
+  const { data } = await api.get('/brands')
+  brands.value = Array.isArray(data) ? data : data?.content ?? []
+}
+
 function openCreate() {
   editing.value = null
   Object.assign(form, emptyForm())
@@ -204,7 +220,9 @@ function openCreate() {
 function openEdit(row) {
   editing.value = row
   Object.assign(form, {
-    brand: row.brand,
+    // FIXED: read brandId from the row (VehicleResponseDTO.brandId),
+    // not the non-existent row.brand.
+    brandId: row.brandId,
     model: row.model,
     yearOfManufacture: row.yearOfManufacture,
     licensePlate: row.licensePlate,
@@ -243,12 +261,15 @@ async function onSave() {
 }
 
 async function onDelete(row) {
-  if (!confirm(`${t('vehicles.confirmDelete')} ${row.brand} ${row.model}?`)) return
+  if (!confirm(`${t('vehicles.confirmDelete')} ${row.brandName} ${row.model}?`)) return
   await api.delete(`/vehicles/${row.id}`)
   loadVehicles()
 }
 
-onMounted(loadVehicles)
+onMounted(() => {
+  loadVehicles()
+  loadBrands()
+})
 </script>
 
 <style scoped>

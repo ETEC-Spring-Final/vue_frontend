@@ -92,13 +92,17 @@
             class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-semibold"
             style="background-color: var(--color-primary-light); color: var(--color-primary);"
           >
-            <img v-if="user?.avatarUrl" :src="user.avatarUrl" alt="" class="h-full w-full object-cover" />
+            <!-- FIXED: was `user?.profilePicture` where `user` was an
+                 undefined destructure (see script below) — always fell
+                 through to the initials span, never showing the real
+                 photo. Now reads the reactive `authState.user`. -->
+            <img v-if="authState.user?.profilePicture" :src="authState.user.profilePicture" alt="" class="h-full w-full object-cover" />
             <span v-else>{{ initials }}</span>
           </span>
 
           <div v-if="!collapsed" class="min-w-0 flex-1 text-left">
-            <p class="truncate text-sm font-semibold" style="color: var(--color-text);">{{ user?.name || user?.email || 'Admin' }}</p>
-            <p class="truncate text-xs" style="color: var(--color-text-secondary);">{{ user?.role }}</p>
+            <p class="truncate text-sm font-semibold" style="color: var(--color-text);">{{ displayName }}</p>
+            <p class="truncate text-xs" style="color: var(--color-text-secondary);">{{ authState.user?.role }}</p>
           </div>
 
           <svg v-if="!collapsed" class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -145,7 +149,15 @@ import { useSidebar } from '@/composables/useSidebar'
 
 const route = useRoute()
 const router = useRouter()
-const { user, hasRole, logout } = useAuthStore()
+
+// FIXED: useAuthStore() returns { state, hasRole, logout, ... } — there is
+// NO top-level `user` key on that returned object, only `state.user`.
+// The old code did `const { user, hasRole, logout } = useAuthStore()`,
+// which silently destructured `user` as `undefined` forever (not a stale
+// cache — it never worked). `state` itself is the reactive() object, so
+// destructuring `state` here is safe: `authState.user` stays reactive
+// and updates live whenever Profile.vue calls fetchProfile().
+const { state: authState, hasRole, logout } = useAuthStore()
 const { collapsed, mobileOpen, toggleCollapsed, closeMobile } = useSidebar()
 
 const menuOpen = ref(false)
@@ -157,7 +169,19 @@ const logoError = ref(false)
 // a rebuild. Falls back to the "CR" badge automatically if the URL 404s.
 const logoUrl = computed(() => import.meta.env.VITE_APP_LOGO_URL || '/logo.png')
 
-const initials = computed(() => (user?.name || user?.email || 'A').slice(0, 2).toUpperCase())
+const displayName = computed(() => {
+  const user = authState.user
+  if (user?.firstName || user?.lastName) {
+    return `${user.firstName || ''} ${user.lastName || ''}`.trim()
+  }
+  return user?.email || 'Admin'
+})
+
+const initials = computed(() => {
+  const user = authState.user
+  const fromName = (user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')
+  return (fromName || user?.email || 'A').slice(0, 2).toUpperCase()
+})
 
 const icon = {
   dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>',

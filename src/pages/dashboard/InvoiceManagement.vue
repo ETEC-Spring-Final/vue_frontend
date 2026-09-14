@@ -133,7 +133,7 @@
           <div>
             <label class="text-sm" style="color: var(--color-text-secondary);">{{ t('invoices.subtotal') }}</label>
             <div class="relative mt-1">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style="color: var(--color-text-secondary);">$</span>
+              <span class="absolute left-2 top-1/2 -translate-y-1/2 text-sm" style="color: var(--color-text-secondary);">$</span>
               <input v-model.number="form.subtotal" type="number" min="0" step="0.01" required class="input-field pl-7" :style="inputStyle" />
             </div>
           </div>
@@ -142,21 +142,21 @@
             <div>
               <label class="text-sm" style="color: var(--color-text-secondary);">{{ t('invoices.discount') }}</label>
               <div class="relative mt-1">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style="color: var(--color-text-secondary);">$</span>
+                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-sm" style="color: var(--color-text-secondary);">$</span>
                 <input v-model.number="form.discountAmount" type="number" min="0" step="0.01" class="input-field pl-7" :style="inputStyle" />
               </div>
             </div>
             <div>
               <label class="text-sm" style="color: var(--color-text-secondary);">{{ t('invoices.tax') }}</label>
               <div class="relative mt-1">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style="color: var(--color-text-secondary);">$</span>
+                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-sm" style="color: var(--color-text-secondary);">$</span>
                 <input v-model.number="form.taxAmount" type="number" min="0" step="0.01" class="input-field pl-7" :style="inputStyle" />
               </div>
             </div>
             <div>
               <label class="text-sm" style="color: var(--color-text-secondary);">{{ t('invoices.lateFee') }}</label>
               <div class="relative mt-1">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style="color: var(--color-text-secondary);">$</span>
+                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-sm" style="color: var(--color-text-secondary);">$</span>
                 <input v-model.number="form.lateFee" type="number" min="0" step="0.01" class="input-field pl-7" :style="inputStyle" />
               </div>
             </div>
