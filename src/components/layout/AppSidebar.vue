@@ -31,14 +31,14 @@
           />
           <span v-else>{{ initialsFromSiteName }}</span>
         </span>
-        <span v-if="!collapsed" class="text-lg font-bold truncate transition-opacity duration-200" style="color: var(--color-text);">
+        <span v-if="!collapsed" class="truncate text-lg font-bold transition-opacity duration-200" style="color: var(--color-text);">
           {{ siteSettings.siteName || 'Car Rental Admin' }}
         </span>
       </RouterLink>
 
       <button
         type="button"
-        class="ml-auto hidden h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 hover:bg-[var(--color-primary-light)] active:scale-90 md:flex"
+        class="ml-auto hidden h-8 w-8 items-center justify-center rounded-full transition-all duration-200 hover:bg-[var(--color-primary-light)] active:scale-90 md:flex"
         @click="toggleCollapsed"
         :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
       >
@@ -49,7 +49,7 @@
 
       <button
         type="button"
-        class="ml-auto flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-[var(--color-primary-light)] md:hidden"
+        class="ml-auto flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 hover:bg-[var(--color-primary-light)] active:scale-90 md:hidden"
         @click="closeMobile"
         aria-label="Close menu"
       >
@@ -62,7 +62,7 @@
         v-for="item in visibleItems"
         :key="item.path"
         :to="item.path"
-        class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-1"
+        class="group relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-1"
         :class="isActive(item.path) ? 'font-semibold' : ''"
         :style="isActive(item.path)
           ? `background-color: var(--color-primary-light); color: var(--color-primary);`
@@ -81,6 +81,12 @@
             style="background-color: var(--color-primary);"
           ></span>
         </transition>
+        <!-- subtle hover fill for inactive items -->
+        <span
+          v-if="!isActive(item.path)"
+          class="pointer-events-none absolute inset-0 -z-10 scale-95 rounded-xl opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100"
+          style="background-color: var(--color-primary-light);"
+        ></span>
       </RouterLink>
     </nav>
 

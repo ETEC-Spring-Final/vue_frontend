@@ -3,16 +3,16 @@
     <AppSidebar />
     <div class="flex flex-1 flex-col overflow-hidden">
       <header
-        class="flex h-16 items-center justify-between border-b px-4 md:px-6 shrink-0"
+        class="flex h-16 shrink-0 items-center justify-between border-b px-4 md:px-6"
         style="background-color: var(--color-surface); border-color: var(--color-border);"
       >
         <div class="flex items-center gap-3">
           <button
             type="button"
-            class="flex h-9 w-9 items-center justify-center rounded-lg transition hover:opacity-80 md:hidden"
+            class="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:bg-[var(--color-primary-light)] active:scale-90 md:hidden"
             style="color: var(--color-text);"
-            @click="toggleMobile"
             aria-label="Open menu"
+            @click="toggleMobile"
           >
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
@@ -20,44 +20,47 @@
         </div>
 
         <div class="flex items-center gap-2 md:gap-3">
+          <!-- Theme toggle -->
           <button
             type="button"
-            class="flex h-9 w-9 items-center justify-center rounded-full transition hover:opacity-80"
-            style="background-color: var(--color-bg); color: var(--color-text-secondary);"
-            @click="toggleTheme"
+            class="flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-inset transition-all duration-200 hover:scale-105 hover:ring-[var(--color-primary)]/40 active:scale-90"
+            style="background-color: var(--color-bg); color: var(--color-text-secondary); --tw-ring-color: var(--color-border);"
             :aria-label="isDark ? $t('theme.switchToLight') : $t('theme.switchToDark')"
+            @click="toggleTheme"
           >
-            <svg v-if="isDark" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
-            </svg>
-            <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="5"/>
-              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-            </svg>
+            <Transition name="icon-pop" mode="out-in">
+              <svg v-if="isDark" key="moon" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+              </svg>
+              <svg v-else key="sun" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"/>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+              </svg>
+            </Transition>
           </button>
 
+          <!-- Locale toggle -->
           <button
             type="button"
-            class="flex h-9 items-center justify-center rounded-full px-3 text-xs font-semibold transition hover:opacity-80"
-            style="background-color: var(--color-bg); color: var(--color-text);"
+            class="flex h-9 items-center justify-center rounded-full px-3 text-xs font-semibold ring-1 ring-inset transition-all duration-200 hover:scale-105 hover:ring-[var(--color-primary)]/40 active:scale-90"
+            style="background-color: var(--color-bg); color: var(--color-text); --tw-ring-color: var(--color-border);"
             @click="toggleLocale"
           >
-            {{ locale === 'en' ? 'ខ្មែរ' : 'EN' }}
+            <Transition name="icon-pop" mode="out-in">
+              <span :key="locale">{{ locale === 'en' ? 'ខ្មែរ' : 'EN' }}</span>
+            </Transition>
           </button>
 
           <NotificationBell />
 
+          <!-- Avatar / user menu -->
           <div class="relative" ref="menuRef">
             <button
               type="button"
-              class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full text-xs font-semibold transition hover:opacity-80"
+              class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full text-xs font-semibold ring-2 ring-transparent transition-all duration-200 hover:scale-105 hover:ring-[var(--color-primary)]/40 active:scale-90"
               style="background-color: var(--color-primary-light); color: var(--color-primary);"
               @click="menuOpen = !menuOpen"
             >
-              <!-- FIXED: was `user?.profilePicture` where `user` was an
-                   undefined destructure (see script below) — always fell
-                   through to the initials-only span, never showing the
-                   real uploaded photo. Now reads reactive `authState.user`. -->
               <img v-if="authState.user?.profilePicture" :src="authState.user.profilePicture" alt="" class="h-full w-full object-cover" />
               <span v-else>{{ initials }}</span>
             </button>
@@ -65,16 +68,16 @@
             <transition name="fade-slide">
               <div
                 v-if="menuOpen"
-                class="absolute right-0 mt-2 w-52 rounded-xl border py-2 shadow-lg z-50"
+                class="absolute right-0 z-50 mt-2 w-52 rounded-xl border py-2 shadow-lg"
                 style="background-color: var(--color-surface); border-color: var(--color-border);"
               >
-                <div class="px-4 py-2 border-b" style="border-color: var(--color-border);">
+                <div class="border-b px-4 py-2" style="border-color: var(--color-border);">
                   <p class="truncate text-sm font-semibold" style="color: var(--color-text);">{{ displayName }}</p>
                   <p class="text-xs" style="color: var(--color-text-secondary);">{{ authState.user?.role }}</p>
                 </div>
                 <RouterLink
                   to="/dashboard/profile"
-                  class="flex items-center gap-2 px-4 py-2 text-sm transition hover:opacity-70"
+                  class="flex items-center gap-2 px-4 py-2 text-sm transition-colors duration-150 hover:bg-[var(--color-primary-light)]"
                   style="color: var(--color-text);"
                   @click="menuOpen = false"
                 >
@@ -83,7 +86,7 @@
                 </RouterLink>
                 <RouterLink
                   to="/dashboard/settings"
-                  class="flex items-center gap-2 px-4 py-2 text-sm transition hover:opacity-70"
+                  class="flex items-center gap-2 px-4 py-2 text-sm transition-colors duration-150 hover:bg-[var(--color-primary-light)]"
                   style="color: var(--color-text);"
                   @click="menuOpen = false"
                 >
@@ -92,7 +95,7 @@
                 </RouterLink>
                 <button
                   type="button"
-                  class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition hover:opacity-70"
+                  class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors duration-150 hover:bg-red-50"
                   style="color: #DC2626;"
                   @click="onLogout"
                 >
@@ -130,13 +133,6 @@ import { setLocale } from '@/i18n'
 const route = useRoute()
 const router = useRouter()
 
-// FIXED: useAuthStore() returns { state, login, logout, ... } — there is
-// NO top-level `user` key, only `state.user`. The old code destructured
-// `const { user, logout } = useAuthStore()`, so `user` was silently
-// `undefined` forever — this wasn't a caching bug, the header avatar/name
-// never worked at all. `state` is the reactive() object from the store,
-// so `authState.user` below stays reactive and updates the moment
-// Profile.vue calls fetchProfile() after a successful save.
 const { state: authState, logout } = useAuthStore()
 const { isDark, toggleTheme } = useTheme()
 const { locale } = useI18n()
@@ -191,4 +187,10 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
   opacity: 0;
   transform: translateY(-4px);
 }
+
+.icon-pop-enter-active, .icon-pop-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.icon-pop-enter-from { opacity: 0; transform: scale(0.5) rotate(-30deg); }
+.icon-pop-leave-to { opacity: 0; transform: scale(0.5) rotate(30deg); }
 </style>

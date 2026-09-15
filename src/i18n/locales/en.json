@@ -14,7 +14,8 @@
     "services": "Services",
     "auditLogs": "Audit Logs",
     "loginHistory": "Login History",
-    "logout": "Logout"
+    "logout": "Logout",
+    "settings": "Site Settings"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -80,7 +81,36 @@
     "saveError": "Could not save this vehicle.",
     "confirmDelete": "Delete",
     "doors": "Doors",
-    "luggages": "Luggage capacity"
+    "luggages": "Luggage capacity",
+    "loadError": "Could not load vehicles.",
+    "deleteError": "Could not delete this vehicle — it may still have images or active bookings.",
+    "deleting": "Deleting…",
+    "done": "Done",
+    "statusValues": {
+      "AVAILABLE": "Available",
+      "RESERVED": "Reserved",
+      "RENTED": "Rented",
+      "MAINTENANCE": "Maintenance",
+      "UNAVAILABLE": "Unavailable"
+    },
+    "gallery": {
+      "title": "Photos",
+      "dropHint": "Drag & drop photos here, or click to select",
+      "uploading": "Uploading…",
+      "uploadError": "Some photos failed to upload.",
+      "actionError": "Action failed. Please try again.",
+      "tooLarge": "Each photo must be under 5MB.",
+      "empty": "No photos yet.",
+      "saveFirst": "Save the vehicle first, then you can add photos.",
+      "createdHint": "Vehicle created! Add some photos below.",
+      "primary": "Cover",
+      "setPrimary": "Set as cover photo",
+      "moveLeft": "Move left",
+      "moveRight": "Move right",
+      "deletePhoto": "Delete photo",
+      "confirmDelete": "Delete this photo?",
+      "photoAlt": "Vehicle photo"
+    }
   },
   "locations": {
     "count": "locations",
@@ -258,7 +288,7 @@
     "title": "Reviews",
     "count": "reviews",
     "avgRating": "average rating",
-    "lowRated": "low rated (\u22642\u2605)",
+    "lowRated": "low rated (≤2★)",
     "hidden": "hidden",
     "search": "Search by customer, comment, or vehicle",
     "all": "All",
@@ -447,7 +477,7 @@
     "next": "Next",
     "loadError": "Failed to load login history."
   },
-    "profile": {
+  "profile": {
     "title": "My Profile",
     "editInfo": "Edit information",
     "firstName": "First name",
@@ -475,32 +505,47 @@
     "failed": "Failed"
   },
   "settings": {
-  "title": "Site Settings",
-  "subtitle": "Update the site name, logo, and contact info shown across the app.",
-  "logo": "Logo",
-  "uploadLogo": "Upload logo",
-  "uploading": "Uploading…",
-  "changeImage": "Change",
-  "remove": "Remove",
-  "noLogo": "No logo",
-  "favicon": "Favicon (optional)",
-  "uploadFavicon": "Upload favicon",
-  "editImage": "Edit",
-  "none": "None",
-  "imageHint": "JPG, PNG or WEBP.",
-  "siteName": "Site Name",
-  "contactEmail": "Contact Email",
-  "contactPhone": "Contact Phone",
-  "address": "Address",
-  "facebookUrl": "Facebook URL",
-  "telegramUrl": "Telegram URL",
-  "save": "Save Changes",
-  "saving": "Saving...",
-  "saveSuccess": "Settings saved successfully.",
-  "saveError": "Failed to save settings.",
-  "cloudinaryNotConfigured": "Cloudinary is not configured (missing VITE_CLOUDINARY_* env vars).",
-  "uploadFailed": "Could not upload the image."
-},
+    "title": "Site Settings",
+    "subtitle": "Update the site name, logo, and contact info shown across the app.",
+    "logo": "Logo",
+    "uploadLogo": "Upload logo",
+    "uploading": "Uploading…",
+    "changeImage": "Change",
+    "remove": "Remove",
+    "noLogo": "No logo",
+    "favicon": "Favicon (optional)",
+    "uploadFavicon": "Upload favicon",
+    "editImage": "Edit",
+    "none": "None",
+    "imageHint": "JPG, PNG or WEBP.",
+    "siteName": "Site Name",
+    "contactEmail": "Contact Email",
+    "contactPhone": "Contact Phone",
+    "address": "Address",
+    "facebookUrl": "Facebook URL",
+    "telegramUrl": "Telegram URL",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "saveSuccess": "Settings saved successfully.",
+    "saveError": "Failed to save settings.",
+    "cloudinaryNotConfigured": "Cloudinary is not configured (missing VITE_CLOUDINARY_* env vars).",
+    "uploadFailed": "Could not upload the image."
+  },
+  "vehicleDetail": {
+    "photo": "photo",
+    "prevPhoto": "Previous photo",
+    "nextPhoto": "Next photo",
+    "addFavorite": "Add to favorites",
+    "removeFavorite": "Remove from favorites",
+    "day": "day",
+    "specifications": "Specifications",
+    "rentNow": "Rent now",
+    "unavailable": "Currently unavailable",
+    "reviews": "Reviews",
+    "noReviews": "No reviews yet — be the first to rent and review this car.",
+    "notFound": "This vehicle could not be found.",
+    "loadError": "Could not load this vehicle. Please try again."
+  },
   "table": {
     "actions": "Actions",
     "loading": "Loading…",
@@ -511,8 +556,10 @@
     "switchToDark": "Switch to dark mode"
   },
   "common": {
+    "back": "Back",
+    "tryAgain": "Try again",
+    "dismiss": "Dismiss",
     "lightMode": "Light",
     "darkMode": "Dark"
   }
-
 }

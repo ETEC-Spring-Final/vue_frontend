@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-white">
-    <div class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-6xl animate-page-in px-4 py-6 sm:px-6 lg:px-8">
 
       <!-- Header: greeting adapts to auth state -->
       <header class="flex items-center justify-between gap-4">
@@ -12,7 +12,7 @@
           <template v-else>
             <h1 class="text-xl font-bold text-[#1A2036] sm:text-2xl">Find your next ride</h1>
             <p class="mt-1 text-sm text-[#6B7280]">
-              <RouterLink to="/login" class="font-semibold text-[#3D5FE0] hover:text-[#3350C0]">Sign in</RouterLink>
+              <RouterLink to="/login" class="font-semibold text-[#3D5FE0] transition-colors hover:text-[#3350C0]">Sign in</RouterLink>
               to book a car and track your trips.
             </p>
           </template>
@@ -21,21 +21,21 @@
         <RouterLink
           v-if="isAuthenticated()"
           to="/profile"
-          class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E9EDFB] text-sm font-semibold text-[#3D5FE0]"
+          class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E9EDFB] text-sm font-semibold text-[#3D5FE0] ring-2 ring-transparent transition-all duration-200 hover:scale-105 hover:ring-[#3D5FE0]/30"
         >
           {{ initials }}
         </RouterLink>
         <RouterLink
           v-else
           to="/register"
-          class="shrink-0 rounded-full bg-[#3D5FE0] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3350C0]"
+          class="shrink-0 rounded-full bg-[#3D5FE0] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#3D5FE0]/20 transition-all duration-200 hover:bg-[#3350C0] hover:shadow-lg hover:shadow-[#3D5FE0]/25 active:scale-95"
         >
           Sign up
         </RouterLink>
       </header>
 
       <!-- Search -->
-      <div class="mt-6 flex items-center gap-3 rounded-full bg-[#F3F4F6] px-5 py-3.5">
+      <div class="mt-6 flex items-center gap-3 rounded-full bg-[#F3F4F6] px-5 py-3.5 ring-1 ring-transparent transition-all duration-200 focus-within:bg-white focus-within:ring-[#3D5FE0]/30 focus-within:shadow-sm">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0 text-[#9CA3AF]">
           <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
           <path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="m20 20-3.5-3.5"/>
@@ -50,7 +50,7 @@
       </div>
 
       <!-- Hero banner -->
-      <div class="relative mt-6 overflow-hidden rounded-3xl bg-[#1A2036]">
+      <div class="relative mt-6 overflow-hidden rounded-3xl bg-[#1A2036] shadow-lg shadow-[#1A2036]/10">
         <div
           class="flex transition-transform duration-500 ease-out"
           :style="{ transform: `translateX(-${activeBanner * 100}%)` }"
@@ -73,8 +73,8 @@
             v-for="(banner, i) in banners"
             :key="banner.id"
             type="button"
-            class="h-1.5 rounded-full transition-all"
-            :class="i === activeBanner ? 'w-6 bg-white' : 'w-1.5 bg-white/40'"
+            class="h-1.5 rounded-full transition-all duration-300"
+            :class="i === activeBanner ? 'w-6 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/60'"
             :aria-label="`Show banner ${i + 1}`"
             @click="activeBanner = i"
           />
@@ -87,10 +87,10 @@
           v-for="brand in brands"
           :key="brand"
           type="button"
-          class="shrink-0 rounded-full border px-5 py-2 text-sm font-semibold transition"
+          class="shrink-0 rounded-full border px-5 py-2 text-sm font-semibold transition-all duration-200 active:scale-95"
           :class="activeBrand === brand
-            ? 'border-[#3D5FE0] bg-[#3D5FE0] text-white'
-            : 'border-[#E5E7EB] bg-white text-[#1A2036] hover:bg-[#F9FAFB]'"
+            ? 'border-[#3D5FE0] bg-[#3D5FE0] text-white shadow-sm shadow-[#3D5FE0]/25'
+            : 'border-[#E5E7EB] bg-white text-[#1A2036] hover:border-[#3D5FE0]/30 hover:bg-[#F9FAFB]'"
           @click="activeBrand = brand"
         >
           {{ brand }}
@@ -100,7 +100,7 @@
       <!-- Popular cars -->
       <div class="mt-8 flex items-center justify-between">
         <h3 class="text-lg font-bold text-[#1A2036]">Popular cars</h3>
-        <RouterLink to="/explore" class="text-sm font-semibold text-[#3D5FE0] hover:text-[#3350C0]">
+        <RouterLink to="/explore" class="text-sm font-semibold text-[#3D5FE0] transition-colors hover:text-[#3350C0]">
           See all
         </RouterLink>
       </div>
@@ -113,7 +113,7 @@
       <!-- Error -->
       <div v-else-if="loadError" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
         {{ loadError }}
-        <button type="button" class="ml-2 font-semibold underline" @click="loadVehicles">Try again</button>
+        <button type="button" class="ml-2 font-semibold underline transition-opacity hover:opacity-70" @click="loadVehicles">Try again</button>
       </div>
 
       <!-- Empty -->
@@ -122,7 +122,12 @@
       </div>
 
       <!-- Vehicle grid -->
-      <div v-else class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <TransitionGroup
+        v-else
+        tag="div"
+        name="card"
+        class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+      >
         <VehicleCard
           v-for="vehicle in filteredVehicles"
           :key="vehicle.id"
@@ -130,7 +135,7 @@
           @toggle-favorite="toggleFavorite"
           @rent="handleRentNow"
         />
-      </div>
+      </TransitionGroup>
 
     </div>
   </div>
@@ -251,3 +256,24 @@ function handleRentNow(vehicle) {
   router.push(`/vehicles/${vehicle.id}`)
 }
 </script>
+
+<style scoped>
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-page-in {
+  animation: page-in 0.35s ease-out;
+}
+
+.card-enter-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.card-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.card-move {
+  transition: transform 0.3s ease;
+}
+</style>
