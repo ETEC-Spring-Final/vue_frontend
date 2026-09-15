@@ -30,7 +30,7 @@ function decodeJwtPayload(token) {
   return JSON.parse(json);
 }
 
-onMounted(() => {
+onMounted(async () => {
   const token = route.query.token;
 
   if (!token || typeof token !== "string") {
@@ -50,7 +50,7 @@ onMounted(() => {
       throw new Error("Token is missing expected claims (id/email/role).");
     }
 
-    login({ id, email, role, token });
+    await login({ id, email, role, token }); // login() now also fetches the profile — must await
     router.replace(defaultRedirect());
   } catch (e) {
     error.value =

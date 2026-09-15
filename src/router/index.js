@@ -20,6 +20,11 @@
 |   ['ADMIN', 'MANAGER'] — omit it to allow any authenticated role
 | - `meta.guestOnly` marks a route that a logged-in user shouldn't see
 |   (login/register) — they get redirected to /dashboard instead
+| - `/login` and `/register` both render the SAME component (`AuthLayout`),
+|   with a `mode` prop distinguishing them. This is intentional: Vue Router
+|   does not destroy/recreate a component when navigating between two
+|   routes that share the same component, only its props change — that's
+|   what makes the cross-slide transition inside AuthLayout.vue smooth.
 | - `/reset-password` is intentionally NOT guestOnly: a user should be able
 |   to open a reset link from email even if they (or someone else) happen
 |   to be logged in on this browser/session at the time.
@@ -39,6 +44,7 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 import useAuthStore from '@/stores/auth.store'
+import AuthLayout from '@/layouts/AuthLayout.vue'  // ✅ ត្រូវនឹងទីតាំងថ្មី
 
 // Page components dashboard-facing (staff/admin) — all require auth and a role in ['ADMIN', 'MANAGER', 'STAFF'] to access. The dashboard layout wraps these.
 
@@ -58,10 +64,9 @@ import MaintenanceManagement from '@/pages/dashboard/MaintenanceManagement.vue'
 import ServiceManagement from '@/pages/dashboard/ServiceManagement.vue'
 import AuditLogManagement from '@/pages/dashboard/AuditLogManagement.vue'
 import LoginHistoryManagement from '@/pages/dashboard/LoginHistoryManagement.vue'
+import Settings from '@/pages/dashboard/Settings.vue'
 
 // page components client-facing
-import Login from '@/pages/auth/Login.vue'
-import Register from '@/pages/auth/Register.vue'
 import ForgotPassword from '@/pages/auth/ForgotPassword.vue'
 import ResetPassword from '@/pages/auth/ResetPassword.vue'
 import Preview from '@/pages/preview/Preview.vue'
@@ -120,9 +125,8 @@ const routes = [
       { path: 'services', component: ServiceManagement },
       { path: 'audit-logs', component: AuditLogManagement, meta: { roles: ['ADMIN', 'MANAGER'] } },
       { path: 'login-history', component: LoginHistoryManagement, meta: { roles: ['ADMIN', 'MANAGER'] } },
-      
+      { path: 'settings', component: Settings, meta: { roles: ['ADMIN', 'MANAGER'] } },
 
-      
       // បន្ថែម child route ថ្មីនៅទីនេះ សម្រាប់ locations, reservations, rentals, ...
     ],
   },
@@ -130,9 +134,12 @@ const routes = [
   /**
    * Authentication routes
    * `guestOnly`: an already-logged-in user is redirected away
+   *
+   * Both routes render AuthLayout with a `mode` prop — see the note at the
+   * top of this file for why they intentionally share one component.
    */
-  { path: '/login', component: Login, meta: { guestOnly: true } },
-  { path: '/register', component: Register, meta: { guestOnly: true } },
+  { path: '/login', component: AuthLayout, props: { mode: 'login' }, meta: { guestOnly: true } },
+  { path: '/register', component: AuthLayout, props: { mode: 'register' }, meta: { guestOnly: true } },
   { path: '/forgot-password', component: ForgotPassword, meta: { guestOnly: true } },
 
   /**

@@ -17,27 +17,28 @@
     style="background-color: var(--color-surface); border-color: var(--color-border);"
   >
     <div class="flex h-16 items-center justify-between px-4">
-      <RouterLink to="/dashboard" class="flex min-w-0 items-center gap-2" @click="closeMobile">
-        <img
-          v-if="logoUrl && !logoError"
-          :src="logoUrl"
-          alt="CarRental Admin"
-          class="h-8 w-8 shrink-0 rounded-lg object-cover"
-          @error="logoError = true"
-        />
+      <RouterLink to="/dashboard" class="group flex min-w-0 items-center gap-2 transition-transform duration-200 hover:scale-[1.03]" @click="closeMobile">
         <span
-          v-else
-          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
-          style="background-color: var(--color-primary);"
-        >CR</span>
-        <span v-if="!collapsed" class="text-lg font-bold truncate" style="color: var(--color-text);">
-          CarRental Admin
+          class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-sm font-bold text-white shadow-md transition-transform duration-300 group-hover:rotate-6"
+          :style="siteSettings.logoUrl && !logoError ? '' : 'background-color: var(--color-primary);'"
+        >
+          <img
+            v-if="siteSettings.logoUrl && !logoError"
+            :src="siteSettings.logoUrl"
+            :alt="siteSettings.siteName || 'Logo'"
+            class="h-full w-full object-cover"
+            @error="logoError = true"
+          />
+          <span v-else>{{ initialsFromSiteName }}</span>
+        </span>
+        <span v-if="!collapsed" class="text-lg font-bold truncate transition-opacity duration-200" style="color: var(--color-text);">
+          {{ siteSettings.siteName || 'Car Rental Admin' }}
         </span>
       </RouterLink>
 
       <button
         type="button"
-        class="ml-auto hidden h-8 w-8 items-center justify-center rounded-lg transition hover:bg-[var(--color-primary-light)] md:flex"
+        class="ml-auto hidden h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 hover:bg-[var(--color-primary-light)] active:scale-90 md:flex"
         @click="toggleCollapsed"
         :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
       >
@@ -61,7 +62,7 @@
         v-for="item in visibleItems"
         :key="item.path"
         :to="item.path"
-        class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 hover:translate-x-0.5"
+        class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-1"
         :class="isActive(item.path) ? 'font-semibold' : ''"
         :style="isActive(item.path)
           ? `background-color: var(--color-primary-light); color: var(--color-primary);`
@@ -69,15 +70,17 @@
         @click="closeMobile"
       >
         <span
-          class="flex h-5 w-5 shrink-0 items-center justify-center transition-transform duration-150 group-hover:scale-110"
+          class="flex h-5 w-5 shrink-0 items-center justify-center transition-transform duration-200 group-hover:scale-110"
           v-html="item.icon"
         ></span>
         <span v-if="!collapsed" class="truncate">{{ $t(`sidebar.${item.key}`) }}</span>
-        <span
-          v-if="isActive(item.path)"
-          class="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full"
-          style="background-color: var(--color-primary);"
-        ></span>
+        <transition name="dot-pop">
+          <span
+            v-if="isActive(item.path)"
+            class="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full"
+            style="background-color: var(--color-primary);"
+          ></span>
+        </transition>
       </RouterLink>
     </nav>
 
@@ -85,17 +88,13 @@
       <div class="relative" ref="menuRef">
         <button
           type="button"
-          class="flex w-full items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-[var(--color-primary-light)]"
+          class="flex w-full items-center gap-3 rounded-xl px-2 py-2 transition-all duration-200 hover:bg-[var(--color-primary-light)] active:scale-[0.98]"
           @click="menuOpen = !menuOpen"
         >
           <span
-            class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-semibold"
+            class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-semibold ring-2 ring-transparent transition-all duration-200 hover:ring-[var(--color-primary)]/30"
             style="background-color: var(--color-primary-light); color: var(--color-primary);"
           >
-            <!-- FIXED: was `user?.profilePicture` where `user` was an
-                 undefined destructure (see script below) — always fell
-                 through to the initials span, never showing the real
-                 photo. Now reads the reactive `authState.user`. -->
             <img v-if="authState.user?.profilePicture" :src="authState.user.profilePicture" alt="" class="h-full w-full object-cover" />
             <span v-else>{{ initials }}</span>
           </span>
@@ -105,8 +104,8 @@
             <p class="truncate text-xs" style="color: var(--color-text-secondary);">{{ authState.user?.role }}</p>
           </div>
 
-          <svg v-if="!collapsed" class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 9l4-4 4 4M8 15l4 4 4-4" />
+          <svg v-if="!collapsed" class="h-4 w-4 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': menuOpen }" style="color: var(--color-text-secondary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 15l4 4 4-4" />
           </svg>
         </button>
 
@@ -118,16 +117,26 @@
           >
             <RouterLink
               to="/dashboard/profile"
-              class="flex items-center gap-2 px-4 py-2 text-sm transition hover:opacity-70"
+              class="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors duration-150 hover:bg-[var(--color-primary-light)]"
               style="color: var(--color-text);"
               @click="menuOpen = false; closeMobile()"
             >
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               {{ $t('userMenu.profile') }}
             </RouterLink>
+            <RouterLink
+              v-if="hasRole('ADMIN', 'MANAGER')"
+              to="/dashboard/settings"
+              class="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors duration-150 hover:bg-[var(--color-primary-light)]"
+              style="color: var(--color-text);"
+              @click="menuOpen = false; closeMobile()"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+              {{ $t('sidebar.settings') }}
+            </RouterLink>
             <button
               type="button"
-              class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition hover:opacity-70"
+              class="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-red-50"
               style="color: #DC2626;"
               @click="onLogout"
             >
@@ -145,29 +154,30 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import useAuthStore from '@/stores/auth.store'
+import useSiteSettingsStore from '@/stores/siteSettings.store'
 import { useSidebar } from '@/composables/useSidebar'
 
 const route = useRoute()
 const router = useRouter()
 
-// FIXED: useAuthStore() returns { state, hasRole, logout, ... } — there is
-// NO top-level `user` key on that returned object, only `state.user`.
-// The old code did `const { user, hasRole, logout } = useAuthStore()`,
-// which silently destructured `user` as `undefined` forever (not a stale
-// cache — it never worked). `state` itself is the reactive() object, so
-// destructuring `state` here is safe: `authState.user` stays reactive
-// and updates live whenever Profile.vue calls fetchProfile().
 const { state: authState, hasRole, logout } = useAuthStore()
+const { state: siteSettings } = useSiteSettingsStore()
 const { collapsed, mobileOpen, toggleCollapsed, closeMobile } = useSidebar()
 
 const menuOpen = ref(false)
 const menuRef = ref(null)
 const logoError = ref(false)
 
-// Dynamic logo: put your file at public/logo.png (works immediately), or
-// set VITE_APP_LOGO_URL in .env to point at a CDN/uploaded logo without
-// a rebuild. Falls back to the "CR" badge automatically if the URL 404s.
-const logoUrl = computed(() => import.meta.env.VITE_APP_LOGO_URL || '/logo.png')
+const initialsFromSiteName = computed(() => {
+  const name = siteSettings.siteName || 'CarRental'
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+})
 
 const displayName = computed(() => {
   const user = authState.user
@@ -250,4 +260,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
 }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.dot-pop-enter-active { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.dot-pop-enter-from { transform: translateY(-50%) scaleY(0); }
 </style>

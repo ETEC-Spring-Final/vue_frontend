@@ -47,14 +47,18 @@ const state = reactive({
 /**
  * Store the session after a successful register/login call.
  * @param {{ id: number, email: string, role: string, token: string }} payload
+ * @returns {Promise<void>} resolves once the profile fetch settles
  */
-function login(payload) {
+async function login(payload) {
   const { token, ...user } = payload
   state.user = user
   state.token = token
 
   localStorage.setItem(TOKEN_KEY, token)
   localStorage.setItem(USER_KEY, JSON.stringify(user))
+
+  // fetchProfile() catches its own errors, so this never rejects.
+  await fetchProfile()
 }
 
 /**

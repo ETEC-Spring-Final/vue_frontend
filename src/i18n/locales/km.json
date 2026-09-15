@@ -14,7 +14,8 @@
     "services": "សេវាកម្ម",
     "auditLogs": "កំណត់ត្រាសវនកម្ម",
     "loginHistory": "ប្រវត្តិចូលប្រើ",
-    "logout": "ចាកចេញ"
+    "logout": "ចាកចេញ",
+    "settings": "ការកំណត់គេហទំព័រ"
   },
   "dashboard": {
     "title": "ផ្ទាំងគ្រប់គ្រង",
@@ -474,6 +475,33 @@
     "success": "ជោគជ័យ",
     "failed": "បរាជ័យ"
   },
+  "settings": {
+  "title": "ការកំណត់គេហទំព័រ",
+  "subtitle": "ធ្វើបច្ចុប្បន្នភាពឈ្មោះគេហទំព័រ ឡូហ្គោ និងព័ត៌មានទំនាក់ទំនងដែលបង្ហាញនៅទូទាំង app",
+  "logo": "ឡូហ្គោ",
+  "uploadLogo": "បញ្ចូលឡូហ្គោ",
+  "uploading": "កំពុងបញ្ចូល…",
+  "changeImage": "ប្តូរ",
+  "remove": "លុប",
+  "noLogo": "គ្មានឡូហ្គោ",
+  "favicon": "រូបតំណាង Favicon (មិនចាំបាច់)",
+  "uploadFavicon": "បញ្ចូល Favicon",
+  "editImage": "កែប្រែ",
+  "none": "គ្មាន",
+  "imageHint": "JPG, PNG ឬ WEBP។",
+  "siteName": "ឈ្មោះគេហទំព័រ",
+  "contactEmail": "អ៊ីមែលទំនាក់ទំនង",
+  "contactPhone": "លេខទូរស័ព្ទទំនាក់ទំនង",
+  "address": "អាសយដ្ឋាន",
+  "facebookUrl": "តំណ Facebook",
+  "telegramUrl": "តំណ Telegram",
+  "save": "រក្សាទុកការផ្លាស់ប្តូរ",
+  "saving": "កំពុងរក្សាទុក...",
+  "saveSuccess": "ការកំណត់ត្រូវបានរក្សាទុកដោយជោគជ័យ។",
+  "saveError": "មិនអាចរក្សាទុកការកំណត់បានទេ។",
+  "cloudinaryNotConfigured": "Cloudinary មិនទាន់បានកំណត់រចនាសម្ព័ន្ធទេ (ខ្វះ VITE_CLOUDINARY_* env vars)។",
+  "uploadFailed": "មិនអាចបញ្ចូលរូបភាពបានទេ។"
+},
   "table": {
     "actions": "សកម្មភាព",
     "loading": "កំពុងផ្ទុក…",
