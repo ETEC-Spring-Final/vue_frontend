@@ -217,6 +217,8 @@
     "add": "Add vehicle",
     "addTitle": "Add vehicle",
     "editTitle": "Edit vehicle",
+    "addFavorite": "Add to favorites",
+    "removeFavorite": "Remove from favorites",
     "brand": "Brand",
     "model": "Model",
     "year": "Year of manufacture",
@@ -771,6 +773,8 @@
     "empty": "No records found."
   },
   "theme": {
+    "dark": "Switch to dark mode",
+    "light": "Switch to light mode",
     "switchToLight": "Switch to light mode",
     "switchToDark": "Switch to dark mode"
   },
