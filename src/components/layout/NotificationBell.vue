@@ -30,7 +30,7 @@
     <Transition name="dropdown-pop">
       <div
         v-if="open"
-        class="absolute right-0 z-50 mt-2 flex max-h-[28rem] w-96 flex-col overflow-hidden rounded-2xl border shadow-2xl"
+        class="absolute right-0 z-50 mt-2 flex max-h-[28rem] w-96 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl"
         style="background-color: var(--color-surface); border-color: var(--color-border);"
       >
         <!-- Header -->
@@ -93,7 +93,7 @@
 
         <!-- Footer -->
         <RouterLink
-          to="/dashboard/notifications"
+          :to="viewAllTo"
           class="block border-t px-5 py-3 text-center text-xs font-semibold transition-colors duration-150 hover:bg-[var(--color-primary-light)]"
           style="color: var(--color-primary); border-color: var(--color-border);"
           @click="open = false"
@@ -109,14 +109,19 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import notificationsService from '@/services/notifications.service'
+import useAuthStore from '@/stores/auth.store'
 
 const { t } = useI18n()
+const { hasRole } = useAuthStore()
 
 const rootRef = ref(null)
 const open = ref(false)
 const loading = ref(false)
 const notifications = ref([])
 const unreadCount = ref(0)
+
+// Customers land on /notifications; staff keep the admin inbox.
+const viewAllTo = hasRole('ADMIN', 'MANAGER', 'STAFF') ? '/dashboard/notifications' : '/notifications'
 
 let pollTimer = null
 

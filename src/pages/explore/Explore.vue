@@ -102,9 +102,11 @@ import VehicleCard from '@/components/vehicles/VehicleCard.vue'
 import {
   fetchVehicles,
   fetchMyFavorites,
+  fetchVehicleImages,
   addFavorite,
   removeFavorite,
   normalizeVehicle,
+  normalizeImage,
 } from '@/services/vehicles'
 
 const route = useRoute()
@@ -151,6 +153,21 @@ async function loadVehicles() {
     const { data } = await fetchVehicles()
     const list = Array.isArray(data) ? data : (data?.content ?? [])
     vehicles.value = list.map(normalizeVehicle)
+
+    // GET /api/vehicles (list) doesn't include images — only
+    // GET /api/vehicle-images/{id} does, per vehicle. Fetch all covers in
+    // parallel; one failing image request never blocks the grid.
+    await Promise.all(
+      vehicles.value.map(async (v) => {
+        try {
+          const { data: imgData } = await fetchVehicleImages(v.id)
+          const imgList = Array.isArray(imgData) ? imgData : (imgData?.content ?? [])
+          v.image = imgList.map(normalizeImage).find(Boolean) ?? null
+        } catch {
+          v.image = null
+        }
+      })
+    )
 
     if (isAuthenticated()) {
       try {

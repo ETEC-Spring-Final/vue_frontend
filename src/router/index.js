@@ -33,9 +33,10 @@
 |   vehicle browsing is public (GET /api/vehicles has no auth guard on the
 |   backend either). Only "Rent now" / favorite actions inside those pages
 |   check auth before navigating onward.
-| - `/reservations`, `/my-reservations`, and `/favorites` ARE requiresAuth:
-|   creating/viewing reservations and managing favorites always needs a
-|   logged-in user on the backend (POST /api/reservations,
+| - `/booking`, `/my-reservations`, `/my-invoices`, `/payment`, and
+|   `/favorites` ARE requiresAuth: creating/viewing reservations and
+|   managing favorites always needs a logged-in user on the backend
+|   (POST /api/reservations,
 |   GET /api/reservations/my-reservations, GET /api/favorites, and
 |   DELETE /api/favorites/{vehicleId} all require a JWT), so the guard
 |   bounces logged-out users to /login with ?redirect= back to where they
@@ -73,12 +74,13 @@ import ResetPassword from '@/pages/auth/ResetPassword.vue'
 import Home from '@/pages/home/Home.vue'
 import Explore from '@/pages/explore/Explore.vue'
 import VehicleDetail from '@/pages/vehicles/VehicleDetail.vue'
-import ReservationForm from '@/pages/reservations/ReservationForm.vue'
+import Booking from '@/pages/booking/Booking.vue'
 import MyReservations from '@/pages/reservations/MyReservations.vue'
 import Favorites from '@/pages/favorites/Favorites.vue'
 import RentalHistory from '@/pages/rentals/RentalHistory.vue'
 import InvoiceList from '@/pages/invoices/InvoiceList.vue'
 import InvoiceDetail from '@/pages/invoices/InvoiceDetail.vue'
+import Payment from '@/pages/payment/Payment.vue'
 import Notifications from '@/pages/notifications/Notifications.vue'
 import Contact from '@/pages/contact/Contact.vue'
 import AboutUs from '@/pages/about/AboutUs.vue'
@@ -176,13 +178,29 @@ const routes = [
   { path: '/vehicles/:id', component: VehicleDetail },
 
   /**
-   * Reservation form — reached from VehicleDetail's "Rent now" button via
-   * /reservations?vehicleId=123. Requires auth: POST /api/reservations
-   * needs a JWT on the backend.
+   * Booking form — reached from VehicleDetail's "Rent now" button via
+   * /booking/:vehicleId. Requires auth: POST /api/reservations needs a JWT
+   * on the backend. The legacy /reservations?vehicleId= path is kept for
+   * old bookmarks and renders the same Booking page.
    */
   {
+    path: '/booking/:vehicleId',
+    component: Booking,
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/reservations',
-    component: ReservationForm,
+    component: Booking,
+    meta: { requiresAuth: true },
+  },
+
+  /**
+   * Payment — scanned QR + Bakong polling + confirm-payment for one invoice.
+   * Requires auth: POST /api/invoices/{id}/confirm-payment needs a JWT.
+   */
+  {
+    path: '/payment/:invoiceId',
+    component: Payment,
     meta: { requiresAuth: true },
   },
 

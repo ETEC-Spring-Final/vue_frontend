@@ -296,7 +296,7 @@ function handleRentNow() {
     router.push({ path: '/login', query: { redirect: route.fullPath } })
     return
   }
-  router.push(`/reservations?vehicleId=${vehicle.value.id}`)
+  router.push(`/booking/${vehicle.value.id}`)
 }
 </script>
 

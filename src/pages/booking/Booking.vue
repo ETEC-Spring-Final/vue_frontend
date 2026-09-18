@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { fetchVehicleById, normalizeVehicleDetail } from "@/services/vehicles";
 import {
   createReservation,
@@ -10,11 +11,14 @@ import {
   calculatePriceBreakdown,
 } from "@/services/reservations";
 import SiteHeader from "@/components/layout/SiteHeader.vue";
+import SiteFooter from "@/components/layout/SiteFooter.vue";
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 
-const vehicleId = route.query.vehicleId || route.params.vehicleId;
+// /booking/:vehicleId (path) or legacy /reservations?vehicleId= (query)
+const vehicleId = route.params.vehicleId || route.query.vehicleId;
 
 const vehicle = ref(null);
 const locations = ref([]);
@@ -27,15 +31,17 @@ const error = ref("");
 const success = ref(false);
 
 const form = ref({
-  pickupLocationId: "",
+  pickUpLocationId: "",
   returnLocationId: "",
-  pickupDate: "",
-  returnDate: "",
+  pickUpDateTime: "",
+  returnDateTime: "",
   selectedServiceIds: [],
   discountCode: "",
 });
 
-const today = new Date().toISOString().split("T")[0];
+const now = new Date();
+now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+const minDateTime = now.toISOString().slice(0, 16);
 
 async function loadData() {
   loading.value = true;
@@ -49,11 +55,11 @@ async function loadData() {
         getDiscounts(),
       ]);
     vehicle.value = vehicleRes ? normalizeVehicleDetail(vehicleRes.data) : null;
-    locations.value = locationsRes || [];
-    services.value = servicesRes || [];
-    discounts.value = discountsRes || [];
+    locations.value = Array.isArray(locationsRes) ? locationsRes : (locationsRes?.content ?? []);
+    services.value = Array.isArray(servicesRes) ? servicesRes : (servicesRes?.content ?? []);
+    discounts.value = Array.isArray(discountsRes) ? discountsRes : (discountsRes?.content ?? []);
   } catch (e) {
-    error.value = e?.response?.data?.message || "Failed to load reservation data.";
+    error.value = e?.response?.data?.message || t("booking.loadError");
   } finally {
     loading.value = false;
   }
@@ -62,7 +68,7 @@ async function loadData() {
 onMounted(async () => {
   await loadData();
   if (!vehicleId) {
-    error.value = "No vehicle selected. Please choose a vehicle first.";
+    error.value = t("booking.noVehicle");
   }
 });
 
@@ -80,16 +86,16 @@ const matchedDiscount = computed(() => {
 });
 
 const datesValid = computed(() => {
-  if (!form.value.pickupDate || !form.value.returnDate) return false;
-  return new Date(form.value.returnDate) > new Date(form.value.pickupDate);
+  if (!form.value.pickUpDateTime || !form.value.returnDateTime) return false;
+  return new Date(form.value.returnDateTime) > new Date(form.value.pickUpDateTime);
 });
 
 const breakdown = computed(() => {
   if (!vehicle.value || !datesValid.value) return null;
   return calculatePriceBreakdown({
     pricePerDay: vehicle.value.price ?? 0,
-    pickupDate: form.value.pickupDate,
-    returnDate: form.value.returnDate,
+    pickupDate: form.value.pickUpDateTime,
+    returnDate: form.value.returnDateTime,
     insurancePerDay: 0,
     selectedServices: selectedServices.value,
     discount: matchedDiscount.value,
@@ -99,7 +105,7 @@ const breakdown = computed(() => {
 const canSubmit = computed(() => {
   return (
     !!vehicle.value &&
-    !!form.value.pickupLocationId &&
+    !!form.value.pickUpLocationId &&
     !!form.value.returnLocationId &&
     datesValid.value &&
     !submitting.value
@@ -112,6 +118,11 @@ function toggleService(id) {
   else form.value.selectedServiceIds.splice(idx, 1);
 }
 
+function toLocalDateTime(v) {
+  if (!v) return v;
+  return `${v}:00`;
+}
+
 async function handleSubmit() {
   if (!canSubmit.value) return;
   submitting.value = true;
@@ -119,18 +130,19 @@ async function handleSubmit() {
   try {
     const payload = {
       vehicleId: vehicle.value.id,
-      pickupLocationId: form.value.pickupLocationId,
+      pickUpLocationId: form.value.pickUpLocationId,
       returnLocationId: form.value.returnLocationId,
-      pickupDate: form.value.pickupDate,
-      returnDate: form.value.returnDate,
+      pickUpDateTime: toLocalDateTime(form.value.pickUpDateTime),
+      returnDateTime: toLocalDateTime(form.value.returnDateTime),
       serviceIds: form.value.selectedServiceIds,
-      discountCode: form.value.discountCode || undefined,
+      discountCode: form.value.discountCode.trim() || undefined,
     };
-    await createReservation(payload);
+    const created = await createReservation(payload);
     success.value = true;
-    setTimeout(() => router.push("/my-reservations"), 1200);
+    const invoiceId = created?.invoiceId ?? route.query.invoiceId;
+    setTimeout(() => router.push(invoiceId ? `/payment/${invoiceId}` : "/my-reservations"), 1400);
   } catch (e) {
-    error.value = e?.response?.data?.message || "Something went wrong creating your reservation.";
+    error.value = e?.response?.data?.message || t("booking.submitError");
   } finally {
     submitting.value = false;
   }
@@ -142,7 +154,7 @@ async function handleSubmit() {
     <SiteHeader />
 
     <div class="mx-auto max-w-6xl animate-page-in px-4 py-6 sm:px-6 lg:px-8">
-      <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">Reserve your vehicle</h1>
+      <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">{{ t('booking.title') }}</h1>
 
       <!-- Loading skeleton -->
       <div v-if="loading" class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -162,7 +174,7 @@ async function handleSubmit() {
       <!-- Success -->
       <Transition name="fade">
         <div v-if="success" class="mt-6 rounded-2xl px-4 py-3 text-sm font-medium" :style="{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }">
-          Reservation created! Redirecting to your reservations…
+          {{ t('booking.success') }}
         </div>
       </Transition>
 
@@ -178,56 +190,56 @@ async function handleSubmit() {
             <div class="h-16 w-16 shrink-0 rounded-xl" :style="{ background: `linear-gradient(135deg, var(--color-primary), var(--color-text))` }"></div>
             <div>
               <p class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ vehicle.name }}</p>
-              <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">${{ Number(vehicle.price ?? 0).toFixed(2) }} / day</p>
+              <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">${{ Number(vehicle.price ?? 0).toFixed(2) }} / {{ t('booking.day') }}</p>
             </div>
           </article>
 
           <!-- Dates -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label class="block">
-              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Pickup date</span>
+              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ t('booking.pickupDateTime') }}</span>
               <input
-                v-model="form.pickupDate" type="date" :min="today"
+                v-model="form.pickUpDateTime" type="datetime-local" :min="minDateTime"
                 class="mt-1 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-shadow duration-200 focus:shadow-sm"
                 :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
               />
             </label>
             <label class="block">
-              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Return date</span>
+              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ t('booking.returnDateTime') }}</span>
               <input
-                v-model="form.returnDate" type="date" :min="form.pickupDate || today"
+                v-model="form.returnDateTime" type="datetime-local" :min="form.pickUpDateTime || minDateTime"
                 class="mt-1 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-shadow duration-200 focus:shadow-sm"
                 :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
               />
             </label>
           </div>
           <Transition name="fade">
-            <p v-if="form.pickupDate && form.returnDate && !datesValid" class="text-sm text-red-600">
-              Return date must be after pickup date.
+            <p v-if="form.pickUpDateTime && form.returnDateTime && !datesValid" class="text-sm text-red-600">
+              {{ t('booking.datesInvalid') }}
             </p>
           </Transition>
 
           <!-- Locations -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label class="block">
-              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Pickup location</span>
+              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ t('booking.pickupLocation') }}</span>
               <select
-                v-model="form.pickupLocationId"
+                v-model="form.pickUpLocationId"
                 class="mt-1 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-shadow duration-200 focus:shadow-sm"
                 :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
               >
-                <option value="" disabled>Select location</option>
+                <option value="" disabled>{{ t('booking.selectLocation') }}</option>
                 <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
               </select>
             </label>
             <label class="block">
-              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Return location</span>
+              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ t('booking.returnLocation') }}</span>
               <select
                 v-model="form.returnLocationId"
                 class="mt-1 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-shadow duration-200 focus:shadow-sm"
                 :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
               >
-                <option value="" disabled>Select location</option>
+                <option value="" disabled>{{ t('booking.selectLocation') }}</option>
                 <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
               </select>
             </label>
@@ -235,7 +247,7 @@ async function handleSubmit() {
 
           <!-- Additional services -->
           <div v-if="services.length">
-            <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Additional services</span>
+            <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ t('booking.services') }}</span>
             <div class="mt-2 flex flex-wrap gap-2">
               <button
                 v-for="s in services" :key="s.id" type="button" @click="toggleService(s.id)"
@@ -251,7 +263,7 @@ async function handleSubmit() {
 
           <!-- Discount code -->
           <label class="block">
-            <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Discount code (optional)</span>
+            <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ t('booking.discountCode') }}</span>
             <input
               v-model="form.discountCode" type="text" placeholder="e.g. SUMMER10"
               class="mt-1 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-shadow duration-200 focus:shadow-sm"
@@ -259,10 +271,10 @@ async function handleSubmit() {
             />
             <Transition name="fade" mode="out-in">
               <span v-if="form.discountCode && !matchedDiscount" key="pending" class="mt-1 block text-xs" :style="{ color: 'var(--color-text-secondary)' }">
-                Code will be validated on submit.
+                {{ t('booking.codeHint') }}
               </span>
               <span v-else-if="matchedDiscount" key="ok" class="mt-1 block text-xs text-green-600">
-                Discount applied.
+                {{ t('booking.codeApplied') }}
               </span>
             </Transition>
           </label>
@@ -278,32 +290,32 @@ async function handleSubmit() {
             class="rounded-2xl border p-5 sticky top-6 space-y-3 transition-shadow duration-200 hover:shadow-sm"
             :style="{ borderColor: 'var(--color-border)' }"
           >
-            <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">Price summary</h2>
+            <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ t('booking.priceSummary') }}</h2>
 
             <Transition name="fade" mode="out-in">
               <div v-if="!breakdown" key="empty" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-                Select your pickup and return dates to see pricing.
+                {{ t('booking.briefHint') }}
               </div>
 
               <div v-else key="filled" class="space-y-3">
                 <div class="flex justify-between text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-                  <span>Rental ({{ breakdown.days }} day{{ breakdown.days > 1 ? "s" : "" }})</span>
+                  <span>{{ t('booking.rental', { days: breakdown.days }) }}</span>
                   <span>${{ breakdown.rentalTotal.toFixed(2) }}</span>
                 </div>
                 <div v-if="breakdown.insuranceTotal" class="flex justify-between text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-                  <span>Insurance</span>
+                  <span>{{ t('booking.insurance') }}</span>
                   <span>${{ breakdown.insuranceTotal.toFixed(2) }}</span>
                 </div>
                 <div v-if="breakdown.servicesTotal" class="flex justify-between text-sm" :style="{ color: 'var(--color-text-secondary)' }">
-                  <span>Additional services</span>
+                  <span>{{ t('booking.additionalServices') }}</span>
                   <span>${{ breakdown.servicesTotal.toFixed(2) }}</span>
                 </div>
                 <div v-if="breakdown.discountAmount" class="flex justify-between text-sm text-green-600">
-                  <span>Discount</span>
+                  <span>{{ t('booking.discount') }}</span>
                   <span>-${{ breakdown.discountAmount.toFixed(2) }}</span>
                 </div>
                 <div class="flex justify-between border-t pt-3 text-base font-bold" :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }">
-                  <span>Total</span>
+                  <span>{{ t('booking.total') }}</span>
                   <span>${{ breakdown.grandTotal.toFixed(2) }}</span>
                 </div>
               </div>
@@ -314,12 +326,14 @@ async function handleSubmit() {
               class="w-full rounded-full py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none"
               :style="{ backgroundColor: 'var(--color-primary)' }"
             >
-              {{ submitting ? "Submitting…" : "Confirm reservation" }}
+              {{ submitting ? t('booking.submitting') : t('booking.confirm') }}
             </button>
           </article>
         </aside>
       </div>
     </div>
+
+    <SiteFooter />
   </div>
 </template>
 

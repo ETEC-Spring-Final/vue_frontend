@@ -66,6 +66,8 @@
           <ThemeToggle />
         </div>
 
+        <NotificationBell v-if="isAuthenticated()" />
+
         <RouterLink
           v-if="isAuthenticated()"
           to="/profile"
@@ -158,6 +160,7 @@ import useAuthStore from '@/stores/auth.store'
 import useSiteSettingsStore from '@/stores/siteSettings.store'
 import ThemeToggle from '@/components/common/ThemeToggle.vue'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
+import NotificationBell from '@/components/layout/NotificationBell.vue'
 
 const route = useRoute()
 const { t } = useI18n()

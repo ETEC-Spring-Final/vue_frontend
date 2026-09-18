@@ -1,15 +1,21 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
-import { getMyReservations, cancelReservation } from "@/services/reservations";
+import { useI18n } from "vue-i18n";
+import { getMyReservations, getLocations, cancelReservation } from "@/services/reservations";
+import { fetchVehicles, normalizeVehicle } from "@/services/vehicles";
 import SiteHeader from "@/components/layout/SiteHeader.vue";
 
 const router = useRouter();
+const { t } = useI18n();
 
 const reservations = ref([]);
 const loading = ref(true);
 const error = ref("");
 const cancellingId = ref(null);
+
+const vehicleNames = ref({});
+const locationNames = ref({});
 
 // Status -> style mapping using theme tokens (not hardcoded hex) so this
 // respects dark/light mode and any future palette change automatically.
@@ -34,8 +40,26 @@ async function loadReservations() {
   error.value = "";
   try {
     reservations.value = await getMyReservations();
+
+    // Backend returns flat IDs (vehicleId / pickUpLocationId /
+    // returnLocationId), not nested objects. Resolve display names once
+    // (both endpoints are public) so the list renders readable labels.
+    try {
+      const [vehiclesRaw, locationsRaw] = await Promise.all([fetchVehicles(), getLocations()]);
+      const vehicles = Array.isArray(vehiclesRaw.data) ? vehiclesRaw.data : (vehiclesRaw.data?.content ?? []);
+      const locations = Array.isArray(locationsRaw.data) ? locationsRaw.data : (locationsRaw.data?.content ?? []);
+
+      vehicleNames.value = Object.fromEntries(
+        vehicles.map((v) => [v.id, normalizeVehicle(v).name])
+      );
+      locationNames.value = Object.fromEntries(
+        locations.map((l) => [l.id, l.name ?? l.city ?? `#${l.id}`])
+      );
+    } catch {
+      // Non-fatal — labels fall back to the raw id below.
+    }
   } catch (e) {
-    error.value = e?.response?.data?.message || "Failed to load your reservations.";
+    error.value = e?.response?.data?.message || t("myReservations.loadError");
   } finally {
     loading.value = false;
   }
@@ -51,11 +75,16 @@ const past = computed(() =>
 );
 
 function canCancel(r) {
-  return r.status === "PENDING" || r.status === "CONFIRMED";
+  return r.status === "PENDING";
+}
+
+function canPay(r) {
+  return !!r.invoiceId && r.status !== "CANCELLED" && r.status !== "COMPLETED";
 }
 
 async function handleCancel(id) {
   cancellingId.value = id;
+  error.value = "";
   try {
     const updated = await cancelReservation(id);
     const idx = reservations.value.findIndex((r) => r.id === id);
@@ -63,7 +92,7 @@ async function handleCancel(id) {
       reservations.value[idx] = updated ?? { ...reservations.value[idx], status: "CANCELLED" };
     }
   } catch (e) {
-    error.value = e?.response?.data?.message || "Could not cancel this reservation.";
+    error.value = e?.response?.data?.message || t("myReservations.cancelError");
   } finally {
     cancellingId.value = null;
   }
@@ -75,9 +104,11 @@ function formatDate(d) {
 }
 
 function vehicleLabel(r) {
-  const v = r.vehicle;
-  if (!v) return `Vehicle #${r.vehicleId ?? ""}`;
-  return `${v.brand ?? ""} ${v.model ?? ""}`.trim();
+  return vehicleNames.value[r.vehicleId] ?? `${t("myReservations.vehicle")} #${r.vehicleId ?? ""}`;
+}
+
+function locationLabel(id) {
+  return locationNames.value[id] ?? `${t("myReservations.location")} #${id ?? ""}`;
 }
 </script>
 
@@ -87,14 +118,14 @@ function vehicleLabel(r) {
 
     <div class="mx-auto max-w-6xl animate-page-in px-4 py-6 sm:px-6 lg:px-8">
       <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">My Reservations</h1>
+        <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">{{ t('myReservations.title') }}</h1>
         <button
           type="button"
           @click="router.push('/explore')"
           class="rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:shadow-md active:scale-95"
           :style="{ backgroundColor: 'var(--color-primary)' }"
         >
-          Browse vehicles
+          {{ t('myReservations.browse') }}
         </button>
       </div>
 
@@ -106,7 +137,7 @@ function vehicleLabel(r) {
       <!-- Error (nothing loaded) -->
       <div v-else-if="error && !reservations.length" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">
         {{ error }}
-        <button type="button" class="ml-2 font-semibold underline" @click="loadReservations">Try again</button>
+        <button type="button" class="ml-2 font-semibold underline" @click="loadReservations">{{ t('myReservations.tryAgain') }}</button>
       </div>
 
       <!-- Empty -->
@@ -116,13 +147,13 @@ function vehicleLabel(r) {
             <path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 7h14a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/>
           </svg>
         </div>
-        <p class="mt-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">You don't have any reservations yet.</p>
+        <p class="mt-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ t('myReservations.emptyTitle') }}</p>
         <button
           type="button" @click="router.push('/explore')"
           class="mt-4 rounded-full px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:shadow-md active:scale-95"
           :style="{ backgroundColor: 'var(--color-primary)' }"
         >
-          Find a vehicle to rent
+          {{ t('myReservations.emptyCta') }}
         </button>
       </div>
 
@@ -133,7 +164,7 @@ function vehicleLabel(r) {
         </Transition>
 
         <section v-if="upcoming.length" class="mt-8">
-          <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">Upcoming</h2>
+          <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ t('myReservations.upcoming') }}</h2>
           <TransitionGroup tag="div" name="card" class="mt-4 space-y-4">
             <article
               v-for="r in upcoming" :key="r.id"
@@ -145,10 +176,10 @@ function vehicleLabel(r) {
                 <div>
                   <p class="text-sm font-semibold" :style="{ color: 'var(--color-text)' }">{{ vehicleLabel(r) }}</p>
                   <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-                    {{ formatDate(r.pickupDate) }} → {{ formatDate(r.returnDate) }}
+                    {{ formatDate(r.pickUpDateTime) }} → {{ formatDate(r.returnDateTime) }}
                   </p>
                   <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
-                    {{ r.pickupLocation?.name ?? "Pickup location" }} → {{ r.returnLocation?.name ?? "Return location" }}
+                    {{ locationLabel(r.pickUpLocationId) }} → {{ locationLabel(r.returnLocationId) }}
                   </p>
                 </div>
               </div>
@@ -161,11 +192,19 @@ function vehicleLabel(r) {
                   ${{ Number(r.totalPrice).toFixed(2) }}
                 </span>
                 <button
+                  v-if="canPay(r)" type="button"
+                  @click="router.push(`/payment/${r.invoiceId}`)"
+                  class="rounded-full px-4 py-2 text-xs font-semibold text-white transition-all duration-200 hover:opacity-90 hover:shadow-sm active:scale-95"
+                  :style="{ backgroundColor: 'var(--color-primary)' }"
+                >
+                  {{ t('myReservations.pay') }}
+                </button>
+                <button
                   v-if="canCancel(r)" type="button" :disabled="cancellingId === r.id"
                   @click="handleCancel(r.id)"
                   class="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition-all duration-200 hover:bg-red-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {{ cancellingId === r.id ? "Cancelling…" : "Cancel" }}
+                  {{ cancellingId === r.id ? t('myReservations.cancelling') : t('myReservations.cancel') }}
                 </button>
               </div>
             </article>
@@ -173,7 +212,7 @@ function vehicleLabel(r) {
         </section>
 
         <section v-if="past.length" class="mt-10">
-          <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">Past</h2>
+          <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ t('myReservations.past') }}</h2>
           <div class="mt-4 space-y-4">
             <article
               v-for="r in past" :key="r.id"
@@ -185,7 +224,7 @@ function vehicleLabel(r) {
                 <div>
                   <p class="text-sm font-semibold" :style="{ color: 'var(--color-text)' }">{{ vehicleLabel(r) }}</p>
                   <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
-                    {{ formatDate(r.pickupDate) }} → {{ formatDate(r.returnDate) }}
+                    {{ formatDate(r.pickUpDateTime) }} → {{ formatDate(r.returnDateTime) }}
                   </p>
                 </div>
               </div>

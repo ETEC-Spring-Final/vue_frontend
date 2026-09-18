@@ -3,7 +3,7 @@
 Standalone guide for AI coding agents working in `vue_frontend/`. Read this before making
 changes. The full project guide (backend + frontend, incl. the API reference) lives in
 [`../spring_backend/agent_guid_to_do.md`](../spring_backend/agent_guid_to_do.md) — that file is
-the source of truth for endpoints and conventions. **Last verified: 2026-09-17.**
+the source of truth for endpoints and conventions. **Last verified: 2026-09-18.**
 
 ---
 
@@ -63,10 +63,12 @@ vue_frontend/src/
 │   ├── home/                     # Home.vue (+ home/home/Card.vue — odd nesting)
 │   ├── invoices/                 # InvoiceList.vue, InvoiceDetail.vue
 │   ├── notifications/            # Notifications.vue
+│   ├── booking/                  # Booking.vue — public booking form (`/booking/:vehicleId`)
+│   ├── payment/                  # Payment.vue — Bakong QR + polling (`/payment/:invoiceId`)
 │   ├── preview/                  # Preview.vue demo landing + components/ (LeftPannel, RightPannel, PreText)
 │   ├── profile/                  # Profile.vue
 │   ├── rentals/                  # RentalHistory.vue
-│   ├── reservations/             # ReservationForm.vue, MyReservations.vue
+│   ├── reservations/             # MyReservations.vue (ReservationForm.vue deleted — see Booking.vue)
 │   ├── vehicles/                 # VehicleDetail.vue
 │   └── NotFound.vue
 ├── router/index.js               # routes + auth/role guards
@@ -82,10 +84,10 @@ vue_frontend/src/
 |------|----------------|-------|
 | `api.js` | axios base, `TOKEN_KEY` | JWT interceptor; redirects to `/login` on 401 **only when a token was attached**; 403 left to callers |
 | `vehicles.js` | `/vehicles`, `/vehicle-images`, `/reviews/vehicle`, `/favorites` | Normalizers `normalizeVehicle*`, `normalizeImage`, `normalizeReview` — **`brand` vs `brandName` still wrong**, fix |
-| `reservations.js` | `/reservations`, `/locations`, `/services`, `/discounts` | `calculatePriceBreakdown` helper; ⚠ `getDiscounts`/`getServices` 403 for customers |
+| `reservations.js` | `/reservations`, `/locations`, `/services`, `/discounts/active` | `createReservation`, `cancelReservation`, `getLocations`/`getServices`/`getDiscounts` (all return unwrapped arrays — verified), client-side `calculatePriceBreakdown` preview. Used by `Booking.vue`. POST body sends `pickUpDateTime`/`returnDateTime` (ISO) + `serviceIds[]`/`discountCode`. Getter gets `rentalId`/`invoiceId` from response |
 | `rentals.js` | `/rentals`, `/rental-documents`, `/inspections` | ⚠ calls **removed** `POST /rental-documents/{id}/upload`; has `RENTAL_STATUS_STEPS` |
-| `invoices.js` | `/invoices`, `/v1/bakong` | ⚠ stale Bakong (`check-payment`) — duplicate of `invoice.service.js` |
-| `invoice.service.js` | `/invoices`, `/v1/bakong` | used by InvoiceManagement; same stale Bakong shape |
+| `invoices.js` | `/invoices`, `/v1/bakong` | ✅ real Bakong flow: `generateQr(BakongRequest)` → `qrImage({qr,md5})` (blob) → `checkTransaction(md5)` → `confirmPayment(id,{md5})`. Used by Payment + InvoiceDetail |
+| `invoice.service.js` | `/invoices`, `/v1/bakong` | ⚠ admin dual (used by `InvoiceManagement.vue`); still has **stale** Bakong (`generate-qr {invoiceId}` / `check-payment`) — public flow uses `invoices.js`; dedupe later |
 | `favorites.js` | `/favorites` | tiny; add/remove live in `vehicles.js` |
 | `reviews.js` | `/reviews` | duplicate of `reviews.service.js` |
 | `reviews.service.js` | `/reviews` (+ `/visibility`) | used by ReviewManagement |
@@ -94,7 +96,7 @@ vue_frontend/src/
 | `profile.js` | `/user-profiles/me` (+login-history) | duplicate of `profile.service.js` |
 | `profile.service.js` | me, updateMe, change-password, login-history | used by AdminProfile + auth store |
 | `dashboard.js` | `/vehicles`, `/reservations`, `/rentals` | **client-side** stats → swap for `/api/admin/stats` when backend adds it |
-| `discount.service.js` | `/discounts` | ⚠ calls nonexistent `GET /discounts/active` |
+| `discount.service.js` | `/discounts` | admin CRUD; `getActiveDiscounts` → `GET /discounts/active` (exists now, any signed-in user) |
 | `maintenance.service.js` | `/maintenance-records` | CRUD |
 | `siteSettings.service.js` | `/settings` | `getSiteSettings` / `updateSiteSettings` |
 
@@ -118,7 +120,9 @@ both.
 | `/forgot-password` | ForgotPassword | guestOnly |
 | `/reset-password` | ResetPassword | — |
 | `/oauth2/redirect` | OAuth2Redirect | — (decodes `?token=`) |
-| `/reservations` | ReservationForm | requiresAuth (`?vehicleId=`) |
+| `/booking/:vehicleId` | Booking | requiresAuth (legacy `/reservations?vehicleId=` also renders it; sends `serviceIds`/`discountCode`, redirects to `/payment/:invoiceId`) |
+| `/payment/:invoiceId` | Payment | requiresAuth (generate-qr → qr-image → check-transaction → confirm-payment) |
+| `/reservations` | Booking | requiresAuth (`?vehicleId=`) |
 | `/my-reservations` | MyReservations | requiresAuth |
 | `/favorites` | Favorites | requiresAuth |
 | `/my-rentals` | RentalHistory | requiresAuth |
@@ -274,8 +278,8 @@ dashboard area is basically done; the next features are all on the public site.
 - [ ] Fix `vehicles.js` `normalizeVehicle` (`brandName`), and `Home.vue` brand chips.
 - [ ] Wire real vehicle images into `VehicleCard.vue` via the attachment flow (no SVG placeholder).
 - [ ] Fix stale backend contracts in the customer flows: rental-doc upload
-      (`rentals.js`), Bakong endpoints (`invoices.js` / `invoice.service.js`), discount/service
-      lookups that 403 (`reservations.js`), `discount.service.js` `/active`. See
+      (`rentals.js`), backend `POST /api/reservations/price`, remaining dedupe of
+      `invoice.service.js` Bakong (public path already fixed in `invoices.js`). See
       `../spring_backend/agent_guid_to_do.md` §2.7 for the matching backend fixes.
 - [ ] Migrate remaining hard-hex customer pages (VehicleDetail, VehicleCard, Explore, Profile,
       invoice/reservation/rental lists) to the CSS-variable themed system.
@@ -300,12 +304,16 @@ dashboard area is basically done; the next features are all on the public site.
 
 ### Booking & account flows
 
-- Multi-step booking wizard with real price data (backend `POST /api/reservations/price` when
-  available) instead of client-side math alone.
-- Bakong QR + payment polling on invoice/reservation success.
-- Rental document upload via the working attachment JSON flow.
-- Notification center: read/read-all, types, unread badge.
-- Avatar upload + change password on Profile.
+- [x] Booking page (`/booking/:vehicleId`, legacy `/reservations?vehicleId=` also works):
+      createReservation → backend auto-creates Rental+Invoice (CUSTOMER) → redirect `/payment/:invoiceId`.
+- [x] Bakong QR + payment polling on `Payment.vue` (`/payment/:invoiceId`): generate-qr → qr-image
+      → check-transaction → confirm-payment. ⚠ **verify QR actually renders against live backend**
+      (reported "not show QR to scan").
+- [ ] Multi-step booking wizard with real price data (backend `POST /api/reservations/price` when
+      available) instead of client-side math alone.
+- [ ] Rental document upload via the working attachment JSON flow.
+- [ ] Notification center: read/read-all, types, unread badge.
+- [ ] Avatar upload + change password on Profile.
 
 ### Polish for public site
 

@@ -71,7 +71,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getFavorites } from '@/services/favorites'
-import { removeFavorite, normalizeVehicleDetail } from '@/services/vehicles'
+import { removeFavorite, normalizeVehicleDetail, fetchVehicleImages, normalizeImage } from '@/services/vehicles'
 import SiteHeader from '@/components/layout/SiteHeader.vue'
 import SiteFooter from '@/components/layout/SiteFooter.vue' 
 import VehicleCard from '@/components/vehicles/VehicleCard.vue'
@@ -93,6 +93,20 @@ async function loadFavorites() {
     // through the same normalizer VehicleDetail.vue uses so fields like
     // .name / .price / .type / .status are consistent everywhere.
     favorites.value = (raw || []).map((item) => normalizeVehicleDetail(item.vehicle ?? item))
+
+    // Favorites DTO doesn't embed images — fetch the primary cover for each
+    // vehicle in parallel; one failing image request never blocks the grid.
+    await Promise.all(
+      favorites.value.map(async (v) => {
+        try {
+          const { data: imgData } = await fetchVehicleImages(v.id)
+          const imgList = Array.isArray(imgData) ? imgData : (imgData?.content ?? [])
+          v.image = imgList.map(normalizeImage).find(Boolean) ?? null
+        } catch {
+          v.image = null
+        }
+      })
+    )
   } catch (e) {
     error.value = e?.response?.data?.message || t('favorites.loadError')
   } finally {
