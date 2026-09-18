@@ -134,6 +134,7 @@
     "confirm": "Confirm reservation",
     "submitting": "Submitting…",
     "success": "Reservation created! Taking you to payment…",
+    "successNoInvoice": "Reservation created. You'll be able to pay once it's confirmed.",
     "noVehicle": "No vehicle selected. Please choose a vehicle first.",
     "loadError": "Failed to load reservation data.",
     "submitError": "Something went wrong creating your reservation."

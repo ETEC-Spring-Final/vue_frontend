@@ -29,6 +29,7 @@ const loading = ref(true);
 const submitting = ref(false);
 const error = ref("");
 const success = ref(false);
+const createdInvoiceId = ref("");
 
 const form = ref({
   pickUpLocationId: "",
@@ -138,9 +139,14 @@ async function handleSubmit() {
       discountCode: form.value.discountCode.trim() || undefined,
     };
     const created = await createReservation(payload);
-    success.value = true;
     const invoiceId = created?.invoiceId ?? route.query.invoiceId;
-    setTimeout(() => router.push(invoiceId ? `/payment/${invoiceId}` : "/my-reservations"), 1400);
+    createdInvoiceId.value = invoiceId ? String(invoiceId) : "";
+    success.value = true;
+    if (createdInvoiceId.value) {
+      setTimeout(() => router.push(`/payment/${createdInvoiceId.value}`), 1400);
+    } else {
+      setTimeout(() => router.push("/my-reservations"), 1400);
+    }
   } catch (e) {
     error.value = e?.response?.data?.message || t("booking.submitError");
   } finally {
@@ -174,7 +180,7 @@ async function handleSubmit() {
       <!-- Success -->
       <Transition name="fade">
         <div v-if="success" class="mt-6 rounded-2xl px-4 py-3 text-sm font-medium" :style="{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }">
-          {{ t('booking.success') }}
+          {{ t(createdInvoiceId ? 'booking.success' : 'booking.successNoInvoice') }}
         </div>
       </Transition>
 

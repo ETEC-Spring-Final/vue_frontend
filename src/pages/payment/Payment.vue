@@ -55,22 +55,33 @@ async function onGenerateQr() {
       storeLabel: siteSettings.state.siteName || "CarRental",
     };
     const { data } = await invoicesApi.generateQr(payload);
-    qrData.value = data?.data || null;
-    if (!qrData.value || !qrData.value.qr) {
-      throw new Error("NO_QR");
+    const qrInfo = data?.data || null;
+    qrData.value = qrInfo;
+    if (!qrInfo || !qrInfo.qr) {
+      paymentError.value = data?.KHQRStatus?.message || t("payment.qrError");
+      return;
     }
-    const img = await invoicesApi.qrImage({ qr: qrData.value.qr, md5: qrData.value.md5 });
+    const img = await invoicesApi.qrImage({ qr: qrInfo.qr, md5: qrInfo.md5 });
     if (img.data instanceof Blob && img.data.size > 0) {
       qrImageUrl.value = URL.createObjectURL(img.data);
     } else {
-      qrImageUrl.value = "";
+      paymentError.value = t("payment.qrError");
+      return;
     }
     startPolling();
   } catch (err) {
-    paymentError.value = err?.response?.data?.message || t("payment.qrError");
+    paymentError.value = await extractErrorMessage(err) || t("payment.qrError");
   } finally {
     generatingQr.value = false;
   }
+}
+
+async function extractErrorMessage(err) {
+  const data = err?.response?.data;
+  if (data == null) return err?.message || "";
+  if (typeof data === "string") return data.trim();
+  if (data instanceof Blob) return (await data.text()).trim();
+  return data?.message || "";
 }
 
 function startPolling() {
