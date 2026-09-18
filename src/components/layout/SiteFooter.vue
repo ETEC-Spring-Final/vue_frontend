@@ -17,7 +17,7 @@
             <span class="text-base font-bold" :style="{ color: 'var(--color-text)' }">{{ siteSettings.siteName || $t('footer.defaultSiteName') }}</span>
           </div>
           <p class="mt-3 text-sm leading-relaxed" :style="{ color: 'var(--color-text-secondary)' }">
-            A small, carefully kept fleet across Phnom Penh.
+            {{ $t('footer.fleetBlurb') }}
           </p>
 
           <!-- Social icons -->
@@ -34,27 +34,27 @@
         </div>
 
         <div>
-          <h5 class="text-xs font-semibold uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">Explore</h5>
+          <h5 class="text-xs font-semibold uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('footer.explore') }}</h5>
           <ul class="mt-3 space-y-2 text-sm">
-            <li><RouterLink to="/explore" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">Fleet</RouterLink></li>
-            <li><RouterLink to="/favorites" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">Favorites</RouterLink></li>
+            <li><RouterLink to="/explore" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">{{ $t('footer.fleet') }}</RouterLink></li>
+            <li><RouterLink to="/favorites" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">{{ $t('footer.favorites') }}</RouterLink></li>
           </ul>
         </div>
 
         <div>
-          <h5 class="text-xs font-semibold uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">Account</h5>
+          <h5 class="text-xs font-semibold uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('footer.account') }}</h5>
           <ul class="mt-3 space-y-2 text-sm">
-            <li><RouterLink to="/profile" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">Profile</RouterLink></li>
-            <li><RouterLink to="/my-reservations" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">Reservations</RouterLink></li>
-            <li><RouterLink to="/my-rentals" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">Rentals</RouterLink></li>
+            <li><RouterLink to="/profile" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">{{ $t('footer.profile') }}</RouterLink></li>
+            <li><RouterLink to="/my-reservations" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">{{ $t('footer.reservations') }}</RouterLink></li>
+            <li><RouterLink to="/my-rentals" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">{{ $t('footer.rentals') }}</RouterLink></li>
           </ul>
         </div>
 
         <div>
-          <h5 class="text-xs font-semibold uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">Company</h5>
+          <h5 class="text-xs font-semibold uppercase tracking-wide" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('footer.company') }}</h5>
           <ul class="mt-3 space-y-2 text-sm">
-            <li><RouterLink to="/about" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">About us</RouterLink></li>
-            <li><RouterLink to="/contact" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">Contact</RouterLink></li>
+            <li><RouterLink to="/about" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">{{ $t('footer.aboutUs') }}</RouterLink></li>
+            <li><RouterLink to="/contact" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">{{ $t('footer.contact') }}</RouterLink></li>
             <li v-if="siteSettings.contactEmail">
               <a :href="`mailto:${siteSettings.contactEmail}`" class="transition-opacity hover:opacity-70" :style="{ color: 'var(--color-text)' }">{{ siteSettings.contactEmail }}</a>
             </li>
@@ -63,10 +63,10 @@
       </div>
 
       <div class="mt-10 flex flex-col items-center justify-between gap-3 border-t pt-6 text-xs sm:flex-row" :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }">
-        <span>© {{ year }} {{ siteSettings.siteName || $t('footer.defaultSiteName') }}. All rights reserved.</span>
+        <span>© {{ year }} {{ siteSettings.siteName || $t('footer.defaultSiteName') }}. {{ $t('footer.rightsReserved') }}</span>
         <div class="flex gap-4">
-          <RouterLink to="/about" class="transition-opacity hover:opacity-70">About</RouterLink>
-          <RouterLink to="/contact" class="transition-opacity hover:opacity-70">Contact</RouterLink>
+          <RouterLink to="/about" class="transition-opacity hover:opacity-70">{{ $t('footer.about') }}</RouterLink>
+          <RouterLink to="/contact" class="transition-opacity hover:opacity-70">{{ $t('footer.contact') }}</RouterLink>
         </div>
       </div>
     </div>
@@ -83,7 +83,7 @@
         rel="noopener"
         class="group pointer-events-auto flex items-center gap-0 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl"
         :style="{ backgroundColor: '#229ED9' }"
-        aria-label="Chat on Telegram"
+        :aria-label="$t('footer.chatOnTelegram')"
         @mouseenter="telegramHover = true"
         @mouseleave="telegramHover = false"
       >
@@ -93,7 +93,7 @@
           :class="telegramHover ? 'max-w-[160px] px-4 py-3' : 'max-w-0 px-0 py-3'"
           :style="{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }"
         >
-          Chat on Telegram
+          {{ $t('footer.chatOnTelegram') }}
         </span>
         <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" class="h-5 w-5">
@@ -109,7 +109,7 @@
           type="button"
           class="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:scale-95"
           :style="{ backgroundColor: 'var(--color-primary)', color: '#fff' }"
-          aria-label="Scroll to top"
+          :aria-label="$t('footer.scrollToTop')"
           @click="scrollToTop"
         >
           <!-- Chevron-up icon (intentionally not the diagonal-arrow style) -->

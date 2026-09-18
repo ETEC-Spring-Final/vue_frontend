@@ -22,7 +22,7 @@
                 type="button"
                 class="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 hover:rotate-90 hover:bg-[var(--color-primary-light)] active:scale-90"
                 style="color: var(--color-text-secondary);"
-                aria-label="Close"
+                :aria-label="t('common.close')"
                 @click="$emit('close')"
               >
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -52,6 +52,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 defineProps({ open: Boolean, title: String })
 defineEmits(['close'])
 </script>

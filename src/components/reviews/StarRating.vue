@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center gap-1" :aria-label="`${modelValue} out of 5 stars`">
+  <div class="flex items-center gap-1" :aria-label="t('reviews.starsOutOf', { rating: modelValue })">
     <svg
       v-for="i in 5"
       :key="i"
@@ -22,6 +22,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 defineProps({
   modelValue: { type: [Number, String], default: 0 },
   size: { type: Number, default: 16 },

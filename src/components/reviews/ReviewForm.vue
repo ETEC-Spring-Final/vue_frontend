@@ -1,6 +1,6 @@
 <template>
-  <form class="rounded-2xl border border-[#E5E7EB] p-5" @submit.prevent="onSubmit">
-    <p class="text-sm font-semibold text-[#1A2036]">{{ existingReview ? 'Edit your review' : 'Leave a review' }}</p>
+  <form class="rounded-2xl border border-[var(--color-border)] p-5" @submit.prevent="onSubmit">
+    <p class="text-sm font-semibold" :style="{ color: 'var(--color-text)' }">{{ existingReview ? t('reviews.editTitle') : t('reviews.leaveTitle') }}</p>
 
     <div class="mt-3">
       <StarRating v-model="rating" editable />
@@ -9,27 +9,30 @@
     <textarea
       v-model="comment"
       rows="3"
-      placeholder="Share your experience with this vehicle…"
-      class="mt-3 w-full rounded-2xl bg-[#F3F4F6] px-4 py-3 text-sm text-[#1A2036] placeholder:text-[#9CA3AF] outline-none"
+      :placeholder="t('reviews.placeholder')"
+      class="mt-3 w-full rounded-2xl px-4 py-3 text-sm outline-none placeholder:text-[var(--color-text-secondary)]"
+      :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
     ></textarea>
 
-    <p v-if="errorMessage" class="mt-2 text-sm text-red-600">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="mt-2 text-sm text-red-600 dark:text-red-400">{{ errorMessage }}</p>
 
     <div class="mt-3 flex gap-3">
       <button
         type="submit"
         :disabled="submitting || rating === 0"
-        class="rounded-full bg-[#3D5FE0] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3350C0] disabled:cursor-not-allowed disabled:opacity-50"
+        class="rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+        :style="{ backgroundColor: 'var(--color-primary)' }"
       >
-        {{ submitting ? 'Saving…' : existingReview ? 'Update review' : 'Submit review' }}
+        {{ submitting ? t('reviews.saving') : existingReview ? t('reviews.update') : t('reviews.submit') }}
       </button>
       <button
         v-if="existingReview"
         type="button"
-        class="rounded-full border border-[#E5E7EB] px-5 py-2.5 text-sm font-semibold text-[#1A2036] hover:bg-[#F9FAFB]"
+        class="rounded-full border border-[var(--color-border)] px-5 py-2.5 text-sm font-semibold transition-opacity hover:opacity-80"
+        :style="{ color: 'var(--color-text)' }"
         @click="$emit('cancel')"
       >
-        Cancel
+        {{ t('reviews.cancel') }}
       </button>
     </div>
   </form>
@@ -37,9 +40,11 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import StarRating from './StarRating.vue'
 import reviewsApi from '@/services/reviews'
 
+const { t } = useI18n()
 const props = defineProps({
   vehicleId: { type: [String, Number], required: true },
   existingReview: { type: Object, default: null },
@@ -65,7 +70,7 @@ async function onSubmit() {
     }
     emit('submitted')
   } catch (err) {
-    errorMessage.value = err.response?.data?.message || 'Could not save your review.'
+    errorMessage.value = err.response?.data?.message || t('reviews.saveError')
   } finally {
     submitting.value = false
   }

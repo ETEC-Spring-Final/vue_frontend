@@ -37,7 +37,7 @@
       type="button"
       @click="togglePassword"
       class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 transition hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200"
-      aria-label="Toggle password visibility"
+      :aria-label="t('common.togglePassword')"
       :aria-pressed="String(showPassword)"
       tabindex="-1"
     >
@@ -50,6 +50,9 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 /*
 |--------------------------------------------------------------------------
