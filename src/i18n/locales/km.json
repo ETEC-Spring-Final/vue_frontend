@@ -891,7 +891,7 @@
     "name": "ឈ្មោះ",
     "namePlaceholder": "ឧ. សុខា ចាន់",
     "email": "អ៊ីមែល",
-    "emailPlaceholder": "you@example.com",
+    "emailPlaceholder": "you{'@'}example.com",
     "subject": "ប្រធានបទ",
     "subjectPlaceholder": "តើយើងអាចជួយអ្វីបាន?",
     "message": "សារ",
