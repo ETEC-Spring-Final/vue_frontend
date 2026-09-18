@@ -18,7 +18,7 @@
               <img
                 v-if="avatarPreview || form.profilePicture"
                 :src="avatarPreview || form.profilePicture"
-                alt="Avatar"
+                :alt="$t('profile.avatarAlt')"
                 class="h-24 w-24 rounded-full object-cover"
                 :class="{ 'opacity-60': avatarUploading }"
               />

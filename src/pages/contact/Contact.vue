@@ -6,19 +6,19 @@
       <div class="grid grid-cols-1 gap-10 lg:grid-cols-5">
         <!-- Left: info -->
         <div class="lg:col-span-2">
-          <p class="text-xs font-semibold uppercase tracking-wide" :style="{ color: 'var(--color-primary)' }">Contact</p>
-          <h1 class="mt-2 text-3xl font-bold sm:text-4xl" :style="{ color: 'var(--color-text)' }">Got a question? Reach out</h1>
+          <p class="text-xs font-semibold uppercase tracking-wide" :style="{ color: 'var(--color-primary)' }">{{ $t('contact.eyebrow') }}</p>
+          <h1 class="mt-2 text-3xl font-bold sm:text-4xl" :style="{ color: 'var(--color-text)' }">{{ $t('contact.title') }}</h1>
           <p class="mt-3 text-sm leading-relaxed" :style="{ color: 'var(--color-text-secondary)' }">
-            Our team is ready to help with any question about a booking — typically replying within a day.
+            {{ $t('contact.intro') }}
           </p>
 
           <div class="mt-4 flex items-center gap-2 text-xs font-medium" :style="{ color: '#22C55E' }">
             <span class="h-2 w-2 rounded-full bg-current"></span>
-            Average response time: within 24 hours
+            {{ $t('contact.responseTime') }}
           </div>
 
           <div class="mt-6 space-y-4">
-            <div v-for="item in contactInfo" :key="item.label" class="flex items-start gap-3">
+            <div v-for="item in contactInfo" :key="item.labelKey" class="flex items-start gap-3">
               <div
                 class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
                 :style="{ backgroundColor: 'var(--color-primary-light)', border: '1px solid color-mix(in srgb, var(--color-primary) 35%, transparent)' }"
@@ -26,14 +26,14 @@
                 <component :is="item.icon" class="h-4.5 w-4.5" :style="{ color: 'var(--color-primary)' }" />
               </div>
               <div>
-                <p class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ item.label }}</p>
+                <p class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t(item.labelKey) }}</p>
                 <p class="mt-0.5 text-sm font-medium" :style="{ color: 'var(--color-text)' }">{{ item.value }}</p>
               </div>
             </div>
           </div>
 
           <div class="mt-6">
-            <p class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Follow us</p>
+            <p class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('contact.followUs') }}</p>
             <div class="mt-2 flex gap-2">
               <a
                 v-for="s in socials" :key="s.label" :href="s.href" target="_blank" rel="noopener"
@@ -51,37 +51,37 @@
         <form class="space-y-5 lg:col-span-3" @submit.prevent="onSubmit">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label class="block">
-              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Name</span>
+              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('contact.name') }}</span>
               <input
-                v-model="form.name" required placeholder="e.g. Sokha Chan"
-                class="mt-1.5 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-all duration-200 focus:shadow-sm"
+                v-model="form.name" required :placeholder="$t('contact.namePlaceholder')"
+                class="mt-1.5 w-full rounded-full px-5 py-3.5 text-sm outline-none placeholder:text-[var(--color-text-secondary)] transition-all duration-200 focus:shadow-sm"
                 :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
               />
             </label>
             <label class="block">
-              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Email</span>
+              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('contact.email') }}</span>
               <input
-                v-model="form.email" type="email" required placeholder="you@example.com"
-                class="mt-1.5 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-all duration-200 focus:shadow-sm"
+                v-model="form.email" type="email" required :placeholder="$t('contact.emailPlaceholder')"
+                class="mt-1.5 w-full rounded-full px-5 py-3.5 text-sm outline-none placeholder:text-[var(--color-text-secondary)] transition-all duration-200 focus:shadow-sm"
                 :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
               />
             </label>
           </div>
 
           <label class="block">
-            <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Subject</span>
+            <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('contact.subject') }}</span>
             <input
-              v-model="form.subject" placeholder="How can we help?"
-              class="mt-1.5 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-all duration-200 focus:shadow-sm"
+              v-model="form.subject" :placeholder="$t('contact.subjectPlaceholder')"
+              class="mt-1.5 w-full rounded-full px-5 py-3.5 text-sm outline-none placeholder:text-[var(--color-text-secondary)] transition-all duration-200 focus:shadow-sm"
               :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
             />
           </label>
 
           <label class="block">
-            <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Message</span>
+            <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('contact.message') }}</span>
             <textarea
-              v-model="form.message" rows="6" required placeholder="Tell us a bit about your booking or question…"
-              class="mt-1.5 w-full rounded-2xl px-5 py-3.5 text-sm outline-none transition-all duration-200 focus:shadow-sm"
+              v-model="form.message" rows="6" required :placeholder="$t('contact.messagePlaceholder')"
+              class="mt-1.5 w-full rounded-2xl px-5 py-3.5 text-sm outline-none placeholder:text-[var(--color-text-secondary)] transition-all duration-200 focus:shadow-sm"
               :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
             ></textarea>
           </label>
@@ -89,7 +89,7 @@
           <Transition name="fade">
             <p v-if="submitted" class="flex items-center gap-2 text-sm font-medium" :style="{ color: 'var(--color-primary)' }">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-4 w-4"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 12l6 6L20 6"/></svg>
-              Thanks — we've received your message and will reply soon.
+              {{ $t('contact.thanks') }}
             </p>
           </Transition>
 
@@ -98,16 +98,16 @@
             class="w-full rounded-full py-3.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-90 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             :style="{ background: 'linear-gradient(120deg, var(--color-primary), var(--color-primary-hover))' }"
           >
-            {{ submitting ? 'Sending…' : 'Send message' }}
+            {{ submitting ? $t('contact.sending') : $t('contact.send') }}
           </button>
         </form>
       </div>
 
       <!-- Map -->
-      <h2 class="mt-16 text-lg font-bold" :style="{ color: 'var(--color-text)' }">Find us</h2>
+      <h2 class="mt-16 text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ $t('contact.findUs') }}</h2>
       <div class="mt-4 overflow-hidden rounded-2xl border" :style="{ borderColor: 'var(--color-border)' }">
         <iframe
-          title="Office location"
+          :title="$t('contact.mapTitle')"
           class="h-72 w-full grayscale-[15%]"
           style="border:0"
           loading="lazy"
@@ -117,17 +117,17 @@
       </div>
 
       <!-- FAQ -->
-      <h2 class="mt-16 text-center text-lg font-bold" :style="{ color: 'var(--color-text)' }">Frequently asked questions</h2>
-      <p class="mt-1 text-center text-sm" :style="{ color: 'var(--color-text-secondary)' }">Quick answers before you reach out</p>
+      <h2 class="mt-16 text-center text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ $t('contact.faqTitle') }}</h2>
+      <p class="mt-1 text-center text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('contact.faqSubtitle') }}</p>
       <div class="mx-auto mt-6 max-w-2xl space-y-2">
-        <div v-for="(faq, i) in faqs" :key="faq.q" class="overflow-hidden rounded-2xl border" :style="{ borderColor: 'var(--color-border)' }">
+        <div v-for="(faq, i) in faqs" :key="faq.qKey" class="overflow-hidden rounded-2xl border" :style="{ borderColor: 'var(--color-border)' }">
           <button
             type="button"
             class="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold transition-colors duration-200"
             :style="{ color: 'var(--color-text)' }"
             @click="openFaq = openFaq === i ? -1 : i"
           >
-            {{ faq.q }}
+            {{ $t(faq.qKey) }}
             <svg
               xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
               class="h-4 w-4 shrink-0 transition-transform duration-200" :style="{ transform: openFaq === i ? 'rotate(180deg)' : 'rotate(0)' }"
@@ -137,7 +137,7 @@
           </button>
           <Transition name="collapse">
             <p v-if="openFaq === i" class="px-5 pb-4 text-sm leading-relaxed" :style="{ color: 'var(--color-text-secondary)' }">
-              {{ faq.a }}
+              {{ $t(faq.aKey) }}
             </p>
           </Transition>
         </div>
@@ -166,9 +166,9 @@ const openFaq = ref(0)
 const icon = (path) => ({ render: () => h('svg', { viewBox: '0 0 24 24', fill: 'none' }, [h('path', { stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', d: path })]) })
 
 const contactInfo = computed(() => [
-  { label: 'Phone', value: siteSettings.contactPhone || '—', icon: icon('M4 5h3l2 5-2 1a11 11 0 0 0 6 6l1-2 5 2v3a2 2 0 0 1-2 2C10 22 2 14 2 7a2 2 0 0 1 2-2Z') },
-  { label: 'Email', value: siteSettings.contactEmail || '—', icon: icon('M3 6h18v12H3V6Zm0 0 9 7 9-7') },
-  { label: 'Office', value: siteSettings.address || 'Phnom Penh, Cambodia', icon: icon('M12 21s7-6.5 7-11a7 7 0 0 0-14 0c0 4.5 7 11 7 11Zm0-9a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z') },
+  { labelKey: 'contact.phoneLabel', value: siteSettings.contactPhone || '—', icon: icon('M4 5h3l2 5-2 1a11 11 0 0 0 6 6l1-2 5 2v3a2 2 0 0 1-2 2C10 22 2 14 2 7a2 2 0 0 1 2-2Z') },
+  { labelKey: 'contact.emailLabel', value: siteSettings.contactEmail || '—', icon: icon('M3 6h18v12H3V6Zm0 0 9 7 9-7') },
+  { labelKey: 'contact.officeLabel', value: siteSettings.address || 'Phnom Penh, Cambodia', icon: icon('M12 21s7-6.5 7-11a7 7 0 0 0-14 0c0 4.5 7 11 7 11Zm0-9a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z') },
 ])
 
 // FIX: pull from siteSettings via the shared composable (same one
@@ -182,10 +182,10 @@ const mapEmbedUrl = computed(() => {
 })
 
 const faqs = [
-  { q: 'How do I book a vehicle?', a: 'Browse the fleet, pick your dates and locations on the vehicle page, then confirm — a JWT-authenticated account is required to complete a reservation.' },
-  { q: 'Can I cancel a reservation?', a: 'Yes, from My Reservations, as long as it is still Pending or Confirmed. Completed or already-cancelled reservations can\'t be cancelled again.' },
-  { q: 'What documents do I need to upload?', a: 'Once your rental starts, head to My Rentals to upload any required documents (ID, license) directly against that rental.' },
-  { q: 'How do I pay an invoice?', a: 'Open the invoice from My Invoices and use "Pay with Bakong" — scan the generated QR code with your banking app.' },
+  { qKey: 'contact.faq1q', aKey: 'contact.faq1a' },
+  { qKey: 'contact.faq2q', aKey: 'contact.faq2a' },
+  { qKey: 'contact.faq3q', aKey: 'contact.faq3a' },
+  { qKey: 'contact.faq4q', aKey: 'contact.faq4a' },
 ]
 
 async function onSubmit() {

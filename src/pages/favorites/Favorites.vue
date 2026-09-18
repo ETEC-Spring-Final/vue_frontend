@@ -21,7 +21,7 @@
       </div>
 
       <!-- Error (nothing loaded at all) -->
-      <div v-else-if="error && !favorites.length" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">
+      <div v-else-if="error && !favorites.length" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">
         {{ error }}
         <button type="button" class="ml-2 font-semibold underline" @click="loadFavorites">{{ $t('favorites.tryAgain') }}</button>
       </div>
@@ -46,7 +46,7 @@
 
       <!-- Grid -->
       <template v-else>
-        <div v-if="error" class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">
+        <div v-if="error" class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">
           {{ error }}
         </div>
 

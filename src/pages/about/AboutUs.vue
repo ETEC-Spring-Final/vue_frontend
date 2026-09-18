@@ -6,18 +6,17 @@
     <div class="mx-auto max-w-6xl animate-page-in px-4 py-12 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-wide" :style="{ color: 'var(--color-primary)' }">About us</p>
+          <p class="text-xs font-semibold uppercase tracking-wide" :style="{ color: 'var(--color-primary)' }">{{ $t('about.eyebrow') }}</p>
           <h1 class="mt-2 text-3xl font-bold leading-tight sm:text-4xl" :style="{ color: 'var(--color-text)' }">
-            A small fleet, kept small on purpose.
+            {{ $t('about.title') }}
           </h1>
           <p class="mt-3 max-w-lg text-sm leading-relaxed" :style="{ color: 'var(--color-text-secondary)' }">
-            We started Car Rental because renting a car in Phnom Penh shouldn't mean surprises —
-            every vehicle we list is inspected, insured, and driven by us before it ever reaches you.
+            {{ $t('about.intro') }}
           </p>
           <div class="mt-6 flex gap-8">
-            <div v-for="s in heroStats" :key="s.label">
+            <div v-for="s in heroStats" :key="s.labelKey">
               <p class="text-2xl font-bold" :style="{ color: 'var(--color-primary)' }">{{ s.value }}</p>
-              <p class="mt-0.5 text-xs" :style="{ color: 'var(--color-text-secondary)' }">{{ s.label }}</p>
+              <p class="mt-0.5 text-xs" :style="{ color: 'var(--color-text-secondary)' }">{{ $t(s.labelKey) }}</p>
             </div>
           </div>
         </div>
@@ -35,21 +34,21 @@
       <!-- Full stats row -->
       <div class="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div
-          v-for="s in stats" :key="s.label"
+          v-for="s in stats" :key="s.labelKey"
           class="rounded-2xl border p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
           :style="{ borderColor: 'var(--color-border)' }"
         >
           <p class="text-2xl font-bold" :style="{ color: 'var(--color-primary)' }">{{ s.value }}</p>
-          <p class="mt-1 text-xs" :style="{ color: 'var(--color-text-secondary)' }">{{ s.label }}</p>
+          <p class="mt-1 text-xs" :style="{ color: 'var(--color-text-secondary)' }">{{ $t(s.labelKey) }}</p>
         </div>
       </div>
 
       <!-- What we offer -->
-      <h2 class="mt-16 text-center text-lg font-bold" :style="{ color: 'var(--color-text)' }">What we offer</h2>
-      <p class="mt-1 text-center text-sm" :style="{ color: 'var(--color-text-secondary)' }">Everything about renting, made simple</p>
+      <h2 class="mt-16 text-center text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ $t('about.offerTitle') }}</h2>
+      <p class="mt-1 text-center text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('about.offerSubtitle') }}</p>
       <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div
-          v-for="v in values" :key="v.title"
+          v-for="v in values" :key="v.titleKey"
           class="rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
           :style="{ borderColor: 'var(--color-border)' }"
         >
@@ -59,17 +58,17 @@
           >
             <component :is="v.icon" class="h-5 w-5" :style="{ color: 'var(--color-primary)' }" />
           </div>
-          <h3 class="mt-3 text-sm font-bold" :style="{ color: 'var(--color-text)' }">{{ v.title }}</h3>
-          <p class="mt-1 text-sm leading-relaxed" :style="{ color: 'var(--color-text-secondary)' }">{{ v.description }}</p>
+          <h3 class="mt-3 text-sm font-bold" :style="{ color: 'var(--color-text)' }">{{ $t(v.titleKey) }}</h3>
+          <p class="mt-1 text-sm leading-relaxed" :style="{ color: 'var(--color-text-secondary)' }">{{ $t(v.descKey) }}</p>
         </div>
       </div>
 
       <!-- Our journey (timeline) -->
-      <h2 class="mt-16 text-center text-lg font-bold" :style="{ color: 'var(--color-text)' }">Our journey</h2>
-      <p class="mt-1 text-center text-sm" :style="{ color: 'var(--color-text-secondary)' }">A quick look at how we got here</p>
+      <h2 class="mt-16 text-center text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ $t('about.journeyTitle') }}</h2>
+      <p class="mt-1 text-center text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('about.journeySubtitle') }}</p>
       <div class="relative mx-auto mt-8 max-w-xl">
         <div class="absolute bottom-2 left-4 top-2 w-px" :style="{ backgroundColor: 'var(--color-border)' }"></div>
-        <div v-for="(step, i) in journey" :key="step.year" class="relative flex gap-4 pb-8 last:pb-0">
+        <div v-for="(step, i) in journey" :key="step.titleKey" class="relative flex gap-4 pb-8 last:pb-0">
           <div
             class="z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
             :style="{ backgroundColor: journeyColors[i % journeyColors.length] }"
@@ -77,9 +76,9 @@
             {{ i + 1 }}
           </div>
           <div>
-            <p class="text-xs font-semibold" :style="{ color: journeyColors[i % journeyColors.length] }">{{ step.year }}</p>
-            <p class="text-sm font-bold" :style="{ color: 'var(--color-text)' }">{{ step.title }}</p>
-            <p class="mt-0.5 text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ step.description }}</p>
+            <p class="text-xs font-semibold" :style="{ color: journeyColors[i % journeyColors.length] }">{{ $t(step.yearKey) }}</p>
+            <p class="text-sm font-bold" :style="{ color: 'var(--color-text)' }">{{ $t(step.titleKey) }}</p>
+            <p class="mt-0.5 text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t(step.descKey) }}</p>
           </div>
         </div>
       </div>
@@ -88,11 +87,11 @@
       <!-- NOTE: placeholder testimonials — wire to a real "public reviews"
            endpoint if/when one exists on the backend; today's reviews API
            is scoped per-vehicle, not site-wide. -->
-      <h2 class="mt-16 text-center text-lg font-bold" :style="{ color: 'var(--color-text)' }">What renters say</h2>
-      <p class="mt-1 text-center text-sm" :style="{ color: 'var(--color-text-secondary)' }">Real feedback from real trips</p>
+      <h2 class="mt-16 text-center text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ $t('about.testimonialsTitle') }}</h2>
+      <p class="mt-1 text-center text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('about.testimonialsSubtitle') }}</p>
       <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div
-          v-for="t in testimonials" :key="t.name"
+          v-for="item in testimonials" :key="item.name"
           class="rounded-2xl border p-5 transition-shadow duration-200 hover:shadow-sm"
           :style="{ borderColor: 'var(--color-border)' }"
         >
@@ -101,14 +100,14 @@
               <path d="m12 3 2.8 5.9 6.2.9-4.5 4.5 1.1 6.4L12 17.8l-5.6 2.9 1.1-6.4L3 9.8l6.2-.9L12 3Z"/>
             </svg>
           </div>
-          <p class="mt-3 text-sm leading-relaxed" :style="{ color: 'var(--color-text)' }">"{{ t.quote }}"</p>
+          <p class="mt-3 text-sm leading-relaxed" :style="{ color: 'var(--color-text)' }">"{{ $t(item.quoteKey) }}"</p>
           <div class="mt-4 flex items-center gap-2">
-            <div class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white" :style="{ backgroundColor: journeyColors[testimonials.indexOf(t) % journeyColors.length] }">
-              {{ t.name[0] }}
+            <div class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white" :style="{ backgroundColor: journeyColors[testimonials.indexOf(item) % journeyColors.length] }">
+              {{ item.name[0] }}
             </div>
             <div>
-              <p class="text-xs font-semibold" :style="{ color: 'var(--color-text)' }">{{ t.name }}</p>
-              <p class="text-[11px]" :style="{ color: 'var(--color-text-secondary)' }">{{ t.role }}</p>
+              <p class="text-xs font-semibold" :style="{ color: 'var(--color-text)' }">{{ item.name }}</p>
+              <p class="text-[11px]" :style="{ color: 'var(--color-text-secondary)' }">{{ $t(item.roleKey) }}</p>
             </div>
           </div>
         </div>
@@ -119,14 +118,14 @@
         class="mt-16 flex flex-col items-center gap-5 rounded-2xl p-10 text-center"
         :style="{ background: 'linear-gradient(120deg, var(--color-primary), var(--color-primary-hover))' }"
       >
-        <h2 class="text-xl font-bold text-white sm:text-2xl">Ready to book your next drive?</h2>
-        <p class="max-w-md text-sm text-white/80">Browse the fleet — confirmed in minutes, no deposit held until pickup.</p>
+        <h2 class="text-xl font-bold text-white sm:text-2xl">{{ $t('about.ctaTitle') }}</h2>
+        <p class="max-w-md text-sm text-white/80">{{ $t('about.ctaSubtitle') }}</p>
         <RouterLink
           to="/explore"
           class="rounded-full bg-white px-6 py-3 text-sm font-semibold shadow-sm transition-all duration-200 hover:shadow-md active:scale-95"
           :style="{ color: 'var(--color-primary)' }"
         >
-          Browse the fleet
+          {{ $t('about.ctaButton') }}
         </RouterLink>
       </div>
     </div>
@@ -143,37 +142,37 @@ import SiteFooter from '@/components/layout/SiteFooter.vue'
 const icon = (path) => ({ render: () => h('svg', { viewBox: '0 0 24 24', fill: 'none' }, [h('path', { stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', d: path })]) })
 
 const heroStats = [
-  { value: '38+', label: 'Vehicles' },
-  { value: '6+', label: 'Cities' },
-  { value: '2,400+', label: 'Trips completed' },
+  { value: '38+', labelKey: 'about.heroStatVehicles' },
+  { value: '6+', labelKey: 'about.heroStatCities' },
+  { value: '2,400+', labelKey: 'about.heroStatTrips' },
 ]
 
 const stats = [
-  { value: '38', label: 'Vehicles in rotation' },
-  { value: '6', label: 'Cities served' },
-  { value: '4.9', label: 'Average rating' },
-  { value: '24h', label: 'Delivery window' },
+  { value: '38', labelKey: 'about.statVehicles' },
+  { value: '6', labelKey: 'about.statCities' },
+  { value: '4.9', labelKey: 'about.statRating' },
+  { value: '24h', labelKey: 'about.statDelivery' },
 ]
 
 const values = [
-  { title: 'No surprises', description: 'Flat daily rate, insurance and fuel spelled out before you confirm.', icon: icon('M4 12l6 6L20 6') },
-  { title: 'Delivered to you', description: 'We bring the car to your address and walk through it together.', icon: icon('M4 10h16v8H4v-8Zm0 0 2-5h12l2 5') },
-  { title: 'One point of contact', description: 'A single line that knows the car and the booking end to end.', icon: icon('M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z') },
+  { titleKey: 'about.valueSurprisesTitle', descKey: 'about.valueSurprisesDesc', icon: icon('M4 12l6 6L20 6') },
+  { titleKey: 'about.valueDeliveryTitle', descKey: 'about.valueDeliveryDesc', icon: icon('M4 10h16v8H4v-8Zm0 0 2-5h12l2 5') },
+  { titleKey: 'about.valueContactTitle', descKey: 'about.valueContactDesc', icon: icon('M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z') },
 ]
 
 const journeyColors = ['#3D5FE0', '#7C3AED', '#22C55E', '#F59E0B']
 
 const journey = [
-  { year: '2024', title: 'Car Rental founded', description: 'Started with 5 vehicles and a promise: no surprises at pickup.' },
-  { year: '2025', title: 'Crossed 2,000 trips', description: 'Expanded the fleet and added same-day delivery across the city.' },
-  { year: '2026', title: 'Document upload & QR check-in', description: 'Streamlined rentals with digital documents and faster handovers.' },
+  { yearKey: 'about.j1Year', titleKey: 'about.j1Title', descKey: 'about.j1Desc' },
+  { yearKey: 'about.j2Year', titleKey: 'about.j2Title', descKey: 'about.j2Desc' },
+  { yearKey: 'about.j3Year', titleKey: 'about.j3Title', descKey: 'about.j3Desc' },
 ]
 
 // Placeholder — see note above template's Testimonials section.
 const testimonials = [
-  { name: 'Sokha', role: 'Frequent renter', quote: 'Booking took two minutes and the car was exactly as described.' },
-  { name: 'Dara', role: 'Weekend trip', quote: 'Delivery to my door saved so much time — will book again.' },
-  { name: 'Bopha', role: 'Business travel', quote: 'Clear pricing, no hidden fees. Exactly what I needed.' },
+  { name: 'Sokha', roleKey: 'about.t1Role', quoteKey: 'about.t1Quote' },
+  { name: 'Dara', roleKey: 'about.t2Role', quoteKey: 'about.t2Quote' },
+  { name: 'Bopha', roleKey: 'about.t3Role', quoteKey: 'about.t3Quote' },
 ]
 </script>
 

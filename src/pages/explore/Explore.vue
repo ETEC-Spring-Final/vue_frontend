@@ -56,7 +56,7 @@
       </div>
 
       <!-- Error -->
-      <div v-else-if="loadError" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">
+      <div v-else-if="loadError" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">
         {{ loadError }}
         <button type="button" class="ml-2 font-semibold underline" @click="loadVehicles">{{ $t('explore.tryAgain') }}</button>
       </div>
