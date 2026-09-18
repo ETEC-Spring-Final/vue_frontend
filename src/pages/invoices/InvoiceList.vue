@@ -3,8 +3,8 @@
     <SiteHeader />
 
     <div class="mx-auto max-w-4xl animate-page-in px-4 py-6 sm:px-6 lg:px-8">
-      <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">My Invoices</h1>
-      <p class="mt-1 text-sm" :style="{ color: 'var(--color-text-secondary)' }">Track payments for your rentals.</p>
+      <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">{{ $t('invoices.myInvoices') }}</h1>
+      <p class="mt-1 text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('invoices.myInvoicesSub') }}</p>
 
       <!-- Loading -->
       <div v-if="loading" class="mt-8 space-y-3">
@@ -12,7 +12,7 @@
       </div>
 
       <!-- Error -->
-      <div v-else-if="errorMessage" class="mt-8 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">
+      <div v-else-if="errorMessage" class="mt-8 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">
         {{ errorMessage }}
       </div>
 
@@ -23,7 +23,7 @@
             <path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M6 3h9l3 3v15H6V3Zm3 6h6M9 12h6M9 15h4"/>
           </svg>
         </div>
-        <p class="mt-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">You don't have any invoices yet.</p>
+        <p class="mt-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('invoices.noInvoices') }}</p>
       </div>
 
       <!-- List -->
@@ -35,12 +35,12 @@
         >
           <div class="flex items-center justify-between gap-4">
             <div>
-              <p class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Invoice #{{ invoice.id }}</p>
+              <p class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('invoices.invoiceNumber') }}{{ invoice.id }}</p>
               <p class="mt-1 text-lg font-bold" :style="{ color: 'var(--color-text)' }">
                 {{ formatCurrency(invoice.total ?? invoice.totalAmount) }}
               </p>
               <p v-if="invoice.dueDate" class="mt-0.5 text-xs" :style="{ color: 'var(--color-text-secondary)' }">
-                Due {{ formatDate(invoice.dueDate) }}
+                {{ $t('invoices.due') }} {{ formatDate(invoice.dueDate) }}
               </p>
             </div>
 
@@ -53,7 +53,7 @@
                 class="rounded-full px-4 py-2 text-xs font-semibold text-white transition-all duration-200 hover:opacity-90 hover:shadow-sm active:scale-95"
                 :style="{ backgroundColor: 'var(--color-primary)' }"
               >
-                View
+                {{ $t('invoices.view') }}
               </RouterLink>
             </div>
           </div>
@@ -67,9 +67,12 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import invoicesApi from '@/services/invoices'
 import SiteHeader from '@/components/layout/SiteHeader.vue'
 import SiteFooter from '@/components/layout/SiteFooter.vue'
+
+const { t } = useI18n()
 
 const invoices = ref([])
 const loading = ref(true)
@@ -102,7 +105,7 @@ onMounted(async () => {
     const { data } = await invoicesApi.myInvoices()
     invoices.value = Array.isArray(data) ? data : data?.content ?? []
   } catch (err) {
-    errorMessage.value = err.response?.data?.message || 'Could not load your invoices.'
+    errorMessage.value = err.response?.data?.message || t('invoices.loadError')
   } finally {
     loading.value = false
   }

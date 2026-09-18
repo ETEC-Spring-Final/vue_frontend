@@ -339,7 +339,19 @@
     "saving": "Saving…",
     "saveError": "Could not create this rental.",
     "statusError": "Could not update status.",
-    "confirmDelete": "Delete rental"
+    "confirmDelete": "Delete rental",
+    "myRentals": "My Rentals",
+    "viewReservations": "View reservations",
+    "noRentals": "You don't have any rentals yet.",
+    "findVehicle": "Find a vehicle to rent",
+    "currentUpcoming": "Current & upcoming",
+    "past": "Past",
+    "documents": "Documents",
+    "noDocuments": "No documents uploaded yet.",
+    "uploadDocument": "Upload document",
+    "uploading": "Uploading…",
+    "loadError": "Failed to load your rentals.",
+    "uploadError": "Could not upload this document."
   },
   "customers": {
     "count": "customers",
@@ -442,7 +454,14 @@
     "charges": "Charges",
     "summary": "Summary",
     "empty": "No invoices yet.",
-    "noResults": "No matching invoices found."
+    "noResults": "No matching invoices found.",
+    "myInvoices": "My Invoices",
+    "myInvoicesSub": "Track payments for your rentals.",
+    "noInvoices": "You don't have any invoices yet.",
+    "view": "View",
+    "backToInvoices": "Back to invoices",
+    "payWithBakong": "Pay with Bakong",
+    "paidInFull": "This invoice has been paid in full."
   },
   "reviews": {
     "title": "Reviews",

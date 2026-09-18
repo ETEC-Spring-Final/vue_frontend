@@ -23,7 +23,7 @@
       </div>
 
       <!-- Error -->
-      <div v-else-if="loadError" class="flex flex-wrap items-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">
+      <div v-else-if="loadError" class="flex flex-wrap items-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">
         <span>{{ loadError }}</span>
         <button type="button" class="font-semibold underline underline-offset-2 transition hover:opacity-70" @click="loadAll">
           {{ $t('common.tryAgain') }}
@@ -224,10 +224,10 @@ const specs = computed(() => {
 
 const statusClass = computed(() => {
   const map = {
-    AVAILABLE: 'bg-green-50 text-green-600 dark:bg-green-950/40',
-    RESERVED: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40',
-    RENTED: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40',
-    MAINTENANCE: 'bg-red-50 text-red-600 dark:bg-red-950/40',
+    AVAILABLE: 'bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400',
+    RESERVED: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
+    RENTED: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
+    MAINTENANCE: 'bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400',
   }
   return map[vehicle.value?.status] ?? ''
 })

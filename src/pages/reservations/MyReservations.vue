@@ -135,7 +135,7 @@ function locationLabel(id) {
       </div>
 
       <!-- Error (nothing loaded) -->
-      <div v-else-if="error && !reservations.length" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">
+      <div v-else-if="error && !reservations.length" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">
         {{ error }}
         <button type="button" class="ml-2 font-semibold underline" @click="loadReservations">{{ t('myReservations.tryAgain') }}</button>
       </div>
@@ -160,7 +160,7 @@ function locationLabel(id) {
       <!-- Lists -->
       <template v-else>
         <Transition name="fade">
-          <div v-if="error" class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">{{ error }}</div>
+          <div v-if="error" class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">{{ error }}</div>
         </Transition>
 
         <section v-if="upcoming.length" class="mt-8">
@@ -202,7 +202,7 @@ function locationLabel(id) {
                 <button
                   v-if="canCancel(r)" type="button" :disabled="cancellingId === r.id"
                   @click="handleCancel(r.id)"
-                  class="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition-all duration-200 hover:bg-red-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition-all duration-200 hover:bg-red-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/40"
                 >
                   {{ cancellingId === r.id ? t('myReservations.cancelling') : t('myReservations.cancel') }}
                 </button>

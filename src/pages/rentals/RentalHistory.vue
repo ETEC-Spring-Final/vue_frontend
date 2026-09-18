@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import {
   getMyRentals,
   uploadRentalDocument,
@@ -12,6 +13,7 @@ import SiteHeader from "@/components/layout/SiteHeader.vue";
 import SiteFooter from "@/components/layout/SiteFooter.vue";
 
 const router = useRouter();
+const { t } = useI18n();
 
 const rentals = ref([]);
 const documents = ref([]);
@@ -32,7 +34,7 @@ async function loadAll() {
     rentals.value = rentalsRes || [];
     documents.value = docsRes || [];
   } catch (e) {
-    error.value = e?.response?.data?.message || "Failed to load your rentals.";
+    error.value = e?.response?.data?.message || t("rentals.loadError");
   } finally {
     loading.value = false;
   }
@@ -53,7 +55,7 @@ function docsForRental(rentalId) {
 
 function vehicleLabel(r) {
   const v = r.vehicle;
-  if (!v) return `Vehicle #${r.vehicleId ?? ""}`;
+  if (!v) return `${t("rentals.vehicle")} #${r.vehicleId ?? ""}`;
   return `${v.brand ?? ""} ${v.model ?? ""}`.trim();
 }
 
@@ -76,7 +78,7 @@ async function handleFileChange(rental, event) {
     const uploaded = await uploadRentalDocument(rental.id, file);
     documents.value.push(uploaded ?? { rentalId: rental.id, fileName: file.name });
   } catch (e) {
-    uploadError.value = e?.response?.data?.message || "Could not upload this document.";
+    uploadError.value = e?.response?.data?.message || t("rentals.uploadError");
   } finally {
     uploadingRentalId.value = null;
     event.target.value = "";
@@ -90,13 +92,13 @@ async function handleFileChange(rental, event) {
 
     <div class="mx-auto max-w-6xl animate-page-in px-4 py-6 sm:px-6 lg:px-8">
       <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">My Rentals</h1>
+        <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">{{ $t('rentals.myRentals') }}</h1>
         <button
           type="button" @click="router.push('/my-reservations')"
           class="rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 hover:shadow-sm active:scale-95"
           :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
         >
-          View reservations
+          {{ $t('rentals.viewReservations') }}
         </button>
       </div>
 
@@ -106,7 +108,7 @@ async function handleFileChange(rental, event) {
       </div>
 
       <!-- Error -->
-      <div v-else-if="error && !rentals.length" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">
+      <div v-else-if="error && !rentals.length" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">
         {{ error }}
       </div>
 
@@ -117,27 +119,27 @@ async function handleFileChange(rental, event) {
             <path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 13l2-6h14l2 6M5 13h14v6H5v-6ZM7 19v2M17 19v2"/>
           </svg>
         </div>
-        <p class="mt-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">You don't have any rentals yet.</p>
+        <p class="mt-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('rentals.noRentals') }}</p>
         <button
           type="button" @click="router.push('/explore')"
           class="mt-4 rounded-full px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:shadow-md active:scale-95"
           :style="{ backgroundColor: 'var(--color-primary)' }"
         >
-          Find a vehicle to rent
+          {{ $t('rentals.findVehicle') }}
         </button>
       </div>
 
       <template v-else>
         <Transition name="fade">
-          <div v-if="error" class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">{{ error }}</div>
+          <div v-if="error" class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">{{ error }}</div>
         </Transition>
         <Transition name="fade">
-          <div v-if="uploadError" class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">{{ uploadError }}</div>
+          <div v-if="uploadError" class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">{{ uploadError }}</div>
         </Transition>
 
         <!-- Current / upcoming -->
         <section v-if="active.length" class="mt-8">
-          <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">Current &amp; upcoming</h2>
+          <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ $t('rentals.currentUpcoming') }}</h2>
           <div class="mt-4 space-y-6">
             <article
               v-for="r in active" :key="r.id"
@@ -181,20 +183,20 @@ async function handleFileChange(rental, event) {
 
               <!-- Documents -->
               <div class="mt-6 border-t pt-4" :style="{ borderColor: 'var(--color-border)' }">
-                <p class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Documents</p>
+                <p class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('rentals.documents') }}</p>
                 <ul v-if="docsForRental(r.id).length" class="mt-2 space-y-1">
                   <li v-for="doc in docsForRental(r.id)" :key="doc.id ?? doc.fileName" class="text-sm" :style="{ color: 'var(--color-text)' }">
-                    {{ doc.fileName ?? doc.name ?? "Document" }}
+                    {{ doc.fileName ?? doc.name ?? $t('rentals.vehicle') }}
                   </li>
                 </ul>
-                <p v-else class="mt-2 text-sm" :style="{ color: 'var(--color-text-secondary)' }">No documents uploaded yet.</p>
+                <p v-else class="mt-2 text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('rentals.noDocuments') }}</p>
 
                 <label
                   class="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 hover:shadow-sm active:scale-95"
                   :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
                 >
                   <input type="file" class="hidden" :disabled="uploadingRentalId === r.id" @change="(e) => handleFileChange(r, e)" />
-                  {{ uploadingRentalId === r.id ? "Uploading…" : "Upload document" }}
+                  {{ uploadingRentalId === r.id ? $t('rentals.uploading') : $t('rentals.uploadDocument') }}
                 </label>
               </div>
             </article>
@@ -203,7 +205,7 @@ async function handleFileChange(rental, event) {
 
         <!-- Completed / cancelled -->
         <section v-if="completed.length" class="mt-10">
-          <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">Past</h2>
+          <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ $t('rentals.past') }}</h2>
           <div class="mt-4 space-y-4">
             <article
               v-for="r in completed" :key="r.id"
