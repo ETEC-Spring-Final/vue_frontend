@@ -1,5 +1,5 @@
 <template>
-  <div class="relative flex min-h-screen w-full overflow-hidden bg-white lg:block">
+  <div class="relative flex min-h-screen w-full overflow-hidden lg:block" :style="{ backgroundColor: 'var(--color-bg)' }">
 
     <!-- Brand panel — slides between left half (login) and right half (register) -->
     <div
@@ -17,39 +17,38 @@
       <div class="relative z-10">
         <RouterLink to="/home" class="flex items-center gap-2 text-lg font-bold">
           <span class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/15 backdrop-blur">
-            <img v-if="siteSettings.logoUrl" :src="siteSettings.logoUrl" alt="Logo" class="h-full w-full object-cover" />
+            <img v-if="siteSettings.logoUrl" :src="siteSettings.logoUrl" :alt="t('auth.logoAlt')" class="h-full w-full object-cover" />
             <svg v-else viewBox="0 0 24 24" fill="none" class="h-5 w-5 text-white">
               <path fill="currentColor" d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11m-14 0h14m-14 0a2 2 0 0 0-2 2v4a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h12v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-4a2 2 0 0 0-2-2M7.5 15a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm11 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
             </svg>
           </span>
-          {{ siteSettings.siteName || 'CarRental' }}
+          {{ siteSettings.siteName || t('footer.defaultSiteName') }}
         </RouterLink>
       </div>
 
       <transition name="brand-text" mode="out-in">
         <div :key="mode" class="relative z-10">
           <h2 class="text-4xl font-extrabold leading-tight">
-            {{ mode === 'login' ? 'Welcome Back to the Road' : 'Start Your Journey Today' }}
+            {{ mode === 'login' ? t('auth.brandWelcomeTitle') : t('auth.brandJoinTitle') }}
           </h2>
           <p class="mt-4 max-w-sm text-sm text-white/80">
-            {{ mode === 'login'
-              ? 'Sign in to manage your bookings, track rentals, and explore our fleet.'
-              : 'Create an account and get instant access to hundreds of vehicles near you.' }}
+            {{ mode === 'login' ? t('auth.brandLoginSub') : t('auth.brandRegisterSub') }}
           </p>
         </div>
       </transition>
 
       <div class="relative z-10 flex gap-8">
-        <div><p class="text-2xl font-bold">500+</p><p class="text-xs text-white/70">Vehicles</p></div>
-        <div><p class="text-2xl font-bold">24/7</p><p class="text-xs text-white/70">Support Online</p></div>
-        <div><p class="text-2xl font-bold">100%</p><p class="text-xs text-white/70">Secure</p></div>
+        <div><p class="text-2xl font-bold">500+</p><p class="text-xs text-white/70">{{ t('auth.brandVehicles') }}</p></div>
+        <div><p class="text-2xl font-bold">24/7</p><p class="text-xs text-white/70">{{ t('auth.brandSupport') }}</p></div>
+        <div><p class="text-2xl font-bold">100%</p><p class="text-xs text-white/70">{{ t('auth.brandSecure') }}</p></div>
       </div>
     </div>
 
     <!-- Form panel — slides between right half (login) and left half (register) -->
     <div
-      class="slide-panel flex w-full flex-col justify-center overflow-y-auto bg-white px-6 py-10 sm:px-10 lg:absolute lg:inset-y-0 lg:w-1/2 lg:px-16"
+      class="slide-panel flex w-full flex-col justify-center overflow-y-auto px-6 py-10 sm:px-10 lg:absolute lg:inset-y-0 lg:w-1/2 lg:px-16"
       :class="mode === 'login' ? 'role-form-login' : 'role-form-register'"
+      :style="{ backgroundColor: 'var(--color-bg)' }"
     >
       <div class="mx-auto w-full max-w-sm">
         <transition name="form-slide-up" mode="out-in">
@@ -64,6 +63,7 @@
 
 <script setup>
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import useSiteSettingsStore from '@/stores/siteSettings.store'
 import LoginForm from '@/pages/auth/LoginForm.vue'
 import RegisterForm from '@/pages/auth/RegisterForm.vue'
@@ -72,6 +72,7 @@ defineProps({
   mode: { type: String, required: true }, // 'login' | 'register'
 })
 
+const { t } = useI18n()
 const { state: siteSettings } = useSiteSettingsStore()
 </script>
 
