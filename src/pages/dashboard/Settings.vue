@@ -245,6 +245,48 @@
             </div>
           </div>
         </div>
+
+        <div class="grid grid-cols-1 mt-3 gap-4 sm:grid-cols-2">
+          <div class="field-group">
+            <label class="mb-1 block text-sm font-medium" style="color: var(--color-text);">Instagram URL</label>
+            <div class="flex items-center gap-2 rounded-xl border px-3 transition-all duration-200 focus-within:ring-2" :style="`border-color: var(--color-border); background-color: var(--color-bg); --tw-ring-color: var(--color-primary);`">
+              <svg class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary);" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c2.7 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47.66.26 1.22.6 1.77 1.15.55.55.89 1.11 1.15 1.77.25.64.42 1.37.47 2.43C21.99 8.94 22 9.3 22 12s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 0 1-1.15 1.77 4.9 4.9 0 0 1-1.77 1.15c-.64.25-1.37.42-2.43.47C15.06 21.99 14.7 22 12 22s-3.06-.01-4.12-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 0 1-1.77-1.15 4.9 4.9 0 0 1-1.15-1.77c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.7 2 12s.01-3.06.06-4.12c.05-1.06.22-1.79.47-2.43.26-.66.6-1.22 1.15-1.77A4.9 4.9 0 0 1 5.45.53C6.09.28 6.82.11 7.88.06 8.94.01 9.3 0 12 0Zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4ZM17.4 4.6a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/></svg>
+              <input v-model="form.instagramUrl" type="text" maxlength="255" class="w-full bg-transparent py-2.5 text-sm outline-none" style="color: var(--color-text);" />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="mb-1 block text-sm font-medium" style="color: var(--color-text);">TikTok URL</label>
+            <div class="flex items-center gap-2 rounded-xl border px-3 transition-all duration-200 focus-within:ring-2" :style="`border-color: var(--color-border); background-color: var(--color-bg); --tw-ring-color: var(--color-primary);`">
+              <svg class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary);" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 2h-3v13.5a3 3 0 1 1-2.6-3v-3a6 6 0 1 0 5.6 6V8.5a7 7 0 0 0 4 1.3v-3a4 4 0 0 1-4-4Z"/></svg>
+              <input v-model="form.tiktokUrl" type="text" maxlength="255" class="w-full bg-transparent py-2.5 text-sm outline-none" style="color: var(--color-text);" />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="mb-1 block text-sm font-medium" style="color: var(--color-text);">WhatsApp URL</label>
+            <div class="flex items-center gap-2 rounded-xl border px-3 transition-all duration-200 focus-within:ring-2" :style="`border-color: var(--color-border); background-color: var(--color-bg); --tw-ring-color: var(--color-primary);`">
+              <svg class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary);" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.6 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.6-.6-2.9-1.3-4.8-4.2-5-4.4-.1-.2-1.2-1.6-1.2-3s.7-2.2 1-2.5c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.3-.1.6.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.1.5.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1.2.1 1.5.7 1.8.9.3.1.4.2.5.3.1.2.1.9-.1 1.6Z"/></svg>
+              <input v-model="form.whatsappUrl" type="text" maxlength="255" class="w-full bg-transparent py-2.5 text-sm outline-none" style="color: var(--color-text);" />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="mb-1 block text-sm font-medium" style="color: var(--color-text);">LinkedIn URL</label>
+            <div class="flex items-center gap-2 rounded-xl border px-3 transition-all duration-200 focus-within:ring-2" :style="`border-color: var(--color-border); background-color: var(--color-bg); --tw-ring-color: var(--color-primary);`">
+              <svg class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary);" viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM3 8.5h4V21H3V8.5Zm7 0h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-6.1c0-1.46-.03-3.34-2.04-3.34-2.04 0-2.36 1.6-2.36 3.24V21h-4V8.5Z"/></svg>
+              <input v-model="form.linkedinUrl" type="text" maxlength="255" class="w-full bg-transparent py-2.5 text-sm outline-none" style="color: var(--color-text);" />
+            </div>
+          </div>
+
+          <div class="field-group sm:col-span-2">
+            <label class="mb-1 block text-sm font-medium" style="color: var(--color-text);">Website URL</label>
+            <div class="flex items-center gap-2 rounded-xl border px-3 transition-all duration-200 focus-within:ring-2" :style="`border-color: var(--color-border); background-color: var(--color-bg); --tw-ring-color: var(--color-primary);`">
+              <svg class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm-9-9h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+              <input v-model="form.websiteUrl" type="text" maxlength="255" class="w-full bg-transparent py-2.5 text-sm outline-none" style="color: var(--color-text);" />
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- Save button -->
@@ -289,6 +331,11 @@ const form = reactive({
   address: '',
   facebookUrl: '',
   telegramUrl: '',
+  instagramUrl: '',
+  tiktokUrl: '',
+  whatsappUrl: '',
+  linkedinUrl: '',
+  websiteUrl: '',
 })
 
 function syncFormFromStore() {
@@ -300,6 +347,11 @@ function syncFormFromStore() {
   form.address = siteSettings.address || ''
   form.facebookUrl = siteSettings.facebookUrl || ''
   form.telegramUrl = siteSettings.telegramUrl || ''
+  form.instagramUrl = siteSettings.instagramUrl || ''
+  form.tiktokUrl = siteSettings.tiktokUrl || ''
+  form.whatsappUrl = siteSettings.whatsappUrl || ''
+  form.linkedinUrl = siteSettings.linkedinUrl || ''
+  form.websiteUrl = siteSettings.websiteUrl || ''
 }
 
 onMounted(async () => {

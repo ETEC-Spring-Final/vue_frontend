@@ -13,8 +13,9 @@
 | - Guard private/role-restricted routes via `router.beforeEach`
 |
 | Notes:
-| - The root path ("/") currently redirects to "/preview" for demo purposes
-| - Update the root route to Home when moving to production
+| - The root path ("/") now serves the real marketing landing page (Home).
+|   The old demo screen is still reachable at /preview for reference, but it
+|   is no longer what a first-time visitor lands on.
 | - `meta.requiresAuth` marks a route as needing a logged-in user
 | - `meta.roles` (optional) restricts a route to specific roles, e.g.
 |   ['ADMIN', 'MANAGER'] — omit it to allow any authenticated role
@@ -69,7 +70,6 @@ import Settings from '@/pages/dashboard/Settings.vue'
 // page components client-facing
 import ForgotPassword from '@/pages/auth/ForgotPassword.vue'
 import ResetPassword from '@/pages/auth/ResetPassword.vue'
-import Preview from '@/pages/preview/Preview.vue'
 import Home from '@/pages/home/Home.vue'
 import Explore from '@/pages/explore/Explore.vue'
 import VehicleDetail from '@/pages/vehicles/VehicleDetail.vue'
@@ -80,6 +80,8 @@ import RentalHistory from '@/pages/rentals/RentalHistory.vue'
 import InvoiceList from '@/pages/invoices/InvoiceList.vue'
 import InvoiceDetail from '@/pages/invoices/InvoiceDetail.vue'
 import Notifications from '@/pages/notifications/Notifications.vue'
+import Contact from '@/pages/contact/Contact.vue'
+import AboutUs from '@/pages/about/AboutUs.vue'
 import Profile from '@/pages/profile/Profile.vue'
 import OAuth2Redirect from '@/pages/auth/OAuth2Redirect.vue'
 import NotFound from '@/pages/NotFound.vue'
@@ -90,16 +92,23 @@ import NotFound from '@/pages/NotFound.vue'
  */
 const routes = [
   /**
-   * Default entry route
-   * Redirects "/" to "/preview" to showcase the project structure
+   * Default entry route — the real landing page.
+   *
+   * "/" and "/home" both render Home so old links, bookmarks and the
+   * `defaultRedirect()` in auth.store keep working. Home is the canonical
+   * path used in navigation; "/" is what visitors type.
    */
-  { path: '/', redirect: '/preview' },
+  { path: '/', name: 'home', component: Home },
+  { path: '/home', redirect: '/' },
 
   /**
-   * Preview page (landing/demo screen)
-   * Displays project structure and navigation examples
+   * Preview page (structure/demo screen).
+   *
+   * Kept for reference while the marketing site is being built, but it is
+   * no longer served at the root. Lazy-loaded so its components are not
+   * bundled into the initial chunk that every real visitor downloads.
    */
-  { path: '/preview', component: Preview },
+  { path: '/preview', component: () => import('@/pages/preview/Preview.vue') },
 
   /**
    * Main application dashboard
@@ -153,16 +162,11 @@ const routes = [
   { path: '/reset-password', component: ResetPassword },
 
   /**
-   * Optional home route (disabled for now)
-   * Uncomment when switching from preview to real landing page
-   */
-  // { path: '/', component: Home },
-  { path: '/home', component: Home },
-
-  /**
    * Browse/search all vehicles — search bar on Home links here with ?q=.
    */
   { path: '/explore', component: Explore },
+  { path: '/contact', component: Contact },
+  { path: '/about', component: AboutUs },
 
   /**
    * Vehicle detail — public browsing page. GET /api/vehicles/{id} on the
@@ -205,8 +209,9 @@ const routes = [
 
   /**
    * My Rentals — status timeline + document upload. Requires auth:
-   * GET /api/rentals/my-rentals, POST /api/rental-documents/{id}/upload,
-   * and GET /api/rental-documents/my-rental-document all need a JWT.
+   * GET /api/rentals/my-rentals and GET /api/rental-documents/my-rental-document
+   * both need a JWT. Document upload now goes through the two-step attachment
+   * flow (POST /api/attachments then POST /api/rental-documents).
    */
   {
     path: '/my-rentals',
@@ -240,7 +245,7 @@ const routes = [
    * Google OAuth callback target. The backend's
    * OAuth2AuthenticationSuccessHandler redirects here with ?token=... after
    * a successful Google sign-in; this page decodes the JWT, calls
-   * authStore.login(), and forwards the user to /home or /dashboard.
+   * authStore.login(), and forwards the user to / or /dashboard.
    * No requiresAuth here — the user isn't logged in yet when they land on
    * this page, this route is what logs them in.
    */
@@ -255,10 +260,20 @@ const routes = [
 
 /**
  * Router instance configuration
+ *
+ * scrollBehavior matters now that the landing page is long and section-based:
+ * a fresh navigation should start at the top, an in-page anchor (#fleet,
+ * #how-it-works) should scroll smoothly to that section, and going Back should
+ * restore where the visitor was in the fleet grid.
  */
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, behavior: 'smooth', top: 80 }
+    return { top: 0 }
+  },
 })
 
 /**
@@ -267,8 +282,7 @@ const router = createRouter({
  *   (keeps the intended destination in `?redirect=` so Login can send them
  *   back after a successful sign-in)
  * - Blocks routes whose `meta.roles` doesn't include the user's role →
- *   redirects to /dashboard (or /home if not authenticated at all — should
- *   not normally happen since requiresAuth is checked first)
+ *   redirects to / (the landing page)
  * - Blocks `guestOnly` routes (login/register) for already-logged-in users
  */
 router.beforeEach((to) => {
@@ -279,7 +293,7 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.roles && !hasRole(...to.meta.roles)) {
-    return { path: '/home' }
+    return { path: '/' }
   }
 
   if (to.meta.guestOnly && isAuthenticated()) {

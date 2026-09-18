@@ -1,4 +1,76 @@
 {
+  "nav": {
+    "home": "Home",
+    "explore": "Explore",
+    "favorites": "Favorites",
+    "about": "About",
+    "contact": "Contact",
+    "bookings": "My bookings",
+    "profile": "Profile",
+    "login": "Log in",
+    "signup": "Sign up"
+  },
+  "home": {
+    "greeting": "Welcome back, {name}",
+    "subGreeting": "Ready for your next trip?",
+    "findRide": "Find your perfect ride",
+    "signIn": "Sign in",
+    "signInPrompt": "to see personalized picks and manage your bookings.",
+    "searchPlaceholder": "Search by brand, model or type…",
+    "banner1": {
+      "tag": "New arrivals",
+      "title": "Drive the newest cars in our fleet",
+      "subtitle": "Fresh vehicles added every month — book before they're gone."
+    },
+    "banner2": {
+      "tag": "Limited offer",
+      "title": "Save up to 20% on weekend rentals",
+      "subtitle": "Book a Friday–Sunday trip and unlock instant savings."
+    },
+      "stats": {
+      "vehicles": "Vehicles",
+      "cities": "Cities",
+      "rating": "Avg. rating"
+    },
+    "whyUs": {
+      "title": "Why book with us",
+      "subtitle": "Everything about renting, made simple",
+      "item1Title": "No surprises",
+      "item1Desc": "Flat daily rate, insurance and fuel spelled out before you confirm.",
+      "item2Title": "Delivered to you",
+      "item2Desc": "We bring the car to your address and walk through it together.",
+      "item3Title": "One point of contact",
+      "item3Desc": "A single line that knows the car and the booking end to end."
+    },
+    "allBrands": "All brands",
+    "popularCars": "Popular cars",
+    "seeAll": "See all",
+    "noVehicles": "No vehicles match this filter yet.",
+    "loadError": "Could not load vehicles. Please try again."
+
+  },
+  "footer": {
+    "defaultSiteName": "CarRental",
+    "blurb": "Book reliable cars for any trip, anywhere — fast booking, transparent pricing, and support when you need it.",
+    "explore": "Explore",
+    "account": "Account",
+    "contact": "Contact",
+    "invoices": "My invoices",
+    "notifications": "Notifications",
+    "register": "Create account",
+    "rightsReserved": "All rights reserved.",
+    "terms": "Terms",
+    "privacy": "Privacy"
+  },
+  "explore": {
+    "title": "Explore our fleet",
+    "subtitle": "Browse every vehicle available to rent right now.",
+    "searchPlaceholder": "Search by brand, model or type…",
+    "allTypes": "All types",
+    "resultsFound": "vehicles found",
+    "noResults": "No vehicles match your search.",
+    "loadError": "Could not load vehicles. Please try again."
+  },
   "sidebar": {
     "dashboard": "Dashboard",
     "vehicles": "Vehicles",
@@ -70,6 +142,8 @@
     "seats": "Seats",
     "price": "Price per day",
     "priceDay": "Price/day",
+    "perDay": "per day",
+    "rentNow": "Rent now",
     "mileAge": "Mileage",
     "description": "Description",
     "status": "Status",
@@ -480,6 +554,21 @@
   "profile": {
     "title": "My Profile",
     "editInfo": "Edit information",
+    "unnamed": "Unnamed",
+    "changeAvatar": "Change photo",
+    "avatarTooLarge": "Photo must be under 3MB.",
+    "memberSince": "Member since {date}",
+    "tabs": {
+      "info": "Info",
+      "history": "Login history",
+      "reviews": "My reviews",
+      "favorites": "Favorites"
+    },
+    "stats": {
+      "reservations": "Reservations",
+      "favorites": "Favorites",
+      "reviews": "Reviews"
+    },
     "firstName": "First name",
     "lastName": "Last name",
     "phone": "Phone",
@@ -497,12 +586,22 @@
     "passwordSuccess": "Password updated successfully.",
     "passwordError": "Could not update password.",
     "myLoginHistory": "My login history",
+    "historyDate": "Date",
+    "historyIp": "IP",
+    "historyBrowser": "Browser",
+    "historyStatus": "Status",
+    "historySuccess": "Success",
+    "historyFailed": "Failed",
+    "noReviews": "You haven't left any reviews yet.",
+    "favoritesHint": "See every vehicle you've saved.",
+    "goFavorites": "Go to favorites",
     "ip": "IP",
     "device": "Device",
     "status": "Status",
     "loginTime": "Login time",
     "success": "Success",
-    "failed": "Failed"
+    "failed": "Failed",
+    "avatarUploadError": "Could not upload your photo. Please try again."
   },
   "settings": {
     "title": "Site Settings",

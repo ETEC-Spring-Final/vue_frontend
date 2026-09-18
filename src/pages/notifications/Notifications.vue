@@ -6,7 +6,7 @@
       <div v-for="i in 4" :key="i" class="h-16 animate-pulse rounded-2xl bg-[#F3F4F6]"></div>
     </div>
 
-    <div v-else-if="notifications.length === 0" class="mt-16 text-center text-sm text-[#6B7280]">
+    <div v-else-if="notifications.length === 0" class="mt-16 text- center text-sm text-[#6B7280]">
       You're all caught up — no notifications yet.
     </div>
 

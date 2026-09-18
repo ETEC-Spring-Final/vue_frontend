@@ -9,11 +9,11 @@ import {
   getDiscounts,
   calculatePriceBreakdown,
 } from "@/services/reservations";
+import SiteHeader from "@/components/layout/SiteHeader.vue";
 
 const route = useRoute();
 const router = useRouter();
 
-// Vehicle comes from /vehicles/:id "Rent now" -> /reservations?vehicleId=123
 const vehicleId = route.query.vehicleId || route.params.vehicleId;
 
 const vehicle = ref(null);
@@ -26,7 +26,6 @@ const submitting = ref(false);
 const error = ref("");
 const success = ref(false);
 
-// Form state
 const form = ref({
   pickupLocationId: "",
   returnLocationId: "",
@@ -54,8 +53,7 @@ async function loadData() {
     services.value = servicesRes || [];
     discounts.value = discountsRes || [];
   } catch (e) {
-    error.value =
-      e?.response?.data?.message || "Failed to load reservation data.";
+    error.value = e?.response?.data?.message || "Failed to load reservation data.";
   } finally {
     loading.value = false;
   }
@@ -76,8 +74,7 @@ const matchedDiscount = computed(() => {
   if (!form.value.discountCode) return null;
   return (
     discounts.value.find(
-      (d) =>
-        d.code?.toLowerCase() === form.value.discountCode.trim().toLowerCase()
+      (d) => d.code?.toLowerCase() === form.value.discountCode.trim().toLowerCase()
     ) || null
   );
 });
@@ -93,7 +90,7 @@ const breakdown = computed(() => {
     pricePerDay: vehicle.value.price ?? 0,
     pickupDate: form.value.pickupDate,
     returnDate: form.value.returnDate,
-    insurancePerDay: 0, // wire to a real insurance rate once backend exposes one
+    insurancePerDay: 0,
     selectedServices: selectedServices.value,
     discount: matchedDiscount.value,
   });
@@ -111,11 +108,8 @@ const canSubmit = computed(() => {
 
 function toggleService(id) {
   const idx = form.value.selectedServiceIds.indexOf(id);
-  if (idx === -1) {
-    form.value.selectedServiceIds.push(id);
-  } else {
-    form.value.selectedServiceIds.splice(idx, 1);
-  }
+  if (idx === -1) form.value.selectedServiceIds.push(id);
+  else form.value.selectedServiceIds.splice(idx, 1);
 }
 
 async function handleSubmit() {
@@ -136,9 +130,7 @@ async function handleSubmit() {
     success.value = true;
     setTimeout(() => router.push("/my-reservations"), 1200);
   } catch (e) {
-    error.value =
-      e?.response?.data?.message ||
-      "Something went wrong creating your reservation.";
+    error.value = e?.response?.data?.message || "Something went wrong creating your reservation.";
   } finally {
     submitting.value = false;
   }
@@ -146,226 +138,197 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-2xl font-bold text-[#1A2036]">Reserve your vehicle</h1>
+  <div class="min-h-screen transition-colors duration-300" :style="{ backgroundColor: 'var(--color-bg)' }">
+    <SiteHeader />
 
-    <!-- Loading state -->
-    <div v-if="loading" class="mt-8 text-sm text-[#6B7280]">
-      Loading reservation details…
-    </div>
+    <div class="mx-auto max-w-6xl animate-page-in px-4 py-6 sm:px-6 lg:px-8">
+      <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">Reserve your vehicle</h1>
 
-    <!-- Error state (no vehicle / load failure) -->
-    <div
-      v-else-if="error && !vehicle"
-      class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600"
-    >
-      {{ error }}
-    </div>
-
-    <!-- Success state -->
-    <div
-      v-else-if="success"
-      class="mt-6 rounded-2xl bg-[#E9EDFB] px-4 py-3 text-sm text-[#3D5FE0]"
-    >
-      Reservation created! Redirecting to your reservations…
-    </div>
-
-    <!-- Main form -->
-    <div v-else class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Left: form -->
-      <div class="lg:col-span-2 space-y-6">
-        <!-- Vehicle summary -->
-        <article
-          class="overflow-hidden rounded-2xl border border-[#E5E7EB] p-4 flex gap-4 items-center"
-        >
-          <div
-            class="h-16 w-16 shrink-0 rounded-xl bg-gradient-to-br from-[#1A2036] to-[#3D5FE0]"
-          ></div>
-          <div>
-            <p class="text-lg font-bold text-[#1A2036]">
-              {{ vehicle.name }}
-            </p>
-            <p class="text-sm text-[#6B7280]">
-              ${{ Number(vehicle.price ?? 0).toFixed(2) }} / day
-            </p>
-          </div>
-        </article>
-
-        <!-- Dates -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label class="block">
-            <span class="text-xs font-semibold uppercase text-[#9CA3AF]"
-              >Pickup date</span
-            >
-            <input
-              v-model="form.pickupDate"
-              type="date"
-              :min="today"
-              class="mt-1 w-full rounded-full bg-[#F3F4F6] px-5 py-3.5 text-sm text-[#1A2036] outline-none"
-            />
-          </label>
-          <label class="block">
-            <span class="text-xs font-semibold uppercase text-[#9CA3AF]"
-              >Return date</span
-            >
-            <input
-              v-model="form.returnDate"
-              type="date"
-              :min="form.pickupDate || today"
-              class="mt-1 w-full rounded-full bg-[#F3F4F6] px-5 py-3.5 text-sm text-[#1A2036] outline-none"
-            />
-          </label>
+      <!-- Loading skeleton -->
+      <div v-if="loading" class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-4">
+          <div class="h-24 animate-pulse rounded-2xl" :style="{ backgroundColor: 'var(--color-border)' }"></div>
+          <div class="h-14 animate-pulse rounded-2xl" :style="{ backgroundColor: 'var(--color-border)' }"></div>
+          <div class="h-14 animate-pulse rounded-2xl" :style="{ backgroundColor: 'var(--color-border)' }"></div>
         </div>
-        <p
-          v-if="form.pickupDate && form.returnDate && !datesValid"
-          class="text-sm text-red-600"
-        >
-          Return date must be after pickup date.
-        </p>
-
-        <!-- Locations -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label class="block">
-            <span class="text-xs font-semibold uppercase text-[#9CA3AF]"
-              >Pickup location</span
-            >
-            <select
-              v-model="form.pickupLocationId"
-              class="mt-1 w-full rounded-full bg-[#F3F4F6] px-5 py-3.5 text-sm text-[#1A2036] outline-none"
-            >
-              <option value="" disabled>Select location</option>
-              <option v-for="loc in locations" :key="loc.id" :value="loc.id">
-                {{ loc.name }}
-              </option>
-            </select>
-          </label>
-          <label class="block">
-            <span class="text-xs font-semibold uppercase text-[#9CA3AF]"
-              >Return location</span
-            >
-            <select
-              v-model="form.returnLocationId"
-              class="mt-1 w-full rounded-full bg-[#F3F4F6] px-5 py-3.5 text-sm text-[#1A2036] outline-none"
-            >
-              <option value="" disabled>Select location</option>
-              <option v-for="loc in locations" :key="loc.id" :value="loc.id">
-                {{ loc.name }}
-              </option>
-            </select>
-          </label>
-        </div>
-
-        <!-- Additional services -->
-        <div v-if="services.length">
-          <span class="text-xs font-semibold uppercase text-[#9CA3AF]"
-            >Additional services</span
-          >
-          <div class="mt-2 flex flex-wrap gap-2">
-            <button
-              v-for="s in services"
-              :key="s.id"
-              type="button"
-              @click="toggleService(s.id)"
-              class="rounded-full px-4 py-2 text-xs font-semibold transition"
-              :class="
-                form.selectedServiceIds.includes(s.id)
-                  ? 'bg-[#3D5FE0] text-white'
-                  : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#F9FAFB]'
-              "
-            >
-              {{ s.name }} (+${{ Number(s.price).toFixed(2) }})
-            </button>
-          </div>
-        </div>
-
-        <!-- Discount code -->
-        <label class="block">
-          <span class="text-xs font-semibold uppercase text-[#9CA3AF]"
-            >Discount code (optional)</span
-          >
-          <input
-            v-model="form.discountCode"
-            type="text"
-            placeholder="e.g. SUMMER10"
-            class="mt-1 w-full rounded-full bg-[#F3F4F6] px-5 py-3.5 text-sm text-[#1A2036] placeholder:text-[#9CA3AF] outline-none"
-          />
-          <span
-            v-if="form.discountCode && !matchedDiscount"
-            class="mt-1 block text-xs text-[#9CA3AF]"
-          >
-            Code will be validated on submit.
-          </span>
-          <span
-            v-else-if="matchedDiscount"
-            class="mt-1 block text-xs text-[#22C55E]"
-          >
-            Discount applied.
-          </span>
-        </label>
-
-        <div
-          v-if="error"
-          class="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600"
-        >
-          {{ error }}
-        </div>
+        <div class="h-56 animate-pulse rounded-2xl" :style="{ backgroundColor: 'var(--color-border)' }"></div>
       </div>
 
-      <!-- Right: price breakdown -->
-      <aside class="lg:col-span-1">
-        <article
-          class="rounded-2xl border border-[#E5E7EB] p-5 sticky top-6 space-y-3"
-        >
-          <h2 class="text-lg font-bold text-[#1A2036]">Price summary</h2>
+      <!-- Error (no vehicle / load failure) -->
+      <div v-else-if="error && !vehicle" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">
+        {{ error }}
+      </div>
 
-          <div v-if="!breakdown" class="text-sm text-[#6B7280]">
-            Select your pickup and return dates to see pricing.
+      <!-- Success -->
+      <Transition name="fade">
+        <div v-if="success" class="mt-6 rounded-2xl px-4 py-3 text-sm font-medium" :style="{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }">
+          Reservation created! Redirecting to your reservations…
+        </div>
+      </Transition>
+
+      <!-- Main form -->
+      <div v-if="!loading && !success && vehicle" class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: form -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Vehicle summary -->
+          <article
+            class="overflow-hidden rounded-2xl border p-4 flex gap-4 items-center transition-shadow duration-200 hover:shadow-sm"
+            :style="{ borderColor: 'var(--color-border)' }"
+          >
+            <div class="h-16 w-16 shrink-0 rounded-xl" :style="{ background: `linear-gradient(135deg, var(--color-primary), var(--color-text))` }"></div>
+            <div>
+              <p class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">{{ vehicle.name }}</p>
+              <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">${{ Number(vehicle.price ?? 0).toFixed(2) }} / day</p>
+            </div>
+          </article>
+
+          <!-- Dates -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Pickup date</span>
+              <input
+                v-model="form.pickupDate" type="date" :min="today"
+                class="mt-1 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-shadow duration-200 focus:shadow-sm"
+                :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
+              />
+            </label>
+            <label class="block">
+              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Return date</span>
+              <input
+                v-model="form.returnDate" type="date" :min="form.pickupDate || today"
+                class="mt-1 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-shadow duration-200 focus:shadow-sm"
+                :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
+              />
+            </label>
+          </div>
+          <Transition name="fade">
+            <p v-if="form.pickupDate && form.returnDate && !datesValid" class="text-sm text-red-600">
+              Return date must be after pickup date.
+            </p>
+          </Transition>
+
+          <!-- Locations -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Pickup location</span>
+              <select
+                v-model="form.pickupLocationId"
+                class="mt-1 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-shadow duration-200 focus:shadow-sm"
+                :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
+              >
+                <option value="" disabled>Select location</option>
+                <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Return location</span>
+              <select
+                v-model="form.returnLocationId"
+                class="mt-1 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-shadow duration-200 focus:shadow-sm"
+                :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
+              >
+                <option value="" disabled>Select location</option>
+                <option v-for="loc in locations" :key="loc.id" :value="loc.id">{{ loc.name }}</option>
+              </select>
+            </label>
           </div>
 
-          <template v-else>
-            <div class="flex justify-between text-sm text-[#6B7280]">
-              <span>Rental ({{ breakdown.days }} day{{ breakdown.days > 1 ? "s" : "" }})</span>
-              <span>${{ breakdown.rentalTotal.toFixed(2) }}</span>
+          <!-- Additional services -->
+          <div v-if="services.length">
+            <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Additional services</span>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <button
+                v-for="s in services" :key="s.id" type="button" @click="toggleService(s.id)"
+                class="rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 active:scale-95"
+                :style="form.selectedServiceIds.includes(s.id)
+                  ? { backgroundColor: 'var(--color-primary)', color: '#fff' }
+                  : { backgroundColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }"
+              >
+                {{ s.name }} (+${{ Number(s.price).toFixed(2) }})
+              </button>
             </div>
-            <div
-              v-if="breakdown.insuranceTotal"
-              class="flex justify-between text-sm text-[#6B7280]"
-            >
-              <span>Insurance</span>
-              <span>${{ breakdown.insuranceTotal.toFixed(2) }}</span>
-            </div>
-            <div
-              v-if="breakdown.servicesTotal"
-              class="flex justify-between text-sm text-[#6B7280]"
-            >
-              <span>Additional services</span>
-              <span>${{ breakdown.servicesTotal.toFixed(2) }}</span>
-            </div>
-            <div
-              v-if="breakdown.discountAmount"
-              class="flex justify-between text-sm text-[#22C55E]"
-            >
-              <span>Discount</span>
-              <span>-${{ breakdown.discountAmount.toFixed(2) }}</span>
-            </div>
-            <div
-              class="flex justify-between border-t border-[#E5E7EB] pt-3 text-base font-bold text-[#1A2036]"
-            >
-              <span>Total</span>
-              <span>${{ breakdown.grandTotal.toFixed(2) }}</span>
-            </div>
-          </template>
+          </div>
 
-          <button
-            type="button"
-            :disabled="!canSubmit"
-            @click="handleSubmit"
-            class="w-full rounded-full bg-[#3D5FE0] py-3.5 text-sm font-semibold text-white transition hover:bg-[#3350C0] disabled:cursor-not-allowed disabled:opacity-50"
+          <!-- Discount code -->
+          <label class="block">
+            <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Discount code (optional)</span>
+            <input
+              v-model="form.discountCode" type="text" placeholder="e.g. SUMMER10"
+              class="mt-1 w-full rounded-full px-5 py-3.5 text-sm outline-none transition-shadow duration-200 focus:shadow-sm"
+              :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
+            />
+            <Transition name="fade" mode="out-in">
+              <span v-if="form.discountCode && !matchedDiscount" key="pending" class="mt-1 block text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+                Code will be validated on submit.
+              </span>
+              <span v-else-if="matchedDiscount" key="ok" class="mt-1 block text-xs text-green-600">
+                Discount applied.
+              </span>
+            </Transition>
+          </label>
+
+          <Transition name="fade">
+            <div v-if="error" class="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">{{ error }}</div>
+          </Transition>
+        </div>
+
+        <!-- Right: price breakdown -->
+        <aside class="lg:col-span-1">
+          <article
+            class="rounded-2xl border p-5 sticky top-6 space-y-3 transition-shadow duration-200 hover:shadow-sm"
+            :style="{ borderColor: 'var(--color-border)' }"
           >
-            {{ submitting ? "Submitting…" : "Confirm reservation" }}
-          </button>
-        </article>
-      </aside>
+            <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">Price summary</h2>
+
+            <Transition name="fade" mode="out-in">
+              <div v-if="!breakdown" key="empty" class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+                Select your pickup and return dates to see pricing.
+              </div>
+
+              <div v-else key="filled" class="space-y-3">
+                <div class="flex justify-between text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+                  <span>Rental ({{ breakdown.days }} day{{ breakdown.days > 1 ? "s" : "" }})</span>
+                  <span>${{ breakdown.rentalTotal.toFixed(2) }}</span>
+                </div>
+                <div v-if="breakdown.insuranceTotal" class="flex justify-between text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+                  <span>Insurance</span>
+                  <span>${{ breakdown.insuranceTotal.toFixed(2) }}</span>
+                </div>
+                <div v-if="breakdown.servicesTotal" class="flex justify-between text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+                  <span>Additional services</span>
+                  <span>${{ breakdown.servicesTotal.toFixed(2) }}</span>
+                </div>
+                <div v-if="breakdown.discountAmount" class="flex justify-between text-sm text-green-600">
+                  <span>Discount</span>
+                  <span>-${{ breakdown.discountAmount.toFixed(2) }}</span>
+                </div>
+                <div class="flex justify-between border-t pt-3 text-base font-bold" :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }">
+                  <span>Total</span>
+                  <span>${{ breakdown.grandTotal.toFixed(2) }}</span>
+                </div>
+              </div>
+            </Transition>
+
+            <button
+              type="button" :disabled="!canSubmit" @click="handleSubmit"
+              class="w-full rounded-full py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none"
+              :style="{ backgroundColor: 'var(--color-primary)' }"
+            >
+              {{ submitting ? "Submitting…" : "Confirm reservation" }}
+            </button>
+          </article>
+        </aside>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-page-in { animation: page-in 0.35s ease-out; }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>

@@ -1,61 +1,75 @@
 <template>
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-3xl font-bold text-[#1A2036]">My Invoices</h1>
-    <p class="mt-1 text-sm text-[#6B7280]">Track payments for your rentals.</p>
+  <div class="min-h-screen transition-colors duration-300" :style="{ backgroundColor: 'var(--color-bg)' }">
+    <SiteHeader />
 
-    <!-- Loading -->
-    <div v-if="loading" class="mt-8 space-y-3">
-      <div v-for="i in 3" :key="i" class="h-24 animate-pulse rounded-2xl bg-[#F3F4F6]"></div>
-    </div>
+    <div class="mx-auto max-w-4xl animate-page-in px-4 py-6 sm:px-6 lg:px-8">
+      <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">My Invoices</h1>
+      <p class="mt-1 text-sm" :style="{ color: 'var(--color-text-secondary)' }">Track payments for your rentals.</p>
 
-    <!-- Error -->
-    <div v-else-if="errorMessage" class="mt-8 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
-      {{ errorMessage }}
-    </div>
+      <!-- Loading -->
+      <div v-if="loading" class="mt-8 space-y-3">
+        <div v-for="i in 3" :key="i" class="h-24 animate-pulse rounded-2xl" :style="{ backgroundColor: 'var(--color-border)' }"></div>
+      </div>
 
-    <!-- Empty -->
-    <div v-else-if="invoices.length === 0" class="mt-16 text-center">
-      <p class="text-sm text-[#6B7280]">You don't have any invoices yet.</p>
-    </div>
+      <!-- Error -->
+      <div v-else-if="errorMessage" class="mt-8 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">
+        {{ errorMessage }}
+      </div>
 
-    <!-- List -->
-    <div v-else class="mt-8 space-y-4">
-      <article
-        v-for="invoice in invoices"
-        :key="invoice.id"
-        class="overflow-hidden rounded-2xl border border-[#E5E7EB] p-5 transition hover:border-[#3D5FE0]/40"
-      >
-        <div class="flex items-center justify-between gap-4">
-          <div>
-            <p class="text-xs font-semibold uppercase text-[#9CA3AF]">Invoice #{{ invoice.id }}</p>
-            <p class="mt-1 text-lg font-bold text-[#1A2036]">
-              {{ formatCurrency(invoice.total ?? invoice.totalAmount) }}
-            </p>
-            <p v-if="invoice.dueDate" class="mt-0.5 text-xs text-[#9CA3AF]">
-              Due {{ formatDate(invoice.dueDate) }}
-            </p>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <span :class="statusBadgeClass(invoice.status)">
-              {{ invoice.status }}
-            </span>
-            <RouterLink
-              :to="`/my-invoices/${invoice.id}`"
-              class="rounded-full bg-[#3D5FE0] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#3350C0]"
-            >
-              View
-            </RouterLink>
-          </div>
+      <!-- Empty -->
+      <div v-else-if="invoices.length === 0" class="mt-16 flex flex-col items-center text-center">
+        <div class="flex h-14 w-14 items-center justify-center rounded-full transition-transform duration-300 hover:scale-105" :style="{ backgroundColor: 'var(--color-primary-light)' }">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-6 w-6" :style="{ color: 'var(--color-primary)' }">
+            <path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M6 3h9l3 3v15H6V3Zm3 6h6M9 12h6M9 15h4"/>
+          </svg>
         </div>
-      </article>
+        <p class="mt-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">You don't have any invoices yet.</p>
+      </div>
+
+      <!-- List -->
+      <TransitionGroup v-else tag="div" name="card" class="mt-8 space-y-4">
+        <article
+          v-for="invoice in invoices" :key="invoice.id"
+          class="overflow-hidden rounded-2xl border p-5 transition-all duration-200 hover:shadow-sm"
+          :style="{ borderColor: 'var(--color-border)' }"
+        >
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">Invoice #{{ invoice.id }}</p>
+              <p class="mt-1 text-lg font-bold" :style="{ color: 'var(--color-text)' }">
+                {{ formatCurrency(invoice.total ?? invoice.totalAmount) }}
+              </p>
+              <p v-if="invoice.dueDate" class="mt-0.5 text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+                Due {{ formatDate(invoice.dueDate) }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <span class="inline-block rounded-full px-3 py-1 text-xs font-semibold" :style="statusStyle(invoice.status)">
+                {{ invoice.status }}
+              </span>
+              <RouterLink
+                :to="`/my-invoices/${invoice.id}`"
+                class="rounded-full px-4 py-2 text-xs font-semibold text-white transition-all duration-200 hover:opacity-90 hover:shadow-sm active:scale-95"
+                :style="{ backgroundColor: 'var(--color-primary)' }"
+              >
+                View
+              </RouterLink>
+            </div>
+          </div>
+        </article>
+      </TransitionGroup>
     </div>
+
+    <SiteFooter />
   </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import invoicesApi from '@/services/invoices'
+import SiteHeader from '@/components/layout/SiteHeader.vue'
+import SiteFooter from '@/components/layout/SiteFooter.vue'
 
 const invoices = ref([])
 const loading = ref(true)
@@ -71,18 +85,15 @@ function formatDate(value) {
   return new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-// NOTE: confirm exact enum values against InvoiceStatusEnum on the backend
-// (AGENTS.md lists it under backend enums but doesn't spell out the values).
-function statusBadgeClass(status) {
-  const base = 'inline-block rounded-full px-3 py-1 text-xs font-semibold'
+function statusStyle(status) {
   switch ((status || '').toUpperCase()) {
     case 'PAID':
-      return `${base} bg-green-100 text-green-700`
+      return { backgroundColor: 'rgba(34,197,94,0.12)', color: '#22C55E' }
     case 'OVERDUE':
-      return `${base} bg-red-100 text-red-600`
+      return { backgroundColor: 'rgba(239,68,68,0.12)', color: '#EF4444' }
     case 'PENDING':
     default:
-      return `${base} bg-yellow-100 text-yellow-700`
+      return { backgroundColor: 'rgba(234,179,8,0.14)', color: '#CA8A04' }
   }
 }
 
@@ -97,3 +108,11 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+@keyframes page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-page-in { animation: page-in 0.35s ease-out; }
+.card-enter-active { transition: opacity 0.35s ease, transform 0.35s ease; }
+.card-enter-from { opacity: 0; transform: translateY(16px); }
+.card-move { transition: transform 0.3s ease; }
+</style>

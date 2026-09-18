@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { getMyReservations, cancelReservation } from "@/services/reservations";
+import SiteHeader from "@/components/layout/SiteHeader.vue";
 
 const router = useRouter();
 
@@ -10,17 +11,22 @@ const loading = ref(true);
 const error = ref("");
 const cancellingId = ref(null);
 
-// Status -> badge color mapping (ReservationStatusEnum values from backend)
-const STATUS_STYLES = {
-  PENDING: "bg-[#F3F4F6] text-[#6B7280]",
-  CONFIRMED: "bg-[#E9EDFB] text-[#3D5FE0]",
-  CANCELLED: "bg-red-50 text-red-600",
-  COMPLETED: "bg-green-50 text-[#22C55E]",
-  EXPIRED: "bg-[#F3F4F6] text-[#9CA3AF]",
-};
-
-function statusClass(status) {
-  return STATUS_STYLES[status] || "bg-[#F3F4F6] text-[#6B7280]";
+// Status -> style mapping using theme tokens (not hardcoded hex) so this
+// respects dark/light mode and any future palette change automatically.
+function statusStyle(status) {
+  switch (status) {
+    case "CONFIRMED":
+      return { backgroundColor: "var(--color-primary-light)", color: "var(--color-primary)" };
+    case "CANCELLED":
+      return { backgroundColor: "rgba(239,68,68,0.1)", color: "#EF4444" };
+    case "COMPLETED":
+      return { backgroundColor: "rgba(34,197,94,0.1)", color: "#22C55E" };
+    case "EXPIRED":
+      return { backgroundColor: "var(--color-border)", color: "var(--color-text-secondary)" };
+    case "PENDING":
+    default:
+      return { backgroundColor: "var(--color-border)", color: "var(--color-text-secondary)" };
+  }
 }
 
 async function loadReservations() {
@@ -29,8 +35,7 @@ async function loadReservations() {
   try {
     reservations.value = await getMyReservations();
   } catch (e) {
-    error.value =
-      e?.response?.data?.message || "Failed to load your reservations.";
+    error.value = e?.response?.data?.message || "Failed to load your reservations.";
   } finally {
     loading.value = false;
   }
@@ -39,14 +44,10 @@ async function loadReservations() {
 onMounted(loadReservations);
 
 const upcoming = computed(() =>
-  reservations.value.filter(
-    (r) => r.status !== "CANCELLED" && r.status !== "COMPLETED"
-  )
+  reservations.value.filter((r) => r.status !== "CANCELLED" && r.status !== "COMPLETED")
 );
 const past = computed(() =>
-  reservations.value.filter(
-    (r) => r.status === "CANCELLED" || r.status === "COMPLETED"
-  )
+  reservations.value.filter((r) => r.status === "CANCELLED" || r.status === "COMPLETED")
 );
 
 function canCancel(r) {
@@ -59,14 +60,10 @@ async function handleCancel(id) {
     const updated = await cancelReservation(id);
     const idx = reservations.value.findIndex((r) => r.id === id);
     if (idx !== -1) {
-      reservations.value[idx] = updated ?? {
-        ...reservations.value[idx],
-        status: "CANCELLED",
-      };
+      reservations.value[idx] = updated ?? { ...reservations.value[idx], status: "CANCELLED" };
     }
   } catch (e) {
-    error.value =
-      e?.response?.data?.message || "Could not cancel this reservation.";
+    error.value = e?.response?.data?.message || "Could not cancel this reservation.";
   } finally {
     cancellingId.value = null;
   }
@@ -74,11 +71,7 @@ async function handleCancel(id) {
 
 function formatDate(d) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
 function vehicleLabel(r) {
@@ -89,140 +82,137 @@ function vehicleLabel(r) {
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-[#1A2036]">My Reservations</h1>
-      <button
-        type="button"
-        @click="router.push('/explore')"
-        class="rounded-full bg-[#3D5FE0] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3350C0]"
-      >
-        Browse vehicles
-      </button>
-    </div>
+  <div class="min-h-screen transition-colors duration-300" :style="{ backgroundColor: 'var(--color-bg)' }">
+    <SiteHeader />
 
-    <!-- Loading -->
-    <div v-if="loading" class="mt-8 text-sm text-[#6B7280]">
-      Loading your reservations…
-    </div>
-
-    <!-- Error -->
-    <div
-      v-else-if="error && !reservations.length"
-      class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600"
-    >
-      {{ error }}
-    </div>
-
-    <!-- Empty -->
-    <div
-      v-else-if="!reservations.length"
-      class="mt-12 flex flex-col items-center text-center"
-    >
-      <p class="text-sm text-[#6B7280]">
-        You don't have any reservations yet.
-      </p>
-      <button
-        type="button"
-        @click="router.push('/explore')"
-        class="mt-4 rounded-full bg-[#3D5FE0] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#3350C0]"
-      >
-        Find a vehicle to rent
-      </button>
-    </div>
-
-    <!-- Reservation lists -->
-    <template v-else>
-      <div
-        v-if="error"
-        class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600"
-      >
-        {{ error }}
+    <div class="mx-auto max-w-6xl animate-page-in px-4 py-6 sm:px-6 lg:px-8">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">My Reservations</h1>
+        <button
+          type="button"
+          @click="router.push('/explore')"
+          class="rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:shadow-md active:scale-95"
+          :style="{ backgroundColor: 'var(--color-primary)' }"
+        >
+          Browse vehicles
+        </button>
       </div>
 
-      <section v-if="upcoming.length" class="mt-8">
-        <h2 class="text-lg font-bold text-[#1A2036]">Upcoming</h2>
-        <div class="mt-4 space-y-4">
-          <article
-            v-for="r in upcoming"
-            :key="r.id"
-            class="rounded-2xl border border-[#E5E7EB] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-          >
-            <div class="flex items-center gap-4">
-              <div
-                class="h-12 w-12 shrink-0 rounded-xl bg-gradient-to-br from-[#1A2036] to-[#3D5FE0]"
-              ></div>
-              <div>
-                <p class="text-sm font-semibold text-[#1A2036]">
-                  {{ vehicleLabel(r) }}
-                </p>
-                <p class="text-xs text-[#6B7280] mt-0.5">
-                  {{ formatDate(r.pickupDate) }} → {{ formatDate(r.returnDate) }}
-                </p>
-                <p class="text-xs text-[#6B7280]">
-                  {{ r.pickupLocation?.name ?? "Pickup location" }} →
-                  {{ r.returnLocation?.name ?? "Return location" }}
-                </p>
-              </div>
-            </div>
+      <!-- Loading skeleton -->
+      <div v-if="loading" class="mt-8 space-y-4">
+        <div v-for="i in 3" :key="i" class="h-24 animate-pulse rounded-2xl" :style="{ backgroundColor: 'var(--color-border)' }"></div>
+      </div>
 
-            <div class="flex items-center gap-3">
-              <span
-                class="inline-block rounded-full px-3 py-1 text-xs font-semibold"
-                :class="statusClass(r.status)"
-              >
+      <!-- Error (nothing loaded) -->
+      <div v-else-if="error && !reservations.length" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">
+        {{ error }}
+        <button type="button" class="ml-2 font-semibold underline" @click="loadReservations">Try again</button>
+      </div>
+
+      <!-- Empty -->
+      <div v-else-if="!reservations.length" class="mt-16 flex flex-col items-center text-center">
+        <div class="flex h-14 w-14 items-center justify-center rounded-full transition-transform duration-300 hover:scale-105" :style="{ backgroundColor: 'var(--color-primary-light)' }">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-6 w-6" :style="{ color: 'var(--color-primary)' }">
+            <path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 7h14a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/>
+          </svg>
+        </div>
+        <p class="mt-4 text-sm" :style="{ color: 'var(--color-text-secondary)' }">You don't have any reservations yet.</p>
+        <button
+          type="button" @click="router.push('/explore')"
+          class="mt-4 rounded-full px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:shadow-md active:scale-95"
+          :style="{ backgroundColor: 'var(--color-primary)' }"
+        >
+          Find a vehicle to rent
+        </button>
+      </div>
+
+      <!-- Lists -->
+      <template v-else>
+        <Transition name="fade">
+          <div v-if="error" class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40">{{ error }}</div>
+        </Transition>
+
+        <section v-if="upcoming.length" class="mt-8">
+          <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">Upcoming</h2>
+          <TransitionGroup tag="div" name="card" class="mt-4 space-y-4">
+            <article
+              v-for="r in upcoming" :key="r.id"
+              class="rounded-2xl border p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-shadow duration-200 hover:shadow-sm"
+              :style="{ borderColor: 'var(--color-border)' }"
+            >
+              <div class="flex items-center gap-4">
+                <div class="h-12 w-12 shrink-0 rounded-xl" :style="{ background: `linear-gradient(135deg, var(--color-primary), var(--color-text))` }"></div>
+                <div>
+                  <p class="text-sm font-semibold" :style="{ color: 'var(--color-text)' }">{{ vehicleLabel(r) }}</p>
+                  <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
+                    {{ formatDate(r.pickupDate) }} → {{ formatDate(r.returnDate) }}
+                  </p>
+                  <p class="text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+                    {{ r.pickupLocation?.name ?? "Pickup location" }} → {{ r.returnLocation?.name ?? "Return location" }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="inline-block rounded-full px-3 py-1 text-xs font-semibold" :style="statusStyle(r.status)">
+                  {{ r.status }}
+                </span>
+                <span v-if="r.totalPrice != null" class="text-sm font-semibold" :style="{ color: 'var(--color-text)' }">
+                  ${{ Number(r.totalPrice).toFixed(2) }}
+                </span>
+                <button
+                  v-if="canCancel(r)" type="button" :disabled="cancellingId === r.id"
+                  @click="handleCancel(r.id)"
+                  class="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition-all duration-200 hover:bg-red-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {{ cancellingId === r.id ? "Cancelling…" : "Cancel" }}
+                </button>
+              </div>
+            </article>
+          </TransitionGroup>
+        </section>
+
+        <section v-if="past.length" class="mt-10">
+          <h2 class="text-lg font-bold" :style="{ color: 'var(--color-text)' }">Past</h2>
+          <div class="mt-4 space-y-4">
+            <article
+              v-for="r in past" :key="r.id"
+              class="rounded-2xl border p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 opacity-80 transition-opacity duration-200 hover:opacity-100"
+              :style="{ borderColor: 'var(--color-border)' }"
+            >
+              <div class="flex items-center gap-4">
+                <div class="h-12 w-12 shrink-0 rounded-xl" :style="{ background: `linear-gradient(135deg, var(--color-primary), var(--color-text))` }"></div>
+                <div>
+                  <p class="text-sm font-semibold" :style="{ color: 'var(--color-text)' }">{{ vehicleLabel(r) }}</p>
+                  <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
+                    {{ formatDate(r.pickupDate) }} → {{ formatDate(r.returnDate) }}
+                  </p>
+                </div>
+              </div>
+              <span class="inline-block w-fit rounded-full px-3 py-1 text-xs font-semibold" :style="statusStyle(r.status)">
                 {{ r.status }}
               </span>
-              <span
-                v-if="r.totalPrice != null"
-                class="text-sm font-semibold text-[#1A2036]"
-              >
-                ${{ Number(r.totalPrice).toFixed(2) }}
-              </span>
-              <button
-                v-if="canCancel(r)"
-                type="button"
-                :disabled="cancellingId === r.id"
-                @click="handleCancel(r.id)"
-                class="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {{ cancellingId === r.id ? "Cancelling…" : "Cancel" }}
-              </button>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section v-if="past.length" class="mt-10">
-        <h2 class="text-lg font-bold text-[#1A2036]">Past</h2>
-        <div class="mt-4 space-y-4">
-          <article
-            v-for="r in past"
-            :key="r.id"
-            class="rounded-2xl border border-[#E5E7EB] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 opacity-80"
-          >
-            <div class="flex items-center gap-4">
-              <div
-                class="h-12 w-12 shrink-0 rounded-xl bg-gradient-to-br from-[#1A2036] to-[#3D5FE0]"
-              ></div>
-              <div>
-                <p class="text-sm font-semibold text-[#1A2036]">
-                  {{ vehicleLabel(r) }}
-                </p>
-                <p class="text-xs text-[#6B7280] mt-0.5">
-                  {{ formatDate(r.pickupDate) }} → {{ formatDate(r.returnDate) }}
-                </p>
-              </div>
-            </div>
-            <span
-              class="inline-block rounded-full px-3 py-1 text-xs font-semibold"
-              :class="statusClass(r.status)"
-            >
-              {{ r.status }}
-            </span>
-          </article>
-        </div>
-      </section>
-    </template>
+            </article>
+          </div>
+        </section>
+      </template>
+    </div>
   </div>
 </template>
+
+<style scoped>
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-page-in { animation: page-in 0.35s ease-out; }
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.card-enter-active { transition: opacity 0.35s ease, transform 0.35s ease; }
+.card-enter-from { opacity: 0; transform: translateY(16px); }
+.card-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; position: absolute; }
+.card-leave-to { opacity: 0; transform: scale(0.95); }
+.card-move { transition: transform 0.3s ease; }
+</style>
