@@ -68,20 +68,63 @@
 
         <NotificationBell v-if="isAuthenticated()" />
 
-        <RouterLink
-          v-if="isAuthenticated()"
-          to="/profile"
-          class="ml-1 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full text-sm font-semibold ring-2 ring-transparent transition-all duration-200 hover:scale-110 hover:ring-[var(--color-primary)]"
-          :style="{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }"
-        >
-          <img
-            v-if="state.user?.profilePicture"
-            :src="state.user.profilePicture"
-            alt=""
-            class="h-full w-full object-cover"
-          />
-          <span v-else>{{ initials }}</span>
-        </RouterLink>
+        <!-- Avatar + dropdown menu (Profile / Log out) -->
+        <div v-if="isAuthenticated()" ref="userMenuRef" class="relative ml-1">
+          <button
+            type="button"
+            class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full text-sm font-semibold ring-2 ring-transparent transition-all duration-200 hover:scale-110 hover:ring-[var(--color-primary)]"
+            :style="{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }"
+            aria-haspopup="menu"
+            :aria-expanded="userMenuOpen"
+            :aria-label="$t('profile.title')"
+            @click="userMenuOpen = !userMenuOpen"
+          >
+            <img
+              v-if="state.user?.profilePicture"
+              :src="state.user.profilePicture"
+              alt=""
+              class="h-full w-full object-cover"
+            />
+            <span v-else>{{ initials }}</span>
+          </button>
+
+          <Transition name="menu">
+            <div
+              v-if="userMenuOpen"
+              role="menu"
+              class="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-2xl border p-2 shadow-lg"
+              :style="{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }"
+            >
+              <p
+                v-if="state.user?.email"
+                class="truncate px-3 py-2 text-xs"
+                :style="{ color: 'var(--color-text-secondary)' }"
+              >
+                {{ state.user.email }}
+              </p>
+
+              <RouterLink
+                to="/profile"
+                role="menuitem"
+                class="block rounded-xl px-3 py-2 text-sm font-semibold transition-colors duration-150 hover:bg-[var(--color-primary-light)]"
+                :style="{ color: 'var(--color-text)' }"
+                @click="userMenuOpen = false"
+              >
+                {{ $t('profile.title') }}
+              </RouterLink>
+
+              <button
+                type="button"
+                role="menuitem"
+                class="mt-1 block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 transition-colors duration-150 hover:bg-red-50"
+                @click="onLogout"
+              >
+                {{ $t('profile.logout') }}
+              </button>
+            </div>
+          </Transition>
+        </div>
+
         <template v-else>
           <RouterLink
             to="/login"
@@ -155,7 +198,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import useAuthStore from '@/stores/auth.store'
 import useSiteSettingsStore from '@/stores/siteSettings.store'
 import ThemeToggle from '@/components/common/ThemeToggle.vue'
@@ -163,11 +206,40 @@ import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import NotificationBell from '@/components/layout/NotificationBell.vue'
 
 const route = useRoute()
+const router = useRouter()
 const { t } = useI18n()
-const { state, isAuthenticated } = useAuthStore()
+const { state, isAuthenticated, logout } = useAuthStore()
 const { state: siteSettings } = useSiteSettingsStore()
 
 const menuOpen = ref(false)
+
+// ----- Avatar dropdown -----
+const userMenuOpen = ref(false)
+const userMenuRef = ref(null)
+
+// Close the dropdown when clicking anywhere outside of it.
+function onDocumentClick(e) {
+  if (userMenuOpen.value && userMenuRef.value && !userMenuRef.value.contains(e.target)) {
+    userMenuOpen.value = false
+  }
+}
+// ...or when pressing Escape.
+function onKeydown(e) {
+  if (e.key === 'Escape') userMenuOpen.value = false
+}
+
+// `await` works whether logout() is sync or async. `finally` makes sure the
+// user is always sent to /login, even if something fails.
+async function onLogout() {
+  userMenuOpen.value = false
+  if (!window.confirm(t('profile.logoutConfirm'))) return
+  menuOpen.value = false
+  try {
+    await logout()
+  } finally {
+    router.push('/login')
+  }
+}
 
 // NEW: shrinks header height + adds a shadow once the page is scrolled,
 // so the header feels alive rather than a static bar.
@@ -175,8 +247,17 @@ const scrolled = ref(false)
 function onScroll() {
   scrolled.value = window.scrollY > 8
 }
-onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
-onUnmounted(() => window.removeEventListener('scroll', onScroll))
+
+onMounted(() => {
+  window.addEventListener('scroll', onScroll, { passive: true })
+  document.addEventListener('click', onDocumentClick)
+  document.addEventListener('keydown', onKeydown)
+})
+onUnmounted(() => {
+  window.removeEventListener('scroll', onScroll)
+  document.removeEventListener('click', onDocumentClick)
+  document.removeEventListener('keydown', onKeydown)
+})
 
 const links = computed(() => [
   { to: '/', label: t('nav.home') },
@@ -207,6 +288,15 @@ const initials = computed(() => (state.user?.email?.slice(0, 2) ?? '??').toUpper
   opacity: 1;
   transform: translateY(0);
   max-height: 400px;
+}
+
+/* Avatar dropdown */
+.menu-enter-active, .menu-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.menu-enter-from, .menu-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
 }
 
 @keyframes slideIn {
