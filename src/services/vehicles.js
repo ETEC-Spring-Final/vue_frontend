@@ -3,8 +3,9 @@
 | File: services/vehicles.js
 |--------------------------------------------------------------------------
 |
-| Vehicle + favorites + reviews HTTP calls, per Agent Guide §2 API reference:
+| Vehicle + favorites + reviews HTTP calls.
 |   GET    /api/vehicles                          Public — list all vehicles
+|          (?brandId=&type=&transmission=&fuelType=&minPrice=&maxPrice=&seats=)
 |   GET    /api/vehicles/{id}                     Public — get one vehicle
 |   GET    /api/vehicle-images/{id}                Public — images for a vehicle
 |   GET    /api/reviews/vehicle/{id}?page=&size=  Public — paginated reviews
@@ -12,22 +13,34 @@
 |   POST   /api/favorites/{vehicleId}              JWT — add to favorites
 |   DELETE /api/favorites/{vehicleId}              JWT — remove from favorites
 |
-| Field names below (brand, model, type, pricePerDay, transmission, fuel,
-| seats, year, color, mileage, status) are best-guess from the Agent
-| Guide's page specs — the guide doesn't paste the exact response DTOs.
-| Adjust `normalizeVehicle()` / `normalizeReview()` if the real response
-| uses different keys.
+| FIX (2026-09): field names below now match the real VehicleResponseDTO /
+| VehicleImageResponseDTO from the backend (brandName, yearOfManufacture,
+| mileAge, nested attachment) — previously mismatched keys (brand, year,
+| mileage, flat image url) silently produced blank/undefined values with
+| no console error.
 |
 */
 
 import api from '@/services/api'
 
 export function fetchVehicles(params = {}) {
+  // params: { brandId, type, transmission, fuelType, minPrice, maxPrice, seats }
   return api.get('/vehicles', { params })
+}
+
+export function fetchVehiclesByBrand(brandId) {
+  return api.get('/vehicles', { params: { brandId } })
 }
 
 export function fetchVehicleById(id) {
   return api.get(`/vehicles/${id}`)
+}
+
+// GET /api/vehicles/{id}/booked-dates
+// Date windows already reserved for a vehicle (powers the "unavailable"
+// hints on the booking form + client-side overlap check). Public.
+export function fetchBookedDates(vehicleId) {
+  return api.get(`/vehicles/${vehicleId}/booked-dates`)
 }
 
 export function fetchVehicleImages(vehicleId) {
@@ -54,12 +67,12 @@ export function removeFavorite(vehicleId) {
 export function normalizeVehicle(v) {
   return {
     id: v.id,
-    name: [v.brand, v.model].filter(Boolean).join(' ') || v.name || 'Vehicle',
-    brand: v.brand,
+    name: [v.brandName, v.model].filter(Boolean).join(' ') || v.name || 'Vehicle',
+    brand: v.brandName,
     type: v.type ?? v.carType ?? '—',
     price: v.pricePerDay ?? v.dailyRate ?? v.price ?? 0,
     transmission: v.transmission ?? '—',
-    fuel: v.fuel ?? v.fuelType ?? '—',
+    fuel: v.fuelType ?? v.fuel ?? '—',
     seats: v.seats ?? v.seatCount ?? '—',
     favorite: false,
   }
@@ -71,16 +84,21 @@ export function normalizeVehicle(v) {
 export function normalizeVehicleDetail(v) {
   return {
     ...normalizeVehicle(v),
-    year: v.year ?? '—',
+    year: v.yearOfManufacture ?? '—',
     color: v.color ?? '—',
-    mileage: v.mileage ?? v.odometer ?? null,
+    doors: v.doors ?? null,
+    luggages: v.luggages ?? null,
+    mileage: v.mileAge ?? null,
     status: v.status ?? 'AVAILABLE',
     licensePlate: v.licensePlate ?? v.plateNumber ?? '',
   }
 }
 
+// VehicleImageResponseDTO shape: { id, vehicleId, attachment: {...} }
+// The URL lives inside `attachment`, not on the image record itself.
 export function normalizeImage(img) {
-  return img.url ?? img.imageUrl ?? img.path ?? null
+  const a = img.attachment ?? img
+  return a.fileUrl ?? a.url ?? a.imageUrl ?? a.path ?? null
 }
 
 export function normalizeReview(r) {

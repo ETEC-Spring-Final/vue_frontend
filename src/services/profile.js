@@ -1,3 +1,6 @@
+// TODO: duplicated with services/profile.service.js (used by AdminProfile.vue).
+// Merge into one file when doing full Customer Profile feature work
+// (also missing: changePassword — see profile.service.js's changeMyPassword).
 import api from '@/services/api'
 
 export default {

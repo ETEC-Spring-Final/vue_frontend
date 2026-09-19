@@ -1,8 +1,10 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import useAuthStore from "@/stores/auth.store";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { login, defaultRedirect } = useAuthStore();
@@ -30,11 +32,11 @@ function decodeJwtPayload(token) {
   return JSON.parse(json);
 }
 
-onMounted(() => {
+onMounted(async () => {
   const token = route.query.token;
 
   if (!token || typeof token !== "string") {
-    error.value = "No token was returned from Google sign-in.";
+    error.value = t("auth.oauthNoToken");
     return;
   }
 
@@ -50,11 +52,10 @@ onMounted(() => {
       throw new Error("Token is missing expected claims (id/email/role).");
     }
 
-    login({ id, email, role, token });
+    await login({ id, email, role, token }); // login() now also fetches the profile — must await
     router.replace(defaultRedirect());
   } catch (e) {
-    error.value =
-      "Could not complete sign-in. Please try logging in again.";
+    error.value = t("auth.oauthFailed");
   }
 });
 </script>
@@ -62,19 +63,20 @@ onMounted(() => {
 <template>
   <div class="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
     <template v-if="error">
-      <div class="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+      <div class="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">
         {{ error }}
       </div>
       <button
         type="button"
-        class="mt-4 rounded-full bg-[#3D5FE0] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#3350C0]"
+        class="mt-4 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:opacity-90"
+        :style="{ backgroundColor: 'var(--color-primary)' }"
         @click="router.push('/login')"
       >
-        Back to login
+        {{ t('auth.backToLogin') }}
       </button>
     </template>
     <template v-else>
-      <p class="text-sm text-[#6B7280]">Signing you in…</p>
+      <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ t('auth.signingIn') }}</p>
     </template>
   </div>
 </template>

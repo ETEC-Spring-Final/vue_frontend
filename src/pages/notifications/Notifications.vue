@@ -1,30 +1,33 @@
 <template>
-  <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-3xl font-bold text-[#1A2036]">Notifications</h1>
+  <div class="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-bold" :style="{ color: 'var(--color-text)' }">{{ $t('notifications.title') }}</h1>
 
     <div v-if="loading" class="mt-6 space-y-3">
-      <div v-for="i in 4" :key="i" class="h-16 animate-pulse rounded-2xl bg-[#F3F4F6]"></div>
+      <div v-for="i in 4" :key="i" class="h-16 animate-pulse rounded-2xl" :style="{ backgroundColor: 'var(--color-border)' }"></div>
     </div>
 
-    <div v-else-if="notifications.length === 0" class="mt-16 text-center text-sm text-[#6B7280]">
-      You're all caught up — no notifications yet.
+    <div v-else-if="notifications.length === 0" class="mt-16 text-center text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+      {{ $t('notifications.empty') }}
     </div>
 
     <div v-else class="mt-6 space-y-3">
       <article
         v-for="n in notifications"
         :key="n.id"
-        class="rounded-2xl border border-[#E5E7EB] p-4"
-        :class="{ 'bg-[#E9EDFB]/40': !n.read }"
+        class="rounded-2xl border p-4"
+        :style="{
+          borderColor: 'var(--color-border)',
+          backgroundColor: n.read ? 'transparent' : 'color-mix(in srgb, var(--color-primary-light) 40%, transparent)',
+        }"
       >
         <div class="flex items-start justify-between gap-3">
           <div>
-            <p class="text-sm font-semibold text-[#1A2036]">{{ n.title || n.type }}</p>
-            <p class="mt-1 text-sm text-[#6B7280]">{{ n.message || n.content }}</p>
+            <p class="text-sm font-semibold" :style="{ color: 'var(--color-text)' }">{{ n.title || n.type }}</p>
+            <p class="mt-1 text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ n.message || n.content }}</p>
           </div>
-          <span v-if="!n.read" class="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#3D5FE0]"></span>
+          <span v-if="!n.read" class="mt-1 h-2 w-2 shrink-0 rounded-full" :style="{ backgroundColor: 'var(--color-primary)' }"></span>
         </div>
-        <p class="mt-2 text-xs text-[#9CA3AF]">{{ formatDate(n.createdAt) }}</p>
+        <p class="mt-2 text-xs" :style="{ color: 'var(--color-text-secondary)' }">{{ formatDate(n.createdAt) }}</p>
       </article>
     </div>
   </div>

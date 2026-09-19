@@ -27,24 +27,42 @@ export async function getRentalById(id) {
 
 /**
  * Upload a driver document for a rental (license, ID, etc).
- * POST /api/rental-documents/{rentalId}/upload  (multipart/form-data)
+ *
+ * FIX (Phase A): the backend removed the multipart endpoint this used to
+ * call — POST /rental-documents/{rentalId}/upload — see AGENTS.md §2.1/§2.6
+ * ("the active flow is Cloudinary-style ... local multipart upload is
+ * deprecated"). Calling it here 404'd every time a customer tried to
+ * upload a document. This now follows the same two-step attachment flow
+ * used by VehicleManagement.vue for vehicle images:
+ *
+ *   1. The caller uploads the raw file to Cloudinary (or whatever asset
+ *      host the app uses) FIRST, in the component, and gets back a public
+ *      `fileUrl`. This function does not touch the file/FormData at all —
+ *      it only knows about the already-hosted URL.
+ *   2. POST /api/attachments { fileUrl, documentType, isPrimary,
+ *      displayOrder } to register that URL and get back an attachmentId.
+ *   3. POST /api/rental-documents { rentalId, attachmentId } to link the
+ *      attachment to this rental.
+ *
  * @param {number|string} rentalId
- * @param {File} file
- * @param {string} [documentType]  optional, matches DocumentTypeEnum if the
- *   backend expects it as a form field alongside the file
- * @returns {Promise<Object>} uploaded document metadata
+ * @param {string} fileUrl  public URL of the already-uploaded file
+ * @param {string} [documentType]  matches DocumentTypeEnum, e.g. "LICENSE" | "ID_CARD"
+ * @returns {Promise<Object>} the created rental-document record
  */
-export async function uploadRentalDocument(rentalId, file, documentType) {
-  const formData = new FormData();
-  formData.append("file", file);
-  if (documentType) formData.append("documentType", documentType);
+export async function uploadRentalDocument(rentalId, fileUrl, documentType) {
+  const { data: attachment } = await api.post("/attachments", {
+    fileUrl,
+    documentType,
+    isPrimary: true,
+    displayOrder: 0,
+  });
 
-  const { data } = await api.post(
-    `/rental-documents/${rentalId}/upload`,
-    formData,
-    { headers: { "Content-Type": "multipart/form-data" } }
-  );
-  return data;
+  const { data: rentalDocument } = await api.post("/rental-documents", {
+    rentalId,
+    attachmentId: attachment.id,
+  });
+
+  return rentalDocument;
 }
 
 /**

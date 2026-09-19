@@ -94,12 +94,20 @@ export async function getServices() {
 }
 
 /**
- * List available discounts (public, so the form can show applicable codes).
- * GET /api/discounts
+ * List discounts a customer can actually apply right now.
+ *
+ * FIX (Phase A): this used to call GET /api/discounts, which is the full
+ * admin list — SecurityConfig only ever permitted it at the URL level, so
+ * nothing stopped it from 403'ing once DiscountController got its
+ * @PreAuthorize("hasAnyRole('ADMIN','MANAGER')") added (see AGENTS.md
+ * §2.7 item 4). The backend now exposes GET /api/discounts/active
+ * specifically for this case: it's open to any signed-in user and already
+ * filters out expired/exhausted codes server-side, so the booking form
+ * doesn't need to re-check validity windows itself.
  * @returns {Promise<Array>}
  */
 export async function getDiscounts() {
-  const { data } = await api.get("/discounts");
+  const { data } = await api.get("/discounts/active");
   return data;
 }
 

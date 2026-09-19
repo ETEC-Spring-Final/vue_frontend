@@ -1,5 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@100..700&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  font-family: 'Inter', 'Noto Sans Khmer', sans-serif;
+}
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-bg: #F6F7FA;
+  --color-surface: #FFFFFF;
+  --color-border: #E3E7EF;
+  --color-text: #101728;
+  --color-text-secondary: #5B6478;
+  --color-primary: #24467E;
+  --color-primary-hover: #1A3665;
+  --color-primary-light: #E7EBF5;
+}
+
+.dark {
+  --color-bg: #0A1220;
+  --color-surface: #111B2E;
+  --color-border: #223252;
+  --color-text: #ECF1F9;
+  --color-text-secondary: #93A1BC;
+  --color-primary: #6C8FE0;
+  --color-primary-hover: #85A3EC;
+  --color-primary-light: #1B2A4A;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
 
 @layer base {
   :root {

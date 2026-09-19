@@ -1,21 +1,37 @@
 <template>
-  <div class="min-h-screen bg-white">
-    <div class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+  <div class="min-h-screen transition-colors duration-300" :style="{ backgroundColor: 'var(--color-bg)' }">
+    <SiteHeader />
 
-      <h1 class="text-xl font-bold text-[#1A2036] sm:text-2xl">Explore vehicles</h1>
+    <div class="mx-auto max-w-6xl animate-page-in px-4 py-6 sm:px-6 lg:px-8">
+
+      <h1 class="text-xl font-bold sm:text-2xl" :style="{ color: 'var(--color-text)' }">{{ $t('explore.title') }}</h1>
+      <p class="mt-1 text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('explore.subtitle') }}</p>
 
       <!-- Search -->
-      <div class="mt-4 flex items-center gap-3 rounded-full bg-[#F3F4F6] px-5 py-3.5">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0 text-[#9CA3AF]">
+      <div
+        class="mt-4 flex items-center gap-3 rounded-full px-5 py-3.5 transition-all duration-200 focus-within:shadow-sm"
+        :style="{ backgroundColor: 'var(--color-border)' }"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0" :style="{ color: 'var(--color-text-secondary)' }">
           <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
           <path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="m20 20-3.5-3.5"/>
         </svg>
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search cars or brands…"
-          class="w-full bg-transparent text-sm text-[#1A2036] placeholder:text-[#9CA3AF] outline-none"
+          :placeholder="$t('explore.searchPlaceholder')"
+          class="w-full bg-transparent text-sm outline-none"
+          :style="{ color: 'var(--color-text)' }"
         />
+        <button
+          v-if="searchQuery"
+          type="button"
+          class="shrink-0 text-xs font-semibold transition-opacity hover:opacity-70"
+          :style="{ color: 'var(--color-text-secondary)' }"
+          @click="searchQuery = ''"
+        >
+          ✕
+        </button>
       </div>
 
       <!-- Type filter -->
@@ -24,70 +40,78 @@
           v-for="type in types"
           :key="type"
           type="button"
-          class="shrink-0 rounded-full border px-5 py-2 text-sm font-semibold transition"
-          :class="activeType === type
-            ? 'border-[#3D5FE0] bg-[#3D5FE0] text-white'
-            : 'border-[#E5E7EB] bg-white text-[#1A2036] hover:bg-[#F9FAFB]'"
+          class="shrink-0 rounded-full border px-5 py-2 text-sm font-semibold transition-all duration-200 active:scale-95"
+          :style="activeType === type
+            ? { borderColor: 'var(--color-primary)', backgroundColor: 'var(--color-primary)', color: '#fff' }
+            : { borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }"
           @click="activeType = type"
         >
-          {{ type }}
+          {{ type === 'All' ? $t('explore.allTypes') : type }}
         </button>
       </div>
 
       <!-- Loading -->
       <div v-if="loading" class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <div v-for="n in 6" :key="n" class="h-64 animate-pulse rounded-2xl bg-[#F3F4F6]"></div>
+        <div v-for="n in 6" :key="n" class="h-64 animate-pulse rounded-2xl" :style="{ backgroundColor: 'var(--color-border)' }"></div>
       </div>
 
       <!-- Error -->
-      <div v-else-if="loadError" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+      <div v-else-if="loadError" class="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">
         {{ loadError }}
-        <button type="button" class="ml-2 font-semibold underline" @click="loadVehicles">Try again</button>
+        <button type="button" class="ml-2 font-semibold underline" @click="loadVehicles">{{ $t('explore.tryAgain') }}</button>
       </div>
 
       <!-- Empty -->
-      <div v-else-if="filteredVehicles.length === 0" class="mt-6 rounded-2xl border border-dashed border-[#E5E7EB] px-4 py-10 text-center text-sm text-[#6B7280]">
-        <template v-if="searchQuery || activeType !== 'All'">
-          No vehicles match {{ searchQuery ? `"${searchQuery}"` : `"${activeType}"` }}. Try a different search or filter.
-        </template>
-        <template v-else>
-          No vehicles available yet — check back soon.
-        </template>
+      <div v-else-if="filteredVehicles.length === 0" class="mt-6 rounded-2xl border border-dashed px-4 py-10 text-center text-sm"
+        :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }">
+        <template v-if="searchQuery">{{ $t('explore.noResultsQuery', { query: searchQuery }) }}</template>
+        <template v-else-if="activeType !== 'All'">{{ $t('explore.noResultsType', { type: activeType }) }}</template>
+        <template v-else>{{ $t('explore.noVehiclesYet') }}</template>
       </div>
 
       <!-- Results -->
       <template v-else>
-        <p class="mt-6 text-sm text-[#6B7280]">{{ filteredVehicles.length }} vehicles found</p>
-        <div class="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <p class="mt-6 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+          {{ $t('explore.resultsFound', { count: filteredVehicles.length }) }}
+        </p>
+        <TransitionGroup tag="div" name="card" class="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <VehicleCard
-            v-for="vehicle in filteredVehicles"
+            v-for="(vehicle, i) in filteredVehicles"
             :key="vehicle.id"
             :vehicle="vehicle"
+            :style="{ transitionDelay: `${Math.min(i, 8) * 50}ms` }"
             @toggle-favorite="toggleFavorite"
             @rent="handleRentNow"
           />
-        </div>
+        </TransitionGroup>
       </template>
 
     </div>
+    <SiteFooter />
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import useAuthStore from '@/stores/auth.store'
+import SiteHeader from '@/components/layout/SiteHeader.vue'
+import SiteFooter from '@/components/layout/SiteFooter.vue'
 import VehicleCard from '@/components/vehicles/VehicleCard.vue'
 import {
   fetchVehicles,
   fetchMyFavorites,
+  fetchVehicleImages,
   addFavorite,
   removeFavorite,
   normalizeVehicle,
+  normalizeImage,
 } from '@/services/vehicles'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const { isAuthenticated } = useAuthStore()
 
 const vehicles = ref([])
@@ -130,6 +154,21 @@ async function loadVehicles() {
     const list = Array.isArray(data) ? data : (data?.content ?? [])
     vehicles.value = list.map(normalizeVehicle)
 
+    // GET /api/vehicles (list) doesn't include images — only
+    // GET /api/vehicle-images/{id} does, per vehicle. Fetch all covers in
+    // parallel; one failing image request never blocks the grid.
+    await Promise.all(
+      vehicles.value.map(async (v) => {
+        try {
+          const { data: imgData } = await fetchVehicleImages(v.id)
+          const imgList = Array.isArray(imgData) ? imgData : (imgData?.content ?? [])
+          v.image = imgList.map(normalizeImage).find(Boolean) ?? null
+        } catch {
+          v.image = null
+        }
+      })
+    )
+
     if (isAuthenticated()) {
       try {
         const { data: favData } = await fetchMyFavorites()
@@ -140,8 +179,7 @@ async function loadVehicles() {
       }
     }
   } catch (err) {
-    loadError.value =
-      err.response?.data?.message || 'Could not load vehicles. Please check your connection.'
+    loadError.value = err.response?.data?.message || t('explore.loadError')
   } finally {
     loading.value = false
   }
@@ -171,3 +209,24 @@ function handleRentNow(vehicle) {
   router.push(`/vehicles/${vehicle.id}`)
 }
 </script>
+
+<style scoped>
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-page-in {
+  animation: page-in 0.35s ease-out;
+}
+
+.card-enter-active {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.card-enter-from {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.card-move {
+  transition: transform 0.3s ease;
+}
+</style>

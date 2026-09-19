@@ -14,27 +14,28 @@
 
 <template>
   <!-- Centered container -->
-  <div class="min-h-screen flex items-center justify-center bg-white px-6">
+  <div class="flex min-h-screen items-center justify-center px-6" :style="{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }">
 
-    <div class="text-center max-w-md">
+    <div class="max-w-md text-center">
 
       <!-- Code -->
-      <h1 class="text-5xl font-semibold text-black">
+      <h1 class="text-5xl font-semibold" style="color: var(--color-text);">
         404
       </h1>
 
       <!-- Message -->
-      <p class="mt-4 text-gray-500 text-sm leading-relaxed">
-        Page not found. The route you are looking for does not exist.
+      <p class="mt-4 text-sm leading-relaxed" style="color: var(--color-text-secondary);">
+        {{ t('notFound.title') }} {{ t('notFound.message') }}
       </p>
 
       <!-- Action -->
       <div class="mt-6">
         <RouterLink
-          to="/preview"
-          class="text-sm font-medium text-black hover:underline underline-offset-4"
+          to="/home"
+          class="text-sm font-medium underline-offset-4 hover:underline"
+          style="color: var(--color-text);"
         >
-          Go back to preview
+          {{ t('notFound.goHome') }}
         </RouterLink>
       </div>
 
@@ -42,3 +43,9 @@
 
   </div>
 </template>
+
+<script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+</script>
