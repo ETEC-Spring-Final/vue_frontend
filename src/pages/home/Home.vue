@@ -56,7 +56,10 @@
       </div>
 
       <!-- Hero banner -->
-      <div class="relative mt-6 overflow-hidden rounded-3xl shadow-lg" :style="{ backgroundColor: 'var(--color-text)' }">
+      <div
+          class="relative mt-6 overflow-hidden rounded-3xl shadow-lg"
+          style="background: linear-gradient(135deg, #12172B 0%, #1E2648 60%, color-mix(in srgb, var(--color-primary) 40%, #12172B) 100%);"
+        >
         <div
           class="flex transition-transform duration-500 ease-out"
           :style="{ transform: `translateX(-${activeBanner * 100}%)` }"

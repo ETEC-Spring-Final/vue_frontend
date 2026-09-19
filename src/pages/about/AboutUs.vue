@@ -22,11 +22,20 @@
         </div>
 
         <div
-          class="flex h-56 items-center justify-center overflow-hidden rounded-3xl shadow-sm sm:h-72"
-          :style="{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-hover))' }"
+          class="relative h-56 overflow-hidden rounded-3xl shadow-sm sm:h-72"
+          style="background: linear-gradient(135deg, #12172B 0%, #1E2648 100%);"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-20 w-20 text-white/30">
-            <path fill="currentColor" d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11m-14 0h14m-14 0a2 2 0 0 0-2 2v4a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h12v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-4a2 2 0 0 0-2-2M7.5 15a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm11 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
+          <svg class="absolute inset-0 h-full w-full" viewBox="0 0 400 260" fill="none" preserveAspectRatio="xMidYMid slice">
+            <path
+              d="M40 220 C 120 220, 140 130, 220 120 S 320 70, 355 45"
+              stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-dasharray="1 10" stroke-linecap="round"
+            />
+            <circle cx="40" cy="220" r="5" :fill="journeyColors[0]" />
+            <circle cx="220" cy="120" r="7" :fill="journeyColors[1]" />
+            <circle cx="355" cy="45" r="9" :fill="journeyColors[2]" />
+            <g transform="translate(196, 96) rotate(-20) scale(1.3)">
+              <path fill="white" fill-opacity="0.92" d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11m-14 0h14m-14 0a2 2 0 0 0-2 2v4a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h12v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-4a2 2 0 0 0-2-2M7.5 15a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm11 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
+            </g>
           </svg>
         </div>
       </div>
@@ -114,10 +123,10 @@
       </div>
 
       <!-- CTA -->
-      <div
-        class="mt-16 flex flex-col items-center gap-5 rounded-2xl p-10 text-center"
-        :style="{ background: 'linear-gradient(120deg, var(--color-primary), var(--color-primary-hover))' }"
-      >
+        <div
+          class="mt-16 flex flex-col items-center gap-5 rounded-2xl p-10 text-center"
+          style="background: linear-gradient(120deg, #12172B 0%, #1E2648 60%, color-mix(in srgb, var(--color-primary) 40%, #12172B) 100%);"
+        >
         <h2 class="text-xl font-bold text-white sm:text-2xl">{{ $t('about.ctaTitle') }}</h2>
         <p class="max-w-md text-sm text-white/80">{{ $t('about.ctaSubtitle') }}</p>
         <RouterLink
