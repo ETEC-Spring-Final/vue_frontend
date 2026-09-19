@@ -525,6 +525,8 @@
     "changeAvatar": "ប្តូររូបភាព",
     "avatarTooLarge": "រូបភាពត្រូវតែតិចជាង 3MB។",
     "memberSince": "ជាសមាជិកតាំងពី {date}",
+    "logout": "ចាកចេញ",
+    "logoutConfirm": "តើអ្នកពិតជាចង់ចាកចេញមែនទេ?",
     "tabs": {
       "info": "ព័ត៌មាន",
       "history": "ប្រវត្តិចូលប្រើ",

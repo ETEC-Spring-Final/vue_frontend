@@ -720,6 +720,8 @@
     "changeAvatar": "Change photo",
     "avatarTooLarge": "Photo must be under 3MB.",
     "memberSince": "Member since {date}",
+    "logout": "Log out",
+    "logoutConfirm": "Are you sure you want to log out?",
     "tabs": {
       "info": "Info",
       "history": "Login history",

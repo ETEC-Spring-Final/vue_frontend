@@ -83,6 +83,17 @@
                 <p class="text-[11px]" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('profile.stats.reviews') }}</p>
               </div>
             </div>
+
+            <!-- Logout -->
+            <button
+              type="button"
+              :disabled="loggingOut"
+              class="mt-5 w-full rounded-full border px-5 py-2.5 text-sm font-semibold text-red-600 transition-all duration-200 hover:bg-red-600 hover:text-white active:scale-95 disabled:opacity-50"
+              style="border-color: #dc2626;"
+              @click="onLogout"
+            >
+              {{ $t('profile.logout') }}
+            </button>
           </div>
         </aside>
 
@@ -229,6 +240,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import SiteHeader from '@/components/layout/SiteHeader.vue'
 import StarRating from '@/components/reviews/StarRating.vue'
 import profileApi from '@/services/profile'
@@ -239,14 +251,16 @@ import { uploadToCloudinary } from '@/services/cloudinary'
 import useAuthStore from '@/stores/auth.store'
 
 const { t } = useI18n()
-const { fetchProfile } = useAuthStore()
+const router = useRouter()
+const { fetchProfile, logout } = useAuthStore()
 
-const tabs = [
+// computed so the tab labels update when the language is switched (EN / ខ្មែរ)
+const tabs = computed(() => [
   { id: 'info', label: t('profile.tabs.info') },
   { id: 'history', label: t('profile.tabs.history') },
   { id: 'reviews', label: t('profile.tabs.reviews') },
   { id: 'favorites', label: t('profile.tabs.favorites') },
-]
+])
 const activeTab = ref('info')
 
 // Profile info
@@ -297,6 +311,22 @@ async function onSaveProfile() {
     saveError.value = err.response?.data?.message || t('profile.saveError')
   } finally {
     saving.value = false
+  }
+}
+
+// ----- Logout -----
+// `await` works whether logout() is sync or async. `finally` makes sure the
+// user is always sent to /login, even if the logout API call fails.
+const loggingOut = ref(false)
+
+async function onLogout() {
+  if (!window.confirm(t('profile.logoutConfirm'))) return
+  loggingOut.value = true
+  try {
+    await logout()
+  } finally {
+    loggingOut.value = false
+    router.push('/login')
   }
 }
 
