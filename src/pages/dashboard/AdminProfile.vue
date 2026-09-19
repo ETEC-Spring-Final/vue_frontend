@@ -281,6 +281,7 @@ import {
   changeMyPassword,
   getMyLoginHistory,
 } from '@/services/profile.service'
+import { uploadToCloudinary } from '@/services/cloudinary'
 
 const { t } = useI18n()
 const { fetchProfile } = useAuthStore()
@@ -322,13 +323,10 @@ async function loadProfile() {
   }
 }
 
-// ===== Avatar upload (direct-to-Cloudinary, unsigned preset) =====
+// ===== Avatar upload (via backend POST /api/uploads) =====
 const fileInput = ref(null)
 const uploadingAvatar = ref(false)
 const avatarUploadError = ref('')
-
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
 async function onPickAvatar(e) {
   const file = e.target.files?.[0]
@@ -336,11 +334,6 @@ async function onPickAvatar(e) {
   if (!file) return
 
   avatarUploadError.value = ''
-
-  if (!CLOUD_NAME || !UPLOAD_PRESET) {
-    avatarUploadError.value = 'Cloudinary is not configured (missing VITE_CLOUDINARY_* env vars).'
-    return
-  }
 
   // Instant local preview while the upload is in flight.
   const localPreviewUrl = URL.createObjectURL(file)
@@ -350,23 +343,8 @@ async function onPickAvatar(e) {
 
   uploadingAvatar.value = true
   try {
-    const body = new FormData()
-    body.append('file', file)
-    body.append('upload_preset', UPLOAD_PRESET)
-    body.append('folder', 'admin-profiles') // optional: keep Cloudinary tidy
-
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-      method: 'POST',
-      body,
-    })
-
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => null)
-      throw new Error(errBody?.error?.message || `Upload failed (${res.status})`)
-    }
-
-    const data = await res.json()
-    form.profilePicture = data.secure_url // real Cloudinary URL replaces the local preview
+    const data = await uploadToCloudinary(file, 'admin-profiles')
+    form.profilePicture = data.url // real URL replaces the local preview
   } catch (err) {
     console.error('Avatar upload failed:', err)
     avatarUploadError.value = err.message || 'Could not upload the image.'

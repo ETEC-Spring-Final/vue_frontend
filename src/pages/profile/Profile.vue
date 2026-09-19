@@ -301,8 +301,8 @@ async function onSaveProfile() {
 }
 
 // ----- Avatar upload -----
-// Uploads to Cloudinary (folder "avatars", mirrors the existing
-// "vehicle-images" convention), then immediately PUTs the returned URL
+// Uploads via the backend (POST /api/uploads, allow-listed folder
+// "profile-pictures"), then immediately PUTs the returned URL
 // to /user-profiles/me so it persists across refresh — then refreshes
 // auth.store's cached user so SiteHeader's avatar updates without a
 // full page reload.
@@ -324,7 +324,7 @@ async function onAvatarChange(e) {
   avatarPreview.value = URL.createObjectURL(file)
   avatarUploading.value = true
   try {
-    const url = await uploadToCloudinary(file, 'avatars')
+    const { url } = await uploadToCloudinary(file, 'profile-pictures')
     await profileApi.updateMe({
       firstName: form.firstName,
       lastName: form.lastName,

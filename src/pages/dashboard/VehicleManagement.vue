@@ -279,6 +279,7 @@ import { useI18n } from 'vue-i18n'
 import DataTable from '@/components/ui/DataTable.vue'
 import Modal from '@/components/ui/Modal.vue'
 import api from '@/services/api'
+import { uploadToCloudinary } from '@/services/cloudinary'
 
 const { t } = useI18n()
 
@@ -321,10 +322,6 @@ const galleryLoading = ref(false)
 const uploading = ref(false)
 const imageActionError = ref('')
 const dragOver = ref(false)
-
-// ----- Cloudinary config (env vars — same pattern as Settings.vue, dedicated preset/folder) -----
-const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-const CLOUDINARY_VEHICLE_PRESET = import.meta.env.VITE_CLOUDINARY_VEHICLE_PRESET
 
 function emptyForm() {
   return {
@@ -419,11 +416,6 @@ async function uploadFiles(files) {
   const images = candidates.filter((f) => f.size <= MAX_SIZE)
   const oversizedCount = candidates.length - images.length
 
-  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_VEHICLE_PRESET) {
-    imageActionError.value = t('settings.cloudinaryNotConfigured')
-    return
-  }
-
   imageActionError.value = oversizedCount > 0 ? t('vehicles.gallery.tooLargeSkipped', { count: oversizedCount }) : ''
   if (images.length === 0) return
 
@@ -433,23 +425,10 @@ async function uploadFiles(files) {
     let nextOrder = galleryImages.value.length
 
     for (const file of images) {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('upload_preset', CLOUDINARY_VEHICLE_PRESET)
-      formData.append('folder', 'vehicle-images')
-
-      const cloudRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-        { method: 'POST', body: formData }
-      )
-      if (!cloudRes.ok) {
-        const errBody = await cloudRes.json().catch(() => null)
-        throw new Error(errBody?.error?.message || `Upload failed (${cloudRes.status})`)
-      }
-      const cloudData = await cloudRes.json()
+      const cloudRes = await uploadToCloudinary(file, 'vehicle-images')
 
       const { data: attachment } = await api.post('/attachments', {
-        fileUrl: cloudData.secure_url,
+        fileUrl: cloudRes.url,
         documentType: 'VEHICLE_IMAGE',
         isPrimary: isFirst,
         displayOrder: nextOrder,

@@ -312,6 +312,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { updateSiteSettings } from '@/services/siteSettings.service'
+import { uploadToCloudinary } from '@/services/cloudinary'
 import useSiteSettingsStore from '@/stores/siteSettings.store'
 
 const { t } = useI18n()
@@ -361,9 +362,7 @@ onMounted(async () => {
   loading.value = false
 })
 
-// ===== Image upload (direct-to-Cloudinary, unsigned preset) =====
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+// ===== Image upload (via backend POST /api/uploads) =====
 
 const logoInput = ref(null)
 const faviconInput = ref(null)
@@ -386,11 +385,6 @@ async function onPickImage(e, field) {
 
   uploadError.value = ''
 
-  if (!CLOUD_NAME || !UPLOAD_PRESET) {
-    uploadError.value = t('settings.cloudinaryNotConfigured')
-    return
-  }
-
   const localPreviewUrl = URL.createObjectURL(file)
   const previousValue = form[field]
   form[field] = localPreviewUrl
@@ -398,23 +392,8 @@ async function onPickImage(e, field) {
 
   uploading.value = true
   try {
-    const body = new FormData()
-    body.append('file', file)
-    body.append('upload_preset', UPLOAD_PRESET)
-    body.append('folder', 'site-settings')
-
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-      method: 'POST',
-      body,
-    })
-
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => null)
-      throw new Error(errBody?.error?.message || `Upload failed (${res.status})`)
-    }
-
-    const data = await res.json()
-    form[field] = data.secure_url
+    const data = await uploadToCloudinary(file, 'site-settings')
+    form[field] = data.url
   } catch (err) {
     console.error(`${field} upload failed:`, err)
     uploadError.value = err.message || t('settings.uploadFailed')
