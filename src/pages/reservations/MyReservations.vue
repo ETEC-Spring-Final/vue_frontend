@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { getMyReservations, getLocations, cancelReservation } from "@/services/reservations";
 import { fetchVehicles, normalizeVehicle } from "@/services/vehicles";
+import invoicesApi from "@/services/invoices";
 import SiteHeader from "@/components/layout/SiteHeader.vue";
 
 const router = useRouter();
@@ -13,6 +14,7 @@ const reservations = ref([]);
 const loading = ref(true);
 const error = ref("");
 const cancellingId = ref(null);
+const downloadingId = ref(null);
 
 const vehicleNames = ref({});
 const locationNames = ref({});
@@ -101,6 +103,28 @@ async function handleCancel(id) {
 function formatDate(d) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+async function handleDownloadInvoice(id) {
+  if (!id || downloadingId.value) return;
+  downloadingId.value = id;
+  error.value = "";
+  try {
+    const res = await invoicesApi.downloadPdf(id);
+    const blob = new Blob([res.data], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `invoice-${id}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    error.value = e?.response?.data?.message || t("payment.downloadError");
+  } finally {
+    downloadingId.value = null;
+  }
 }
 
 function vehicleLabel(r) {
@@ -228,9 +252,19 @@ function locationLabel(id) {
                   </p>
                 </div>
               </div>
-              <span class="inline-block w-fit rounded-full px-3 py-1 text-xs font-semibold" :style="statusStyle(r.status)">
-                {{ r.status }}
-              </span>
+              <div class="flex items-center gap-3">
+                <span class="inline-block w-fit rounded-full px-3 py-1 text-xs font-semibold" :style="statusStyle(r.status)">
+                  {{ r.status }}
+                </span>
+                <button
+                  v-if="r.invoiceId" type="button" :disabled="downloadingId === r.invoiceId"
+                  @click="handleDownloadInvoice(r.invoiceId)"
+                  class="rounded-full border px-4 py-2 text-xs font-semibold transition-all duration-200 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  :style="{ borderColor: 'var(--color-border)', color: 'var(--color-primary)' }"
+                >
+                  {{ downloadingId === r.invoiceId ? t('myReservations.downloading') : t('myReservations.downloadInvoice') }}
+                </button>
+              </div>
             </article>
           </div>
         </section>

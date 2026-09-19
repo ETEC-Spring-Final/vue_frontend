@@ -46,6 +46,23 @@
               </div>
             </article>
 
+            <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button" :disabled="downloading" @click="onDownloadInvoice"
+                class="flex-1 rounded-full py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                :style="{ backgroundColor: 'var(--color-primary)' }"
+              >
+                {{ downloading ? $t('invoices.downloading') : $t('invoices.downloadInvoice') }}
+              </button>
+              <button
+                type="button" @click="onShareInvoice"
+                class="flex-1 rounded-full border py-3.5 text-sm font-semibold transition-all duration-200 hover:shadow-md active:scale-[0.98]"
+                :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }"
+              >
+                {{ $t('invoices.share') }}
+              </button>
+            </div>
+
             <div v-if="invoice.status?.toUpperCase() !== 'PAID'" class="mt-6">
               <RouterLink
                 :to="`/payment/${invoice.id}`"
@@ -82,6 +99,54 @@ const { t } = useI18n()
 const invoice = ref(null)
 const loading = ref(true)
 const errorMessage = ref('')
+const downloading = ref(false)
+
+function invoiceLink() {
+  return `${window.location.origin}/my-invoices/${invoice.value?.id ?? ''}`
+}
+
+async function onDownloadInvoice() {
+  if (!invoice.value || downloading.value) return
+  downloading.value = true
+  errorMessage.value = ''
+  try {
+    const res = await invoicesApi.downloadPdf(invoice.value.id)
+    const blob = new Blob([res.data], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `invoice-${invoice.value.invoiceNumber || invoice.value.id}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    errorMessage.value = err?.response?.data?.message || t('payment.downloadError')
+  } finally {
+    downloading.value = false
+  }
+}
+
+async function onShareInvoice() {
+  if (!invoice.value) return
+  const link = invoiceLink()
+  const shareData = {
+    title: t('payment.shareTitle', { invoice: invoice.value.invoiceNumber || invoice.value.id }),
+    text: t('payment.shareText', { invoice: invoice.value.invoiceNumber || invoice.value.id }),
+    url: link,
+  }
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData)
+      return
+    }
+    await navigator.clipboard.writeText(link)
+    errorMessage.value = ''
+    window.alert(t('payment.linkCopied'))
+  } catch {
+    window.prompt(t('payment.copyLink'), link)
+  }
+}
 
 function formatCurrency(value) {
   if (value === undefined || value === null) return '$0.00'

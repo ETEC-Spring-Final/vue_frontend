@@ -36,6 +36,13 @@ export function fetchVehicleById(id) {
   return api.get(`/vehicles/${id}`)
 }
 
+// GET /api/vehicles/{id}/booked-dates
+// Date windows already reserved for a vehicle (powers the "unavailable"
+// hints on the booking form + client-side overlap check). Public.
+export function fetchBookedDates(vehicleId) {
+  return api.get(`/vehicles/${vehicleId}/booked-dates`)
+}
+
 export function fetchVehicleImages(vehicleId) {
   return api.get(`/vehicle-images/${vehicleId}`)
 }

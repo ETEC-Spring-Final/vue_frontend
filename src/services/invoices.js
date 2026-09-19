@@ -49,4 +49,17 @@ export default {
   confirmPayment(id, md5) {
     return api.post(`/invoices/${id}/confirm-payment`, { md5 })
   },
+
+  // PATCH /api/invoices/{id}/payment-method
+  // Owner or staff records how the invoice will be paid. Picking CASH keeps the
+  // invoice UNPAID (staff mark it PAID at pickup); KHQR keeps the QR flow.
+  // Request body: InvoicePaymentMethodDTO { paymentMethod: 'VISA'|'ABA_PAY'|'KHQR'|'CASH' }
+  setPaymentMethod(id, paymentMethod) {
+    return api.patch(`/invoices/${id}/payment-method`, { paymentMethod })
+  },
+
+  // GET /api/invoices/{id}/pdf — printable invoice PDF (owner or staff)
+  downloadPdf(id) {
+    return api.get(`/invoices/${id}/pdf`, { responseType: 'blob' })
+  },
 }

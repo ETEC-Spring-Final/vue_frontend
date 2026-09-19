@@ -2,11 +2,15 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { fetchVehicleById, normalizeVehicleDetail } from "@/services/vehicles";
+import {
+  fetchVehicleById,
+  normalizeVehicleDetail,
+  fetchBookedDates,
+} from "@/services/vehicles";
+import { getAdditionalServices } from "@/services/additionalServices";
 import {
   createReservation,
   getLocations,
-  getServices,
   getDiscounts,
   calculatePriceBreakdown,
 } from "@/services/reservations";
@@ -15,7 +19,7 @@ import SiteFooter from "@/components/layout/SiteFooter.vue";
 
 const route = useRoute();
 const router = useRouter();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 // /booking/:vehicleId (path) or legacy /reservations?vehicleId= (query)
 const vehicleId = route.params.vehicleId || route.query.vehicleId;
@@ -24,6 +28,8 @@ const vehicle = ref(null);
 const locations = ref([]);
 const services = ref([]);
 const discounts = ref([]);
+const bookedDates = ref([]);
+const bookedDatesLoaded = ref(false);
 
 const loading = ref(true);
 const submitting = ref(false);
@@ -44,21 +50,35 @@ const now = new Date();
 now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
 const minDateTime = now.toISOString().slice(0, 16);
 
+const daysBetween = (a, b) => {
+  const d = Math.round((new Date(b) - new Date(a)) / (1000 * 60 * 60 * 24));
+  return Math.max(1, d);
+};
+
+const PER_DAY_SERVICES = true;
+
 async function loadData() {
   loading.value = true;
   error.value = "";
   try {
-    const [vehicleRes, locationsRes, servicesRes, discountsRes] =
+    const [vehicleRes, locationsRes, servicesRes, discountsRes, bookedRes] =
       await Promise.all([
         vehicleId ? fetchVehicleById(vehicleId) : Promise.resolve(null),
         getLocations(),
-        getServices(),
+        getAdditionalServices(),
         getDiscounts(),
+        vehicleId ? fetchBookedDates(vehicleId) : Promise.resolve(null),
       ]);
     vehicle.value = vehicleRes ? normalizeVehicleDetail(vehicleRes.data) : null;
     locations.value = Array.isArray(locationsRes) ? locationsRes : (locationsRes?.content ?? []);
     services.value = Array.isArray(servicesRes) ? servicesRes : (servicesRes?.content ?? []);
     discounts.value = Array.isArray(discountsRes) ? discountsRes : (discountsRes?.content ?? []);
+    const booked = Array.isArray(bookedRes?.data ?? bookedRes) ? (bookedRes?.data ?? bookedRes) : [];
+    bookedDates.value = booked.map((b) => ({
+      startDate: b.startDate ?? b.pickUpDateTime ?? b.start,
+      endDate: b.endDate ?? b.returnDateTime ?? b.end,
+    }));
+    bookedDatesLoaded.value = true;
   } catch (e) {
     error.value = e?.response?.data?.message || t("booking.loadError");
   } finally {
@@ -77,6 +97,9 @@ const selectedServices = computed(() =>
   services.value.filter((s) => form.value.selectedServiceIds.includes(s.id))
 );
 
+const localizedServiceName = (s) =>
+  locale.value === "km" && s.nameKh ? s.nameKh : s.name;
+
 const matchedDiscount = computed(() => {
   if (!form.value.discountCode) return null;
   return (
@@ -91,16 +114,45 @@ const datesValid = computed(() => {
   return new Date(form.value.returnDateTime) > new Date(form.value.pickUpDateTime);
 });
 
+// B2 — client-side overlap check against fetched booked windows.
+const overlapsBooked = computed(() => {
+  if (!form.value.pickUpDateTime || !form.value.returnDateTime || !bookedDates.value.length) {
+    return false;
+  }
+  const selStart = new Date(form.value.pickUpDateTime).getTime();
+  const selEnd = new Date(form.value.returnDateTime).getTime();
+  return bookedDates.value.some((b) => {
+    const bStart = new Date(b.startDate).getTime();
+    const bEnd = new Date(b.endDate).getTime();
+    return selStart < bEnd && selEnd > bStart;
+  });
+});
+
+function formatBookedRange(b) {
+  const opts = { day: "numeric", month: "short", year: "numeric" };
+  const start = new Date(b.startDate).toLocaleDateString(locale.value === "km" ? "km-KH" : undefined, opts);
+  const end = new Date(b.endDate).toLocaleDateString(locale.value === "km" ? "km-KH" : undefined, opts);
+  return `${start}–${end}`;
+}
+
 const breakdown = computed(() => {
   if (!vehicle.value || !datesValid.value) return null;
-  return calculatePriceBreakdown({
-    pricePerDay: vehicle.value.price ?? 0,
-    pickupDate: form.value.pickUpDateTime,
-    returnDate: form.value.returnDateTime,
-    insurancePerDay: 0,
-    selectedServices: selectedServices.value,
-    discount: matchedDiscount.value,
-  });
+  const days = daysBetween(form.value.pickUpDateTime, form.value.returnDateTime);
+  const perDayTotal = selectedServices.value.reduce(
+    (sum, s) => sum + (Number(s.pricePerDay) || Number(s.price) || 0),
+    0
+  );
+  return {
+    ...calculatePriceBreakdown({
+      pricePerDay: vehicle.value.price ?? 0,
+      pickupDate: form.value.pickUpDateTime,
+      returnDate: form.value.returnDateTime,
+      insurancePerDay: 0,
+      selectedServices: [{ id: "__perDayTotal", name: "", price: perDayTotal * days }],
+      discount: matchedDiscount.value,
+    }),
+    perDayTotal,
+  };
 });
 
 const canSubmit = computed(() => {
@@ -109,6 +161,7 @@ const canSubmit = computed(() => {
     !!form.value.pickUpLocationId &&
     !!form.value.returnLocationId &&
     datesValid.value &&
+    !overlapsBooked.value &&
     !submitting.value
   );
 });
@@ -225,6 +278,31 @@ async function handleSubmit() {
             </p>
           </Transition>
 
+          <!-- B2 — already-booked windows (amber info, not red) -->
+          <Transition name="fade">
+            <div
+              v-if="bookedDatesLoaded && bookedDates.length"
+              class="mt-2 rounded-2xl px-4 py-3 text-sm"
+              :style="{ backgroundColor: 'rgba(234,179,8,0.14)', color: '#B45309', border: '1px solid rgba(234,179,8,0.4)' }"
+            >
+              <p class="flex items-start gap-2 font-medium">
+                <span aria-hidden="true">⚠</span>
+                <span>{{ t(bookedDates.length > 1 ? 'booking.unavailableMany' : 'booking.unavailable') }}</span>
+              </p>
+              <ul class="mt-1.5 space-y-0.5">
+                <li v-for="(b, i) in bookedDates" :key="i" class="text-xs">
+                  {{ formatBookedRange(b) }}
+                </li>
+              </ul>
+            </div>
+          </Transition>
+
+          <Transition name="fade">
+            <p v-if="overlapsBooked" class="mt-2 text-sm text-red-600">
+              {{ t('booking.overlapsBooked') }}
+            </p>
+          </Transition>
+
           <!-- Locations -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label class="block">
@@ -251,20 +329,57 @@ async function handleSubmit() {
             </label>
           </div>
 
-          <!-- Additional services -->
+          <!-- B3 — Additional services (per day, from /api/additional-services) -->
           <div v-if="services.length">
-            <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ t('booking.services') }}</span>
-            <div class="mt-2 flex flex-wrap gap-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">
+                {{ t('booking.additionalServicesTitle') }}
+              </span>
+              <span class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">
+                {{ t('booking.perDay') }}
+              </span>
+            </div>
+            <div class="mt-2 space-y-2">
               <button
                 v-for="s in services" :key="s.id" type="button" @click="toggleService(s.id)"
-                class="rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 active:scale-95"
+                class="group w-full rounded-2xl border px-4 py-3 text-left transition-all duration-200 active:scale-[0.99]"
                 :style="form.selectedServiceIds.includes(s.id)
-                  ? { backgroundColor: 'var(--color-primary)', color: '#fff' }
-                  : { backgroundColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }"
+                  ? { borderColor: 'var(--color-primary)', backgroundColor: 'var(--color-primary-light)', boxShadow: '0 0 0 3px rgba(61,95,224,0.12)' }
+                  : { borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
               >
-                {{ s.name }} (+${{ Number(s.price).toFixed(2) }})
+                <div class="flex items-start gap-3">
+                  <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base transition-transform duration-200 group-hover:scale-110"
+                    :style="{ backgroundColor: form.selectedServiceIds.includes(s.id) ? 'var(--color-primary)' : 'var(--color-border)', color: form.selectedServiceIds.includes(s.id) ? '#fff' : 'var(--color-text-secondary)' }">
+                    {{ s.icon || '✦' }}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center justify-between gap-2">
+                      <p class="text-sm font-semibold" :style="{ color: 'var(--color-text)' }">
+                        {{ localizedServiceName(s) }}
+                      </p>
+                      <p class="shrink-0 text-sm font-bold" :style="{ color: 'var(--color-primary)' }">
+                        ${{ Number(s.pricePerDay ?? s.price ?? 0).toFixed(2) }}<span class="text-xs font-medium" :style="{ color: 'var(--color-text-secondary)' }">/{{ t('booking.day') }}</span>
+                      </p>
+                    </div>
+                    <p v-if="s.description" class="mt-0.5 text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+                      {{ s.description }}
+                    </p>
+                  </div>
+                  <span
+                    class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-all duration-200"
+                    :style="form.selectedServiceIds.includes(s.id)
+                      ? { backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)', color: '#fff' }
+                      : { borderColor: 'var(--color-border)', color: 'transparent' }"
+                  >✓</span>
+                </div>
               </button>
             </div>
+
+            <Transition name="fade">
+              <p v-if="selectedServices.length" class="mt-2 text-xs font-medium" :style="{ color: 'var(--color-primary)' }">
+                {{ t('booking.addOnsTotal', { total: (breakdown?.perDayTotal ?? 0).toFixed(2) }) }}
+              </p>
+            </Transition>
           </div>
 
           <!-- Discount code -->

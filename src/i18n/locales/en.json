@@ -109,7 +109,9 @@
     "cancelling": "Cancelling…",
     "pay": "Pay now",
     "vehicle": "Vehicle",
-    "location": "Location"
+    "location": "Location",
+    "downloadInvoice": "Invoice PDF",
+    "downloading": "Downloading…"
   },
   "booking": {
     "title": "Reserve your vehicle",
@@ -121,6 +123,12 @@
     "returnLocation": "Return location",
     "selectLocation": "Select location",
     "services": "Additional services",
+    "additionalServicesTitle": "Additional services",
+    "perDay": "per day",
+    "unavailable": "This vehicle is already booked for:",
+    "unavailableMany": "This vehicle is already booked for these dates:",
+    "overlapsBooked": "Your selected dates overlap an existing booking. Please choose different dates.",
+    "addOnsTotal": "Add-ons estimate: +${total}/day",
     "discountCode": "Discount code (optional)",
     "codeHint": "Code will be validated on submit.",
     "codeApplied": "Discount applied.",
@@ -156,7 +164,35 @@
     "confirmError": "Could not confirm the payment. Please contact support if you already paid.",
     "paid": "This invoice has been paid in full.",
     "loadError": "Could not load this invoice.",
-    "backToReservations": "Back to my reservations"
+    "backToReservations": "Back to my reservations",
+    "chooseMethod": "Choose a payment method",
+    "comingSoon": "Coming soon",
+    "methods": {
+      "VISA": "Credit / Debit card",
+      "VISASub": "Card payment",
+      "ABA_PAY": "ABA Pay",
+      "ABA_PAYSub": "Fast wallet",
+      "KHQR": "Bakong KHQR",
+      "KHQRSub": "Scan & pay",
+      "CASH": "Pay on pickup",
+      "CASHSub": "Cash at counter"
+    },
+    "cashConfirmText": "You'll pay in cash when you pick up the vehicle. Your reservation stays pending until an authorised staff member records the payment.",
+    "cashHint": "Note: the invoice remains unpaid until you pay at pickup.",
+    "confirmCash": "I'll pay on pickup",
+    "confirming": "Saving…",
+    "cashRecorded": "Payment method saved — you'll pay in cash on pickup.",
+    "cashRedirection": "Taking you to your reservations…",
+    "methodError": "Could not update the payment method. Please try again.",
+    "thankYou": "Thank you!",
+    "thankYouMsg": "Your payment has been received. You can download your receipt any time.",
+    "downloadInvoice": "Download invoice PDF",
+    "share": "Share invoice",
+    "shareTitle": "Invoice {invoice}",
+    "shareText": "Your rental invoice {invoice}",
+    "linkCopied": "Invoice link copied to clipboard.",
+    "copyLink": "Copy the invoice link to share it:",
+    "downloadError": "Could not download the invoice. Please try again."
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -464,7 +500,10 @@
     "view": "View",
     "backToInvoices": "Back to invoices",
     "payWithBakong": "Pay with Bakong",
-    "paidInFull": "This invoice has been paid in full."
+    "paidInFull": "This invoice has been paid in full.",
+    "downloadInvoice": "Download invoice PDF",
+    "share": "Share invoice",
+    "downloading": "Downloading…"
   },
   "reviews": {
     "title": "Reviews",
