@@ -82,7 +82,7 @@
         <select v-model.number="form.vehicleId" required class="input-field" :style="inputStyle">
           <option value="" disabled>{{ t('maintenance.selectVehicle') }}</option>
           <option v-for="v in vehicles" :key="v.id" :value="v.id">
-            {{ v.brand }} {{ v.model }} — #{{ v.id }}
+            {{ v.brandName ?? v.brand }} {{ v.model }} — #{{ v.id }}
           </option>
         </select>
 
@@ -273,7 +273,7 @@ const filtered = computed(() => {
 
 function vehicleLabel(id) {
   const v = vehicles.value.find((x) => x.id === id)
-  return v ? `${v.brand} ${v.model}` : `#${id}`
+  return v ? `${v.brandName ?? v.brand} ${v.model}` : `#${id}`
 }
 
 function formatDate(value) {

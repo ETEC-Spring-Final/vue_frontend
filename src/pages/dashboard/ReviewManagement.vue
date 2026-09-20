@@ -181,7 +181,7 @@ const filtered = computed(() => {
 
 function vehicleLabel(id) {
   const v = vehicles.value.find((x) => x.id === id)
-  return v ? `${v.brand} ${v.model}` : `#${id}`
+  return v ? `${v.brandName ?? v.brand} ${v.model}` : `#${id}`
 }
 
 function formatDate(value) {

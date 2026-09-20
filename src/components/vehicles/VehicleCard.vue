@@ -59,7 +59,17 @@
 
       <!-- Title + price directly on the photo -->
       <div class="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-2 p-3.5">
-        <h4 class="truncate text-base font-bold text-white">{{ vehicle.name }}</h4>
+        <div class="flex min-w-0 items-center gap-2">
+          <!-- Brand logo (BrandResponseDTO.imageUrl via VehicleResponseDTO.brandImage) -->
+          <img
+            v-if="vehicle.brandImage"
+            :src="vehicle.brandImage"
+            :alt="vehicle.brand"
+            class="h-7 w-7 shrink-0 rounded-full bg-white object-contain p-0.5"
+            loading="lazy"
+          />
+          <h4 class="truncate text-base font-bold text-white">{{ vehicle.name }}</h4>
+        </div>
         <p class="shrink-0 whitespace-nowrap text-sm text-white/80">
           <span class="text-base font-bold text-white">${{ vehicle.price }}</span>
           {{ $t('vehicles.perDay') }}

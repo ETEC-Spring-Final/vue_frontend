@@ -197,6 +197,7 @@
   "sidebar": {
     "dashboard": "Dashboard",
     "vehicles": "Vehicles",
+    "brands": "Brands",
     "locations": "Locations",
     "reservations": "Reservations",
     "rentals": "Rentals",
@@ -292,6 +293,7 @@
       "MAINTENANCE": "Maintenance",
       "UNAVAILABLE": "Unavailable"
     },
+    
     "gallery": {
       "title": "Photos",
       "dropHint": "Drag & drop photos here, or click to select",
@@ -299,6 +301,7 @@
       "uploadError": "Some photos failed to upload.",
       "actionError": "Action failed. Please try again.",
       "tooLarge": "Each photo must be under 5MB.",
+      "tooLargeSkipped": "{count} photo(s) over 5MB were skipped.",
       "empty": "No photos yet.",
       "saveFirst": "Save the vehicle first, then you can add photos.",
       "createdHint": "Vehicle created! Add some photos below.",
@@ -829,6 +832,37 @@
     "lightMode": "Light",
     "darkMode": "Dark"
   },
+  "brandMgmt": {
+      "title": "Brands",
+      "subtitle": "Manage vehicle brands and their logos",
+      "add": "Add brand",
+      "addTitle": "Add new brand",
+      "editTitle": "Edit brand",
+      "name": "Brand name",
+      "namePlaceholder": "e.g. Toyota",
+      "image": "Image",
+      "chooseImage": "Choose image",
+      "changeImage": "Change image",
+      "imageHint": "PNG, JPG or WebP, up to 3 MB",
+      "actions": "Actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "empty": "No brands yet",
+      "confirmDelete": "Are you sure you want to delete",
+      "saved": "Brand saved successfully.",
+      "deleted": "Brand deleted successfully.",
+      "loadError": "Could not load brands.",
+      "saveError": "Could not save the brand.",
+      "deleteError": "Could not delete the brand. It may still be used by vehicles.",
+      "uploadError": "The brand was saved, but the image upload failed. Please try again.",
+      "imageTooLarge": "Image is too large (max 3 MB).",
+      "imageType": "Please choose a PNG, JPG or WebP image.",
+      "nameRequired": "Please enter a brand name.",
+      "dropHint": "Drag & drop an image here, or click to browse"
+    },
   "auth": {
     "welcomeBack": "Welcome back",
     "loginPrompt": "Sign in to continue renting your perfect vehicle.",

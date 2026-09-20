@@ -202,6 +202,8 @@ const initials = computed(() => {
 const icon = {
   dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>',
   vehicles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l2-6h14l2 6"/><path d="M5 13h14v5H5z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg>',
+  // NEW: "award" badge icon for Brands
+  brands: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 12.9L17 22l-5-3-5 3 1.5-9.1"/></svg>',
   locations: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6-7-11a7 7 0 0114 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
   reservations: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
   rentals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16V8a2 2 0 012-2h5l2 3h5a2 2 0 012 2v5"/><path d="M4 16h16v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z"/></svg>',
@@ -219,6 +221,8 @@ const icon = {
 const navItems = [
   { path: '/dashboard', key: 'dashboard', icon: icon.dashboard },
   { path: '/dashboard/vehicles', key: 'vehicles', icon: icon.vehicles },
+  // NEW: no `roles` => visible to ADMIN, MANAGER and STAFF, same as BrandController's @PreAuthorize
+  { path: '/dashboard/brands', key: 'brands', icon: icon.brands },
   { path: '/dashboard/locations', key: 'locations', icon: icon.locations },
   { path: '/dashboard/reservations', key: 'reservations', icon: icon.reservations },
   { path: '/dashboard/rentals', key: 'rentals', icon: icon.rentals },

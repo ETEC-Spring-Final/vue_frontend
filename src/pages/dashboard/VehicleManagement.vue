@@ -30,6 +30,18 @@
 
     <div class="mt-4">
       <DataTable :columns="columns" :rows="vehicles" :loading="loading">
+        <template #cell-brandName="{ row }">
+          <span class="flex items-center gap-2">
+            <img
+              v-if="row.brandImage"
+              :src="row.brandImage"
+              :alt="row.brandName"
+              class="h-6 w-6 rounded-full border bg-white object-contain"
+              style="border-color: var(--color-border);"
+            />
+            <span>{{ row.brandName }}</span>
+          </span>
+        </template>
         <template #cell-pricePerDay="{ row }">${{ row.pricePerDay }}</template>
         <template #cell-status="{ row }">
           <span :class="statusClass(row.status)">{{ $t(`vehicles.statusValues.${row.status}`, row.status) }}</span>

@@ -84,7 +84,9 @@
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   {{ $t('userMenu.profile') }}
                 </RouterLink>
+                <!-- Settings route is ADMIN/MANAGER only (router meta.roles), so hide it for STAFF -->
                 <RouterLink
+                  v-if="hasRole('ADMIN', 'MANAGER')"
                   to="/dashboard/settings"
                   class="flex items-center gap-2 px-4 py-2 text-sm transition-colors duration-150 hover:bg-[var(--color-primary-light)]"
                   style="color: var(--color-text);"
@@ -133,16 +135,40 @@ import { setLocale } from '@/i18n'
 const route = useRoute()
 const router = useRouter()
 
-const { state: authState, logout } = useAuthStore()
+const { state: authState, hasRole, logout } = useAuthStore()
 const { isDark, toggleTheme } = useTheme()
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const { toggleMobile } = useSidebar()
 
 const menuOpen = ref(false)
 const menuRef = ref(null)
 
+// Last URL segment -> translation key (all keys already exist in en.json / km.json).
+// Unknown segments fall back to the old capitalised-English behaviour.
+const TITLE_KEYS = {
+  dashboard: 'sidebar.dashboard',
+  vehicles: 'sidebar.vehicles',
+  brands: 'sidebar.brands',
+  locations: 'sidebar.locations',
+  reservations: 'sidebar.reservations',
+  rentals: 'sidebar.rentals',
+  customers: 'sidebar.customers',
+  discounts: 'sidebar.discounts',
+  invoices: 'sidebar.invoices',
+  reviews: 'sidebar.reviews',
+  notifications: 'sidebar.notifications',
+  maintenance: 'sidebar.maintenance',
+  services: 'sidebar.services',
+  'audit-logs': 'sidebar.auditLogs',
+  'login-history': 'sidebar.loginHistory',
+  settings: 'sidebar.settings',
+  profile: 'adminProfile.title',
+}
+
 const pageTitle = computed(() => {
   const segment = route.path.split('/').filter(Boolean).pop() || 'dashboard'
+  const key = TITLE_KEYS[segment]
+  if (key) return t(key)
   return segment.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 })
 

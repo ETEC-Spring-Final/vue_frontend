@@ -58,7 +58,7 @@
       <form class="space-y-3" @submit.prevent="onSave">
         <select v-model.number="form.vehicleId" required class="input-field" :style="inputStyle">
           <option value="" disabled>{{ $t('reservations.vehicle') }}</option>
-          <option v-for="v in vehicles" :key="v.id" :value="v.id">{{ v.brand }} {{ v.model }} ({{ v.licensePlate }})</option>
+          <option v-for="v in vehicles" :key="v.id" :value="v.id">{{ v.brandName ?? v.brand }} {{ v.model }} ({{ v.licensePlate }})</option>
         </select>
 
         <div class="grid grid-cols-2 gap-3">
@@ -178,7 +178,7 @@ const form = reactive(emptyForm())
 
 function vehicleLabel(id) {
   const v = vehicles.value.find((x) => x.id === id)
-  return v ? `${v.brand} ${v.model}` : `#${id}`
+  return v ? `${v.brandName ?? v.brand} ${v.model}` : `#${id}`
 }
 
 function locationLabel(id) {

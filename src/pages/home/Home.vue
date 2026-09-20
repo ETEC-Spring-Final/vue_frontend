@@ -150,19 +150,26 @@
         </button>
       </div>
 
-      <!-- Brand filter -->
+      <!-- Brand filter (with brand logos) -->
       <div v-if="brands.length > 1" class="mt-4 flex gap-3 overflow-x-auto pb-1">
         <button
           v-for="brand in brands"
-          :key="brand"
+          :key="brand.name"
           type="button"
-          class="shrink-0 rounded-full border px-5 py-2 text-sm font-semibold transition-all duration-200 active:scale-95"
-          :style="activeBrand === brand
+          class="flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-200 active:scale-95"
+          :style="activeBrand === brand.name
             ? { borderColor: 'var(--color-primary)', backgroundColor: 'var(--color-primary)', color: '#fff' }
             : { borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }"
-          @click="activeBrand = brand"
+          @click="activeBrand = brand.name"
         >
-          {{ brand === 'All' ? $t('home.allBrands') : brand }}
+          <img
+            v-if="brand.image"
+            :src="brand.image"
+            :alt="brand.name"
+            class="h-5 w-5 rounded-full bg-white object-contain"
+            loading="lazy"
+          />
+          {{ brand.name === 'All' ? $t('home.allBrands') : brand.name }}
         </button>
       </div>
 
@@ -213,7 +220,7 @@
         <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('home.noVehicles') }}</p>
       </div>
 
-      <!-- Vehicle grid -->
+      <!-- Vehicle grid (max HOME_LIMIT cards; the full fleet lives on /explore) -->
       <TransitionGroup
         v-else
         tag="div"
@@ -221,7 +228,7 @@
         class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
       >
         <VehicleCard
-          v-for="(vehicle, i) in filteredVehicles"
+          v-for="(vehicle, i) in visibleVehicles"
           :key="vehicle.id"
           :vehicle="vehicle"
           :style="{ transitionDelay: `${Math.min(i, 6) * 60}ms` }"
@@ -229,6 +236,20 @@
           @rent="handleRentNow"
         />
       </TransitionGroup>
+
+      <!-- "See all" button — only when there are more vehicles than the grid shows -->
+      <div v-if="!loading && !loadError && hasMore" class="mt-8 text-center">
+        <RouterLink
+          to="/explore"
+          class="group inline-flex items-center gap-2 rounded-full border px-6 py-2.5 text-sm font-semibold transition-all duration-200 hover:gap-3 hover:shadow-md active:scale-95"
+          :style="{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }"
+        >
+          {{ $t('home.seeAll') }}
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-4 w-4">
+            <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6"/>
+          </svg>
+        </RouterLink>
+      </div>
 
       <!-- Why book with us -->
       <section ref="whyUsRef" class="mt-16" :class="whyUsVisible ? 'reveal-in' : 'reveal-pending'">
@@ -259,7 +280,7 @@
 </template>
 
 <script setup>
-import { computed, h, onMounted, onUnmounted, ref } from 'vue'
+import { computed, h, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import useAuthStore from '@/stores/auth.store'
@@ -330,20 +351,29 @@ const CATEGORY_ICONS = {
 const iconFor = (type) => CATEGORY_ICONS[type] ?? CATEGORY_ICONS.All
 
 // ----- Vehicles: live data from GET /api/vehicles -----
+// The home page only shows a small "popular" selection; the whole fleet
+// (with search + filters) lives on /explore.
+const HOME_LIMIT = 9
+
 const vehicles = ref([])
 const loading = ref(true)
 const loadError = ref('')
 const activeBrand = ref('All')
 const activeCategory = ref('All')
 
+// Brand chips carry the brand logo (VehicleResponseDTO.brandImage) when one exists.
 const brands = computed(() => {
-  const unique = [...new Set(vehicles.value.map((v) => v.brand).filter(Boolean))]
-  return ['All', ...unique]
+  const map = new Map()
+  for (const v of vehicles.value) {
+    if (v.brand && !map.has(v.brand)) map.set(v.brand, { name: v.brand, image: v.brandImage })
+  }
+  return [{ name: 'All', image: null }, ...map.values()]
 })
 
 const categories = computed(() => {
   const unique = [...new Set(vehicles.value.map((v) => v.type).filter((t) => t && t !== '—'))]
-  return [{ value: 'All', label: t('home.allBrands'), icon: iconFor('All') },
+  // The "All" chip filters by car TYPE, so it uses the "All types" label.
+  return [{ value: 'All', label: t('explore.allTypes'), icon: iconFor('All') },
     ...unique.map((type) => ({ value: type, label: type, icon: iconFor(type) }))]
 })
 
@@ -354,28 +384,44 @@ const filteredVehicles = computed(() =>
   )
 )
 
+// Only the first HOME_LIMIT matches are rendered.
+const visibleVehicles = computed(() => filteredVehicles.value.slice(0, HOME_LIMIT))
+const hasMore = computed(() => filteredVehicles.value.length > HOME_LIMIT)
+
+// GET /api/vehicles (list) doesn't include images — only
+// GET /api/vehicle-images/{id} does, per vehicle. Since only the visible
+// cards need a cover photo, request images just for those (max HOME_LIMIT
+// requests instead of one per vehicle in the whole fleet). One failing
+// image request never blocks the grid.
+const imageRequested = new Set()
+
+async function loadCoverImages(list) {
+  const pending = list.filter((v) => !imageRequested.has(v.id))
+  pending.forEach((v) => imageRequested.add(v.id))
+  await Promise.all(
+    pending.map(async (v) => {
+      try {
+        const { data: imgData } = await fetchVehicleImages(v.id)
+        const imgList = Array.isArray(imgData) ? imgData : (imgData?.content ?? [])
+        v.image = imgList.map(normalizeImage).find(Boolean) ?? null
+      } catch {
+        v.image = null
+      }
+    })
+  )
+}
+
+// Runs whenever the visible set changes (initial load, brand/category filter).
+watch(visibleVehicles, (list) => loadCoverImages(list), { immediate: true })
+
 async function loadVehicles() {
   loading.value = true
   loadError.value = ''
+  imageRequested.clear() // fresh vehicle objects after a reload need their images again
   try {
     const { data } = await fetchVehicles()
     const list = Array.isArray(data) ? data : (data?.content ?? [])
     vehicles.value = list.map(normalizeVehicle)
-
-    // FIX: GET /api/vehicles (list) doesn't include images — only
-    // GET /api/vehicle-images/{id} does, per vehicle. Fetch all covers
-    // in parallel; one failing image request never blocks the grid.
-    await Promise.all(
-      vehicles.value.map(async (v) => {
-        try {
-          const { data: imgData } = await fetchVehicleImages(v.id)
-          const imgList = Array.isArray(imgData) ? imgData : (imgData?.content ?? [])
-          v.image = imgList.map(normalizeImage).find(Boolean) ?? null
-        } catch {
-          v.image = null
-        }
-      })
-    )
 
     if (isAuthenticated()) {
       try {

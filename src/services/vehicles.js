@@ -19,6 +19,11 @@
 | mileage, flat image url) silently produced blank/undefined values with
 | no console error.
 |
+| NEW: normalizeVehicle now also carries `brandId` and `brandImage`
+| (VehicleResponseDTO.brandImage = the brand's logo URL) so cards and brand
+| chips can show the logo. `image` is initialised to null so the property is
+| reactive before the cover image request resolves.
+|
 */
 
 import api from '@/services/api'
@@ -69,11 +74,14 @@ export function normalizeVehicle(v) {
     id: v.id,
     name: [v.brandName, v.model].filter(Boolean).join(' ') || v.name || 'Vehicle',
     brand: v.brandName,
+    brandId: v.brandId ?? null,
+    brandImage: v.brandImage ?? null,
     type: v.type ?? v.carType ?? '—',
     price: v.pricePerDay ?? v.dailyRate ?? v.price ?? 0,
     transmission: v.transmission ?? '—',
     fuel: v.fuelType ?? v.fuel ?? '—',
     seats: v.seats ?? v.seatCount ?? '—',
+    image: null, // filled in by Home/Explore once GET /vehicle-images/{id} resolves
     favorite: false,
   }
 }

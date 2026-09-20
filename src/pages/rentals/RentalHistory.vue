@@ -56,7 +56,7 @@ function docsForRental(rentalId) {
 function vehicleLabel(r) {
   const v = r.vehicle;
   if (!v) return `${t("rentals.vehicle")} #${r.vehicleId ?? ""}`;
-  return `${v.brand ?? ""} ${v.model ?? ""}`.trim();
+  return `${v.brandName ?? v.brand ?? ""} ${v.model ?? ""}`.trim();
 }
 
 function formatDate(d) {
