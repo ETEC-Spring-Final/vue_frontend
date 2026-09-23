@@ -1,16 +1,13 @@
-import { ref, watchEffect } from 'vue'
-
-const stored = localStorage.getItem('app_theme')
-const isDark = ref(stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches)
-
-watchEffect(() => {
-  document.documentElement.classList.toggle('dark', isDark.value)
-  localStorage.setItem('app_theme', isDark.value ? 'dark' : 'light')
-})
+// src/composables/useTheme.js
+//
+// Thin wrapper over the theme store so there is ONE source of truth.
+// (Previously this file kept its own state + localStorage key 'app_theme'
+// and fought with stores/theme.store.js, which uses the key 'theme'.)
+import { computed } from 'vue'
+import useThemeStore from '@/stores/theme.store'
 
 export function useTheme() {
-  function toggleTheme() {
-    isDark.value = !isDark.value
-  }
-  return { isDark, toggleTheme }
+  const { state, toggleTheme, setTheme } = useThemeStore()
+  const isDark = computed(() => state.mode === 'dark')
+  return { isDark, toggleTheme, setTheme }
 }

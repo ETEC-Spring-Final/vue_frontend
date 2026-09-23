@@ -57,30 +57,52 @@
 
       <!-- Hero banner -->
       <div
-          class="relative mt-6 overflow-hidden rounded-3xl shadow-lg"
+          class="relative mt-6 h-72 overflow-hidden rounded-3xl shadow-lg sm:h-96 lg:h-[28rem]"
           style="background: linear-gradient(135deg, #12172B 0%, #1E2648 60%, color-mix(in srgb, var(--color-primary) 40%, #12172B) 100%);"
         >
         <div
-          class="flex transition-transform duration-500 ease-out"
+          class="flex h-full transition-transform duration-500 ease-out"
           :style="{ transform: `translateX(-${activeBanner * 100}%)` }"
         >
           <div
             v-for="banner in banners" :key="banner.id"
-            class="relative w-full shrink-0 overflow-hidden px-6 py-10 sm:px-10 sm:py-14"
+            class="relative flex h-full w-full shrink-0 flex-col items-start justify-center overflow-hidden px-6 sm:px-10 lg:px-14"
           >
-            <!-- FIX: glow pushed further out + lower opacity + z-0, so it
+            <!-- Full-bleed car photo, pulled from a randomly-picked vehicle
+                 from the API (re-picked on every load — see heroVehicle in
+                 the script). Fills the whole banner as a background layer;
+                 the gradient (--color-bg) on the outer wrapper shows through
+                 as a fallback whenever there's no image yet. -->
+            <img
+              v-if="heroCarImage"
+              :src="heroCarImage"
+              alt=""
+              class="absolute inset-0 z-0 h-full w-full object-cover"
+              loading="lazy"
+            />
+
+            <!-- Dark gradient scrim over the photo so the white text/button
+                 stay legible — strongest on the left where the copy sits,
+                 fading out toward the right so the car is still visible. -->
+            <div
+              class="pointer-events-none absolute inset-0 z-[1]"
+              style="background: linear-gradient(100deg, rgba(12,17,35,0.88) 0%, rgba(12,17,35,0.45) 32%, rgba(12,17,35,0.08) 58%, rgba(12,17,35,0) 75%);"
+            />
+
+            <!-- FIX: glow pushed further out + lower opacity + z-[1], so it
                  no longer washes out the banner text on top of it. -->
             <div
-              class="pointer-events-none absolute -right-16 -top-16 z-0 h-48 w-48 rounded-full opacity-10 blur-3xl"
+              class="pointer-events-none absolute -right-16 -top-16 z-[1] h-48 w-48 rounded-full opacity-10 blur-3xl"
               :style="{ backgroundColor: 'var(--color-primary)' }"
             />
+
             <span class="relative z-10 inline-block rounded-full px-3 py-1 text-xs font-semibold text-white" :style="{ backgroundColor: 'var(--color-primary)' }">
               {{ banner.tag }}
             </span>
-            <h2 class="relative z-10 mt-4 max-w-xs text-2xl font-bold leading-tight text-white sm:max-w-sm sm:text-3xl">
+            <h2 class="relative z-10 mt-4 max-w-xs text-2xl font-bold leading-tight text-white sm:max-w-sm sm:text-3xl lg:max-w-md lg:text-4xl">
               {{ banner.title }}
             </h2>
-            <p class="relative z-10 mt-3 max-w-xs text-sm text-white/70 sm:max-w-sm">
+            <p class="relative z-10 mt-3 max-w-xs text-sm text-white/70 sm:max-w-sm lg:max-w-md lg:text-base">
               {{ banner.subtitle }}
             </p>
             <RouterLink
@@ -388,11 +410,24 @@ const filteredVehicles = computed(() =>
 const visibleVehicles = computed(() => filteredVehicles.value.slice(0, HOME_LIMIT))
 const hasMore = computed(() => filteredVehicles.value.length > HOME_LIMIT)
 
+// Hero banner car photo: picked at random from the full vehicle list on
+// every load (see pickHeroVehicle() in loadVehicles()), not just the first
+// one. heroVehicle holds a reference into vehicles.value, so once
+// loadCoverImages() sets its `.image` field the computed below updates
+// reactively — normalizeImage() may return either a plain URL string or an
+// object with a url/imageUrl field, so heroCarImage handles both shapes.
+const heroVehicle = ref(null)
+const heroCarImage = computed(() => {
+  const img = heroVehicle.value?.image
+  if (!img) return null
+  return typeof img === 'string' ? img : (img.url ?? img.imageUrl ?? null)
+})
+
 // GET /api/vehicles (list) doesn't include images — only
 // GET /api/vehicle-images/{id} does, per vehicle. Since only the visible
-// cards need a cover photo, request images just for those (max HOME_LIMIT
-// requests instead of one per vehicle in the whole fleet). One failing
-// image request never blocks the grid.
+// cards (plus the hero banner's first vehicle) need a cover photo, request
+// images just for those (max HOME_LIMIT + 1 requests instead of one per
+// vehicle in the whole fleet). One failing image request never blocks the grid.
 const imageRequested = new Set()
 
 async function loadCoverImages(list) {
@@ -412,6 +447,9 @@ async function loadCoverImages(list) {
 }
 
 // Runs whenever the visible set changes (initial load, brand/category filter).
+// The hero banner's random vehicle is fetched separately in loadVehicles();
+// loadCoverImages() dedupes via imageRequested, so there's no double-fetch
+// if that random vehicle also happens to be in visibleVehicles.
 watch(visibleVehicles, (list) => loadCoverImages(list), { immediate: true })
 
 async function loadVehicles() {
@@ -422,6 +460,16 @@ async function loadVehicles() {
     const { data } = await fetchVehicles()
     const list = Array.isArray(data) ? data : (data?.content ?? [])
     vehicles.value = list.map(normalizeVehicle)
+
+    // Hero banner shows a random car each load. loadCoverImages() dedupes
+    // against imageRequested (cleared above), so this is a no-op if the
+    // chosen vehicle is already being fetched as part of visibleVehicles.
+    if (vehicles.value.length) {
+      heroVehicle.value = vehicles.value[Math.floor(Math.random() * vehicles.value.length)]
+      loadCoverImages([heroVehicle.value])
+    } else {
+      heroVehicle.value = null
+    }
 
     if (isAuthenticated()) {
       try {

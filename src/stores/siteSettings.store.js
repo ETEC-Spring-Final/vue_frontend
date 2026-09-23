@@ -5,8 +5,9 @@
 |
 | Description:
 | Lightweight reactive store for site-wide branding/contact settings
-| (site name, logo, favicon, contact info). Fetched once on app load in
-| main.js so the logo/name are available before the header/login render.
+| (site name, logo, favicon, login background, contact info). Fetched once
+| on app load in main.js so the logo/name are available before the
+| header/login render.
 |
 | Notes:
 | - GET /api/settings is public, so this fetch works for logged-out users too.
@@ -20,14 +21,20 @@ import { getSiteSettings } from '@/services/siteSettings.service'
 
 const state = reactive({
   id: null,
-  siteName: 'CarRental',
+  siteName: 'null',
   logoUrl: '',
   faviconUrl: '',
+  authBackgroundUrl: '',
   contactEmail: '',
   contactPhone: '',
   address: '',
   facebookUrl: '',
   telegramUrl: '',
+  instagramUrl: '',
+  tiktokUrl: '',
+  whatsappUrl: '',
+  linkedinUrl: '',
+  websiteUrl: '',
   loaded: false,
 })
 

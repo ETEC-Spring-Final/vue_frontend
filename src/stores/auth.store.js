@@ -16,15 +16,20 @@
 | Notes:
 | - `login(payload)` expects the shape returned by the backend auth
 |   endpoints: { id, email, role, token } (see /api/auth/register,
-|   /api/auth/login)
+|   /api/auth/login, /api/auth/telegram)
 | - services/api.js reads the token directly from localStorage (key
 |   `auth_token`) to avoid a circular import with this file — keep the
 |   key in sync with TOKEN_KEY there if you rename it.
+| - `loginWithTelegram(telegramUser)` posts the Telegram Login Widget's
+|   raw callback payload to the backend (which verifies the hash) and
+|   then reuses login() for everything else — same pattern as
+|   OAuth2Redirect.vue calling login() after decoding a Google JWT.
 |
 */
 
 import { reactive } from 'vue'
 import { getMyProfile } from '@/services/profile.service'
+import { telegramLogin } from '@/services/telegramAuth.service'
 
 const TOKEN_KEY = 'auth_token'
 const USER_KEY = 'auth_user'
@@ -59,6 +64,19 @@ async function login(payload) {
 
   // fetchProfile() catches its own errors, so this never rejects.
   await fetchProfile()
+}
+
+/**
+ * Verify the Telegram Login Widget payload on the backend, then log the
+ * returned session in exactly the same way as email/password or Google
+ * OAuth login.
+ * @param {object} telegramUser - raw object the widget passes to onauth
+ * @returns {Promise<object>} the AuthResponseDTO { id, email, role, token }
+ */
+async function loginWithTelegram(telegramUser) {
+  const authData = await telegramLogin(telegramUser)
+  await login(authData)
+  return authData
 }
 
 /**
@@ -117,5 +135,14 @@ async function fetchProfile() {
 }
 
 export default function useAuthStore() {
-  return { state, login, logout, isAuthenticated, hasRole, defaultRedirect, fetchProfile }
+  return {
+    state,
+    login,
+    loginWithTelegram,
+    logout,
+    isAuthenticated,
+    hasRole,
+    defaultRedirect,
+    fetchProfile,
+  }
 }

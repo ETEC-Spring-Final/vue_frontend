@@ -14,7 +14,7 @@
       </button>
     </div>
 
-    <DataTable class="mt-4" :columns="columns" :rows="reservations" :loading="loading">
+    <DataTable class="mt-4" :columns="columns" :rows="paged" :loading="loading">
       <template #cell-vehicleId="{ row }">
         {{ vehicleLabel(row.vehicleId) }}
       </template>
@@ -53,6 +53,57 @@
     </DataTable>
 
     <p v-if="actionError" class="mt-3 text-sm text-red-600">{{ actionError }}</p>
+
+    <!-- Pagination -->
+    <div
+      v-if="!loading && reservations.length > 0"
+      class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm"
+      style="color: var(--color-text-secondary);"
+    >
+      <div class="flex items-center gap-3">
+        <span>{{ rangeFrom }}–{{ rangeTo }} {{ $t('reservations.of', 'of') }} {{ reservations.length }}</span>
+        <select
+          v-model.number="pageSize"
+          class="rounded-lg border px-2 py-1.5 text-xs outline-none"
+          style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
+        >
+          <option v-for="n in pageSizes" :key="n" :value="n">{{ n }} / {{ $t('reservations.perPage', 'page') }}</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          class="rounded-full border px-3 py-1.5 transition hover:opacity-80 disabled:opacity-40"
+          style="border-color: var(--color-border); color: var(--color-text);"
+          :disabled="page === 1"
+          @click="page--"
+        >{{ $t('reservations.previous', 'Previous') }}</button>
+
+        <template v-for="(b, i) in pageButtons" :key="`${b}-${i}`">
+          <span v-if="b === '…'" class="px-1">…</span>
+          <button
+            v-else
+            type="button"
+            class="h-8 min-w-8 rounded-full border px-2 text-xs font-semibold transition active:scale-95"
+            :style="
+              b === page
+                ? { backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)', color: '#fff' }
+                : { borderColor: 'var(--color-border)', color: 'var(--color-text)' }
+            "
+            @click="page = b"
+          >{{ b }}</button>
+        </template>
+
+        <button
+          type="button"
+          class="rounded-full border px-3 py-1.5 transition hover:opacity-80 disabled:opacity-40"
+          style="border-color: var(--color-border); color: var(--color-text);"
+          :disabled="page >= totalPages"
+          @click="page++"
+        >{{ $t('reservations.next', 'Next') }}</button>
+      </div>
+    </div>
 
     <Modal :open="modalOpen" :title="$t('reservations.addTitle')" @close="modalOpen = false">
       <form class="space-y-3" @submit.prevent="onSave">
@@ -122,7 +173,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DataTable from '@/components/ui/DataTable.vue'
 import Modal from '@/components/ui/Modal.vue'
@@ -159,6 +210,40 @@ const actionError = ref('')
 const modalOpen = ref(false)
 const saving = ref(false)
 const saveError = ref('')
+
+// ----- Pagination (client-side: /reservations returns the full list) -----
+const page = ref(1)
+const pageSize = ref(10)
+const pageSizes = [10, 20, 50]
+
+const totalPages = computed(() => Math.max(1, Math.ceil(reservations.value.length / pageSize.value)))
+const paged = computed(() => {
+  const start = (page.value - 1) * pageSize.value
+  return reservations.value.slice(start, start + pageSize.value)
+})
+const rangeFrom = computed(() => (reservations.value.length === 0 ? 0 : (page.value - 1) * pageSize.value + 1))
+const rangeTo = computed(() => Math.min(page.value * pageSize.value, reservations.value.length))
+
+// 1 … 4 5 6 … 9
+const pageButtons = computed(() => {
+  const total = totalPages.value
+  const cur = page.value
+  const nums = [...new Set([1, total, cur - 1, cur, cur + 1])].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b)
+  const out = []
+  nums.forEach((n, i) => {
+    if (i > 0 && n - nums[i - 1] > 1) out.push('…')
+    out.push(n)
+  })
+  return out
+})
+
+watch(pageSize, () => {
+  page.value = 1
+})
+// Stay in range after deleting the last row on a page
+watch(totalPages, (n) => {
+  if (page.value > n) page.value = n
+})
 
 function emptyForm() {
   return {

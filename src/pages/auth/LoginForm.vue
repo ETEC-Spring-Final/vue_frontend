@@ -73,6 +73,17 @@
         </svg>
         {{ t('auth.continueWithGoogle') }}
       </a>
+
+      <!-- Telegram Login Widget — renders its own styled button once the
+           script loads; onTelegramLogin() posts the widget's payload to
+           the backend for hash verification, same flow shape as
+           OAuth2Redirect.vue's Google handling. -->
+      <TelegramLoginButton
+        v-if="showTelegramLogin"
+        bot-username="auto_rent_premium_bot"
+        @login="onTelegramLogin"
+        @error="() => (errorMessage = t('auth.telegramFailed'))"
+      />
     </div>
 
     <p class="mt-8 text-center text-sm anim-field" :style="{ color: 'var(--color-text-secondary)' }" style="animation-delay:0.45s">
@@ -88,16 +99,19 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import useAuthStore from '@/stores/auth.store'
+import TelegramLoginButton from '@/components/auth/TelegramLoginButton.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
-const { login, defaultRedirect } = useAuthStore()
+const { login, defaultRedirect, loginWithTelegram } = useAuthStore()
 
 const loading = ref(false)
 const errorMessage = ref('')
 const showPassword = ref(false)
 const form = reactive({ email: '', password: '' })
+
+const showTelegramLogin = window.location.protocol === 'https:'
 
 const onSubmit = async () => {
   if (!form.email || !form.password) return
@@ -109,6 +123,19 @@ const onSubmit = async () => {
     router.push(route.query.redirect || defaultRedirect())
   } catch (err) {
     errorMessage.value = err.response?.data?.message || err.response?.data?.error || t('auth.loginFailed')
+  } finally {
+    loading.value = false
+  }
+}
+
+const onTelegramLogin = async (telegramUser) => {
+  loading.value = true
+  errorMessage.value = ''
+  try {
+    await loginWithTelegram(telegramUser)
+    router.push(route.query.redirect || defaultRedirect())
+  } catch (err) {
+    errorMessage.value = err.response?.data?.message || t('auth.telegramFailed')
   } finally {
     loading.value = false
   }

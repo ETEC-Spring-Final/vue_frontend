@@ -110,6 +110,24 @@
         </div>
       </header>
 
+      <!-- Date + system status bar (mirrors the EventPlace reference) -->
+      <div
+        class="flex shrink-0 items-center justify-between border-b px-4 py-2 text-sm md:px-6"
+        style="background-color: var(--color-surface); border-color: var(--color-border); color: var(--color-text-secondary);"
+      >
+        <span class="truncate">{{ formattedDate }}</span>
+        <span
+          class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
+          style="background-color: #DCFCE7; color: #16A34A;"
+        >
+          <span class="relative flex h-1.5 w-1.5">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style="background-color: #16A34A;"></span>
+            <span class="relative inline-flex h-1.5 w-1.5 rounded-full" style="background-color: #16A34A;"></span>
+          </span>
+          {{ $t('layout.systemOnline') }}
+        </span>
+      </div>
+
       <main class="flex-1 overflow-y-auto p-4 md:p-6">
         <RouterView v-slot="{ Component }">
           <transition name="fade-slide" mode="out-in">
@@ -185,6 +203,37 @@ const initials = computed(() => {
   return (fromName || user?.email || 'A').slice(0, 2).toUpperCase()
 })
 
+// Live "Monday, September 21, 2026" style date, localized to en/km and kept
+// in sync with the locale toggle. Updates automatically past midnight.
+//
+// NOTE: Intl.DateTimeFormat('km-KH', ...) is unreliable — many browsers
+// ship without Khmer weekday/month name data and silently fall back to
+// English. So for Khmer we spell the names out ourselves instead of
+// trusting the browser's ICU data.
+const now = ref(new Date())
+let clockTimer = null
+
+const WEEKDAYS_KM = ['អាទិត្យ', 'ច័ន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍']
+const MONTHS_KM = ['មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា', 'កក្កដា', 'សីហា', 'កញ្ញា', 'តុលា', 'វិច្ឆិកា', 'ធ្នូ']
+
+// 21 -> ២១  (remove the toKhDigits(...) calls below to keep Arabic digits)
+const toKhDigits = (n) => String(n).replace(/\d/g, (d) => '០១២៣៤៥៦៧៨៩'[d])
+
+const formattedDate = computed(() => {
+  const d = now.value
+  // Anything that is not English is treated as Khmer, so it works whether
+  // the locale code is 'km', 'kh' or 'km-KH'.
+  if (locale.value !== 'en') {
+    return `ថ្ងៃ${WEEKDAYS_KM[d.getDay()]} ទី${toKhDigits(d.getDate())} ខែ${MONTHS_KM[d.getMonth()]} ឆ្នាំ${toKhDigits(d.getFullYear())}`
+  }
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(d)
+})
+
 function toggleLocale() {
   setLocale(locale.value === 'en' ? 'km' : 'en')
 }
@@ -201,8 +250,15 @@ function onClickOutside(e) {
   }
 }
 
-onMounted(() => document.addEventListener('click', onClickOutside))
-onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
+onMounted(() => {
+  document.addEventListener('click', onClickOutside)
+  // Refresh once a minute; a full day never needs finer granularity here.
+  clockTimer = setInterval(() => { now.value = new Date() }, 60_000)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickOutside)
+  if (clockTimer) clearInterval(clockTimer)
+})
 </script>
 
 <style scoped>

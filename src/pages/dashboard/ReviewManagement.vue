@@ -57,7 +57,7 @@
     </div>
 
     <!-- Table -->
-    <DataTable :columns="columns" :rows="filtered" :loading="loading">
+    <DataTable :columns="columns" :rows="paged" :loading="loading">
       <template #cell-userName="{ row }">
         <span class="font-semibold" style="color: var(--color-text);">{{ row.userName }}</span>
       </template>
@@ -95,18 +95,72 @@
     </p>
 
     <p v-if="actionError" class="mt-3 text-sm text-red-600">{{ actionError }}</p>
+
+    <!-- Pagination -->
+    <div
+      v-if="!loading && filtered.length > 0"
+      class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm"
+      style="color: var(--color-text-secondary);"
+    >
+      <div class="flex items-center gap-3">
+        <span>{{ rangeFrom }}–{{ rangeTo }} {{ tr('reviews.of', 'of') }} {{ filtered.length }}</span>
+        <select
+          v-model.number="pageSize"
+          class="rounded-lg border px-2 py-1.5 text-xs outline-none"
+          style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
+        >
+          <option v-for="n in pageSizes" :key="n" :value="n">{{ n }} / {{ tr('reviews.perPage', 'page') }}</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          class="rounded-full border px-3 py-1.5 transition hover:opacity-80 disabled:opacity-40"
+          style="border-color: var(--color-border); color: var(--color-text);"
+          :disabled="page === 1"
+          @click="page--"
+        >{{ tr('reviews.previous', 'Previous') }}</button>
+
+        <template v-for="(b, i) in pageButtons" :key="`${b}-${i}`">
+          <span v-if="b === '…'" class="px-1">…</span>
+          <button
+            v-else
+            type="button"
+            class="h-8 min-w-8 rounded-full border px-2 text-xs font-semibold transition active:scale-95"
+            :style="
+              b === page
+                ? { backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)', color: '#fff' }
+                : { borderColor: 'var(--color-border)', color: 'var(--color-text)' }
+            "
+            @click="page = b"
+          >{{ b }}</button>
+        </template>
+
+        <button
+          type="button"
+          class="rounded-full border px-3 py-1.5 transition hover:opacity-80 disabled:opacity-40"
+          style="border-color: var(--color-border); color: var(--color-text);"
+          :disabled="page >= totalPages"
+          @click="page++"
+        >{{ tr('reviews.next', 'Next') }}</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DataTable from '@/components/ui/DataTable.vue'
 import StarRating from '@/components/reviews/StarRating.vue'
 import reviewService from '@/services/reviews.service'
 import api from '@/services/api'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
+
+// Translate with a fallback so a missing key never shows "reviews.xxx" on screen.
+const tr = (key, fallback) => (te(key) ? t(key) : fallback)
 
 const columns = computed(() => [
   { key: 'id', label: t('reviews.id') },
@@ -177,6 +231,41 @@ const filtered = computed(() => {
     )
   }
   return list
+})
+
+// ----- Pagination (client-side, applied after search + rating/visibility filters) -----
+const page = ref(1)
+const pageSize = ref(10)
+const pageSizes = [10, 20, 50]
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize.value)))
+const paged = computed(() => {
+  const start = (page.value - 1) * pageSize.value
+  return filtered.value.slice(start, start + pageSize.value)
+})
+const rangeFrom = computed(() => (filtered.value.length === 0 ? 0 : (page.value - 1) * pageSize.value + 1))
+const rangeTo = computed(() => Math.min(page.value * pageSize.value, filtered.value.length))
+
+// 1 … 4 5 6 … 9
+const pageButtons = computed(() => {
+  const total = totalPages.value
+  const cur = page.value
+  const nums = [...new Set([1, total, cur - 1, cur, cur + 1])].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b)
+  const out = []
+  nums.forEach((n, i) => {
+    if (i > 0 && n - nums[i - 1] > 1) out.push('…')
+    out.push(n)
+  })
+  return out
+})
+
+// Back to page 1 whenever the result set changes shape
+watch([search, ratingFilter, visibilityFilter, pageSize], () => {
+  page.value = 1
+})
+// Stay in range after deleting the last row on a page
+watch(totalPages, (n) => {
+  if (page.value > n) page.value = n
 })
 
 function vehicleLabel(id) {

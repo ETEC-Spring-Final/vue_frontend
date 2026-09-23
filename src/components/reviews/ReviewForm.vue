@@ -4,6 +4,10 @@
 
     <div class="mt-3">
       <StarRating v-model="rating" editable />
+      <!-- Tells the customer why Submit is still disabled instead of leaving a silent grey button -->
+      <p v-if="rating === 0" class="mt-1.5 text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+        {{ t('reviews.pickRating', 'Tap a star to rate') }}
+      </p>
     </div>
 
     <textarea

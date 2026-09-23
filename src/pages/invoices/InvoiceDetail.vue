@@ -27,6 +27,10 @@
                   <span :style="{ color: 'var(--color-text-secondary)' }">{{ $t('invoices.subtotal') }}</span>
                   <span :style="{ color: 'var(--color-text)' }">{{ formatCurrency(invoice.subtotal) }}</span>
                 </div>
+                <div v-if="Number(invoice.additionalServicesTotal)" class="flex justify-between text-sm">
+                  <span :style="{ color: 'var(--color-text-secondary)' }">{{ tr('invoices.additionalServices', 'Additional services') }}</span>
+                  <span :style="{ color: 'var(--color-text)' }">{{ formatCurrency(invoice.additionalServicesTotal) }}</span>
+                </div>
                 <div v-if="Number(invoice.discountAmount)" class="flex justify-between text-sm">
                   <span :style="{ color: 'var(--color-text-secondary)' }">{{ $t('invoices.discount') }}</span>
                   <span class="text-red-600">−{{ formatCurrency(invoice.discountAmount) }}</span>
@@ -53,6 +57,13 @@
                 :style="{ backgroundColor: 'var(--color-primary)' }"
               >
                 {{ downloading ? $t('invoices.downloading') : $t('invoices.downloadInvoice') }}
+              </button>
+              <button
+                type="button" @click="printInvoice(invoice)"
+                class="flex-1 rounded-full border py-3.5 text-sm font-semibold transition-all duration-200 hover:shadow-md active:scale-[0.98]"
+                :style="{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }"
+              >
+                {{ tr('invoices.print', 'Print') }}
               </button>
               <button
                 type="button" @click="onShareInvoice"
@@ -82,21 +93,47 @@
     </div>
 
     <SiteFooter />
+
+    <!-- Printable A4 sheet (teleported to <body>, only rendered while printing) -->
+    <InvoicePrintSheet v-if="printData" :invoice="printData.invoice" :customer="customerDetails" :rental="rentalInfo" />
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import invoicesApi from '@/services/invoices'
+import api from '@/services/api'
+import { usePrintInvoice } from '@/composables/usePrintInvoice'
+import useAuthStore from '@/stores/auth.store'
 import SiteHeader from '@/components/layout/SiteHeader.vue'
 import SiteFooter from '@/components/layout/SiteFooter.vue'
+import InvoicePrintSheet from '@/components/ui/InvoicePrintSheet.vue'
 
 const route = useRoute()
-const { t } = useI18n()
+const { t, te } = useI18n()
+const { printData, printInvoice } = usePrintInvoice()
+
+// Translate with a fallback so a missing key never shows "invoices.xxx" on screen.
+const tr = (key, fallback) => (te(key) ? t(key) : fallback)
+
+// On this page the logged-in user is the customer. Prefer the customer
+// info the backend now returns directly on the invoice; fall back to the
+// logged-in user's own profile if it's ever missing.
+const { state: authState } = useAuthStore()
+const customerDetails = computed(() => {
+  const i = invoice.value ?? {}
+  const u = authState.user ?? {}
+  return {
+    name: i.customerName || [u.firstName, u.lastName].filter(Boolean).join(' '),
+    email: i.customerEmail || u.email || '',
+    phone: i.customerPhone || u.phoneNumber || u.phone || '',
+  }
+})
 
 const invoice = ref(null)
+const rentalInfo = ref(null)
 const loading = ref(true)
 const errorMessage = ref('')
 const downloading = ref(false)
@@ -168,6 +205,20 @@ onMounted(async () => {
   try {
     const { data } = await invoicesApi.getById(route.params.id)
     invoice.value = data
+
+    // Fetch the rental too, just to get pickUpDateTime / expectedReturnDateTime
+    // so the printed sheet can show a day count.
+    if (data?.rentalId) {
+      try {
+        const { data: rental } = await api.get(`/rentals/${data.rentalId}`)
+        rentalInfo.value = {
+          pickUpDateTime: rental.pickUpDateTime,
+          expectedReturnDateTime: rental.expectedReturnDateTime,
+        }
+      } catch {
+        rentalInfo.value = null
+      }
+    }
   } catch (err) {
     errorMessage.value = err.response?.data?.message || t('invoices.loadError')
   } finally {
