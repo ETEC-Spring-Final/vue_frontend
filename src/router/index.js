@@ -54,6 +54,7 @@ import BackLayout from '@/layouts/BackLayout.vue'
 import Dashboard from '@/pages/dashboard/Dashboard.vue'
 import AdminProfile from '@/pages/dashboard/AdminProfile.vue'
 import VehicleManagement from '@/pages/dashboard/VehicleManagement.vue'
+import BrandManagement from '@/pages/dashboard/BrandManagement.vue'
 import LocationManagement from '@/pages/dashboard/LocationManagement.vue'
 import ReservationManagement from '@/pages/dashboard/ReservationManagement.vue'
 import RentalManagement from '@/pages/dashboard/RentalManagement.vue'
@@ -124,6 +125,7 @@ const routes = [
       { path: '', component: Dashboard },
       { path: 'profile', component: AdminProfile },
       { path: 'vehicles', component: VehicleManagement },
+      { path: 'brands', component: BrandManagement },
       { path: 'locations', component: LocationManagement },
       { path: 'reservations', component: ReservationManagement },
       { path: 'rentals', component: RentalManagement },

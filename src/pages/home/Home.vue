@@ -57,30 +57,52 @@
 
       <!-- Hero banner -->
       <div
-          class="relative mt-6 overflow-hidden rounded-3xl shadow-lg"
+          class="relative mt-6 h-72 overflow-hidden rounded-3xl shadow-lg sm:h-96 lg:h-[28rem]"
           style="background: linear-gradient(135deg, #12172B 0%, #1E2648 60%, color-mix(in srgb, var(--color-primary) 40%, #12172B) 100%);"
         >
         <div
-          class="flex transition-transform duration-500 ease-out"
+          class="flex h-full transition-transform duration-500 ease-out"
           :style="{ transform: `translateX(-${activeBanner * 100}%)` }"
         >
           <div
             v-for="banner in banners" :key="banner.id"
-            class="relative w-full shrink-0 overflow-hidden px-6 py-10 sm:px-10 sm:py-14"
+            class="relative flex h-full w-full shrink-0 flex-col items-start justify-center overflow-hidden px-6 sm:px-10 lg:px-14"
           >
-            <!-- FIX: glow pushed further out + lower opacity + z-0, so it
+            <!-- Full-bleed car photo, pulled from a randomly-picked vehicle
+                 from the API (re-picked on every load — see heroVehicle in
+                 the script). Fills the whole banner as a background layer;
+                 the gradient (--color-bg) on the outer wrapper shows through
+                 as a fallback whenever there's no image yet. -->
+            <img
+              v-if="heroCarImage"
+              :src="heroCarImage"
+              alt=""
+              class="absolute inset-0 z-0 h-full w-full object-cover"
+              loading="lazy"
+            />
+
+            <!-- Dark gradient scrim over the photo so the white text/button
+                 stay legible — strongest on the left where the copy sits,
+                 fading out toward the right so the car is still visible. -->
+            <div
+              class="pointer-events-none absolute inset-0 z-[1]"
+              style="background: linear-gradient(100deg, rgba(12,17,35,0.88) 0%, rgba(12,17,35,0.45) 32%, rgba(12,17,35,0.08) 58%, rgba(12,17,35,0) 75%);"
+            />
+
+            <!-- FIX: glow pushed further out + lower opacity + z-[1], so it
                  no longer washes out the banner text on top of it. -->
             <div
-              class="pointer-events-none absolute -right-16 -top-16 z-0 h-48 w-48 rounded-full opacity-10 blur-3xl"
+              class="pointer-events-none absolute -right-16 -top-16 z-[1] h-48 w-48 rounded-full opacity-10 blur-3xl"
               :style="{ backgroundColor: 'var(--color-primary)' }"
             />
+
             <span class="relative z-10 inline-block rounded-full px-3 py-1 text-xs font-semibold text-white" :style="{ backgroundColor: 'var(--color-primary)' }">
               {{ banner.tag }}
             </span>
-            <h2 class="relative z-10 mt-4 max-w-xs text-2xl font-bold leading-tight text-white sm:max-w-sm sm:text-3xl">
+            <h2 class="relative z-10 mt-4 max-w-xs text-2xl font-bold leading-tight text-white sm:max-w-sm sm:text-3xl lg:max-w-md lg:text-4xl">
               {{ banner.title }}
             </h2>
-            <p class="relative z-10 mt-3 max-w-xs text-sm text-white/70 sm:max-w-sm">
+            <p class="relative z-10 mt-3 max-w-xs text-sm text-white/70 sm:max-w-sm lg:max-w-md lg:text-base">
               {{ banner.subtitle }}
             </p>
             <RouterLink
@@ -150,19 +172,26 @@
         </button>
       </div>
 
-      <!-- Brand filter -->
+      <!-- Brand filter (with brand logos) -->
       <div v-if="brands.length > 1" class="mt-4 flex gap-3 overflow-x-auto pb-1">
         <button
           v-for="brand in brands"
-          :key="brand"
+          :key="brand.name"
           type="button"
-          class="shrink-0 rounded-full border px-5 py-2 text-sm font-semibold transition-all duration-200 active:scale-95"
-          :style="activeBrand === brand
+          class="flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-200 active:scale-95"
+          :style="activeBrand === brand.name
             ? { borderColor: 'var(--color-primary)', backgroundColor: 'var(--color-primary)', color: '#fff' }
             : { borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }"
-          @click="activeBrand = brand"
+          @click="activeBrand = brand.name"
         >
-          {{ brand === 'All' ? $t('home.allBrands') : brand }}
+          <img
+            v-if="brand.image"
+            :src="brand.image"
+            :alt="brand.name"
+            class="h-5 w-5 rounded-full bg-white object-contain"
+            loading="lazy"
+          />
+          {{ brand.name === 'All' ? $t('home.allBrands') : brand.name }}
         </button>
       </div>
 
@@ -213,7 +242,7 @@
         <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('home.noVehicles') }}</p>
       </div>
 
-      <!-- Vehicle grid -->
+      <!-- Vehicle grid (max HOME_LIMIT cards; the full fleet lives on /explore) -->
       <TransitionGroup
         v-else
         tag="div"
@@ -221,7 +250,7 @@
         class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
       >
         <VehicleCard
-          v-for="(vehicle, i) in filteredVehicles"
+          v-for="(vehicle, i) in visibleVehicles"
           :key="vehicle.id"
           :vehicle="vehicle"
           :style="{ transitionDelay: `${Math.min(i, 6) * 60}ms` }"
@@ -229,6 +258,20 @@
           @rent="handleRentNow"
         />
       </TransitionGroup>
+
+      <!-- "See all" button — only when there are more vehicles than the grid shows -->
+      <div v-if="!loading && !loadError && hasMore" class="mt-8 text-center">
+        <RouterLink
+          to="/explore"
+          class="group inline-flex items-center gap-2 rounded-full border px-6 py-2.5 text-sm font-semibold transition-all duration-200 hover:gap-3 hover:shadow-md active:scale-95"
+          :style="{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }"
+        >
+          {{ $t('home.seeAll') }}
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-4 w-4">
+            <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6"/>
+          </svg>
+        </RouterLink>
+      </div>
 
       <!-- Why book with us -->
       <section ref="whyUsRef" class="mt-16" :class="whyUsVisible ? 'reveal-in' : 'reveal-pending'">
@@ -259,7 +302,7 @@
 </template>
 
 <script setup>
-import { computed, h, onMounted, onUnmounted, ref } from 'vue'
+import { computed, h, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import useAuthStore from '@/stores/auth.store'
@@ -330,20 +373,29 @@ const CATEGORY_ICONS = {
 const iconFor = (type) => CATEGORY_ICONS[type] ?? CATEGORY_ICONS.All
 
 // ----- Vehicles: live data from GET /api/vehicles -----
+// The home page only shows a small "popular" selection; the whole fleet
+// (with search + filters) lives on /explore.
+const HOME_LIMIT = 9
+
 const vehicles = ref([])
 const loading = ref(true)
 const loadError = ref('')
 const activeBrand = ref('All')
 const activeCategory = ref('All')
 
+// Brand chips carry the brand logo (VehicleResponseDTO.brandImage) when one exists.
 const brands = computed(() => {
-  const unique = [...new Set(vehicles.value.map((v) => v.brand).filter(Boolean))]
-  return ['All', ...unique]
+  const map = new Map()
+  for (const v of vehicles.value) {
+    if (v.brand && !map.has(v.brand)) map.set(v.brand, { name: v.brand, image: v.brandImage })
+  }
+  return [{ name: 'All', image: null }, ...map.values()]
 })
 
 const categories = computed(() => {
   const unique = [...new Set(vehicles.value.map((v) => v.type).filter((t) => t && t !== '—'))]
-  return [{ value: 'All', label: t('home.allBrands'), icon: iconFor('All') },
+  // The "All" chip filters by car TYPE, so it uses the "All types" label.
+  return [{ value: 'All', label: t('explore.allTypes'), icon: iconFor('All') },
     ...unique.map((type) => ({ value: type, label: type, icon: iconFor(type) }))]
 })
 
@@ -354,28 +406,70 @@ const filteredVehicles = computed(() =>
   )
 )
 
+// Only the first HOME_LIMIT matches are rendered.
+const visibleVehicles = computed(() => filteredVehicles.value.slice(0, HOME_LIMIT))
+const hasMore = computed(() => filteredVehicles.value.length > HOME_LIMIT)
+
+// Hero banner car photo: picked at random from the full vehicle list on
+// every load (see pickHeroVehicle() in loadVehicles()), not just the first
+// one. heroVehicle holds a reference into vehicles.value, so once
+// loadCoverImages() sets its `.image` field the computed below updates
+// reactively — normalizeImage() may return either a plain URL string or an
+// object with a url/imageUrl field, so heroCarImage handles both shapes.
+const heroVehicle = ref(null)
+const heroCarImage = computed(() => {
+  const img = heroVehicle.value?.image
+  if (!img) return null
+  return typeof img === 'string' ? img : (img.url ?? img.imageUrl ?? null)
+})
+
+// GET /api/vehicles (list) doesn't include images — only
+// GET /api/vehicle-images/{id} does, per vehicle. Since only the visible
+// cards (plus the hero banner's first vehicle) need a cover photo, request
+// images just for those (max HOME_LIMIT + 1 requests instead of one per
+// vehicle in the whole fleet). One failing image request never blocks the grid.
+const imageRequested = new Set()
+
+async function loadCoverImages(list) {
+  const pending = list.filter((v) => !imageRequested.has(v.id))
+  pending.forEach((v) => imageRequested.add(v.id))
+  await Promise.all(
+    pending.map(async (v) => {
+      try {
+        const { data: imgData } = await fetchVehicleImages(v.id)
+        const imgList = Array.isArray(imgData) ? imgData : (imgData?.content ?? [])
+        v.image = imgList.map(normalizeImage).find(Boolean) ?? null
+      } catch {
+        v.image = null
+      }
+    })
+  )
+}
+
+// Runs whenever the visible set changes (initial load, brand/category filter).
+// The hero banner's random vehicle is fetched separately in loadVehicles();
+// loadCoverImages() dedupes via imageRequested, so there's no double-fetch
+// if that random vehicle also happens to be in visibleVehicles.
+watch(visibleVehicles, (list) => loadCoverImages(list), { immediate: true })
+
 async function loadVehicles() {
   loading.value = true
   loadError.value = ''
+  imageRequested.clear() // fresh vehicle objects after a reload need their images again
   try {
     const { data } = await fetchVehicles()
     const list = Array.isArray(data) ? data : (data?.content ?? [])
     vehicles.value = list.map(normalizeVehicle)
 
-    // FIX: GET /api/vehicles (list) doesn't include images — only
-    // GET /api/vehicle-images/{id} does, per vehicle. Fetch all covers
-    // in parallel; one failing image request never blocks the grid.
-    await Promise.all(
-      vehicles.value.map(async (v) => {
-        try {
-          const { data: imgData } = await fetchVehicleImages(v.id)
-          const imgList = Array.isArray(imgData) ? imgData : (imgData?.content ?? [])
-          v.image = imgList.map(normalizeImage).find(Boolean) ?? null
-        } catch {
-          v.image = null
-        }
-      })
-    )
+    // Hero banner shows a random car each load. loadCoverImages() dedupes
+    // against imageRequested (cleared above), so this is a no-op if the
+    // chosen vehicle is already being fetched as part of visibleVehicles.
+    if (vehicles.value.length) {
+      heroVehicle.value = vehicles.value[Math.floor(Math.random() * vehicles.value.length)]
+      loadCoverImages([heroVehicle.value])
+    } else {
+      heroVehicle.value = null
+    }
 
     if (isAuthenticated()) {
       try {

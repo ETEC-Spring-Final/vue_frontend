@@ -84,7 +84,9 @@
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   {{ $t('userMenu.profile') }}
                 </RouterLink>
+                <!-- Settings route is ADMIN/MANAGER only (router meta.roles), so hide it for STAFF -->
                 <RouterLink
+                  v-if="hasRole('ADMIN', 'MANAGER')"
                   to="/dashboard/settings"
                   class="flex items-center gap-2 px-4 py-2 text-sm transition-colors duration-150 hover:bg-[var(--color-primary-light)]"
                   style="color: var(--color-text);"
@@ -107,6 +109,24 @@
           </div>
         </div>
       </header>
+
+      <!-- Date + system status bar (mirrors the EventPlace reference) -->
+      <div
+        class="flex shrink-0 items-center justify-between border-b px-4 py-2 text-sm md:px-6"
+        style="background-color: var(--color-surface); border-color: var(--color-border); color: var(--color-text-secondary);"
+      >
+        <span class="truncate">{{ formattedDate }}</span>
+        <span
+          class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
+          style="background-color: #DCFCE7; color: #16A34A;"
+        >
+          <span class="relative flex h-1.5 w-1.5">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style="background-color: #16A34A;"></span>
+            <span class="relative inline-flex h-1.5 w-1.5 rounded-full" style="background-color: #16A34A;"></span>
+          </span>
+          {{ $t('layout.systemOnline') }}
+        </span>
+      </div>
 
       <main class="flex-1 overflow-y-auto p-4 md:p-6">
         <RouterView v-slot="{ Component }">
@@ -133,16 +153,40 @@ import { setLocale } from '@/i18n'
 const route = useRoute()
 const router = useRouter()
 
-const { state: authState, logout } = useAuthStore()
+const { state: authState, hasRole, logout } = useAuthStore()
 const { isDark, toggleTheme } = useTheme()
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const { toggleMobile } = useSidebar()
 
 const menuOpen = ref(false)
 const menuRef = ref(null)
 
+// Last URL segment -> translation key (all keys already exist in en.json / km.json).
+// Unknown segments fall back to the old capitalised-English behaviour.
+const TITLE_KEYS = {
+  dashboard: 'sidebar.dashboard',
+  vehicles: 'sidebar.vehicles',
+  brands: 'sidebar.brands',
+  locations: 'sidebar.locations',
+  reservations: 'sidebar.reservations',
+  rentals: 'sidebar.rentals',
+  customers: 'sidebar.customers',
+  discounts: 'sidebar.discounts',
+  invoices: 'sidebar.invoices',
+  reviews: 'sidebar.reviews',
+  notifications: 'sidebar.notifications',
+  maintenance: 'sidebar.maintenance',
+  services: 'sidebar.services',
+  'audit-logs': 'sidebar.auditLogs',
+  'login-history': 'sidebar.loginHistory',
+  settings: 'sidebar.settings',
+  profile: 'adminProfile.title',
+}
+
 const pageTitle = computed(() => {
   const segment = route.path.split('/').filter(Boolean).pop() || 'dashboard'
+  const key = TITLE_KEYS[segment]
+  if (key) return t(key)
   return segment.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 })
 
@@ -157,6 +201,37 @@ const initials = computed(() => {
   const user = authState.user
   const fromName = (user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')
   return (fromName || user?.email || 'A').slice(0, 2).toUpperCase()
+})
+
+// Live "Monday, September 21, 2026" style date, localized to en/km and kept
+// in sync with the locale toggle. Updates automatically past midnight.
+//
+// NOTE: Intl.DateTimeFormat('km-KH', ...) is unreliable — many browsers
+// ship without Khmer weekday/month name data and silently fall back to
+// English. So for Khmer we spell the names out ourselves instead of
+// trusting the browser's ICU data.
+const now = ref(new Date())
+let clockTimer = null
+
+const WEEKDAYS_KM = ['អាទិត្យ', 'ច័ន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍']
+const MONTHS_KM = ['មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា', 'កក្កដា', 'សីហា', 'កញ្ញា', 'តុលា', 'វិច្ឆិកា', 'ធ្នូ']
+
+// 21 -> ២១  (remove the toKhDigits(...) calls below to keep Arabic digits)
+const toKhDigits = (n) => String(n).replace(/\d/g, (d) => '០១២៣៤៥៦៧៨៩'[d])
+
+const formattedDate = computed(() => {
+  const d = now.value
+  // Anything that is not English is treated as Khmer, so it works whether
+  // the locale code is 'km', 'kh' or 'km-KH'.
+  if (locale.value !== 'en') {
+    return `ថ្ងៃ${WEEKDAYS_KM[d.getDay()]} ទី${toKhDigits(d.getDate())} ខែ${MONTHS_KM[d.getMonth()]} ឆ្នាំ${toKhDigits(d.getFullYear())}`
+  }
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(d)
 })
 
 function toggleLocale() {
@@ -175,8 +250,15 @@ function onClickOutside(e) {
   }
 }
 
-onMounted(() => document.addEventListener('click', onClickOutside))
-onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
+onMounted(() => {
+  document.addEventListener('click', onClickOutside)
+  // Refresh once a minute; a full day never needs finer granularity here.
+  clockTimer = setInterval(() => { now.value = new Date() }, 60_000)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickOutside)
+  if (clockTimer) clearInterval(clockTimer)
+})
 </script>
 
 <style scoped>

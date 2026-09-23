@@ -1,9 +1,4 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
-
-* {
-  font-family: 'Inter', 'Noto Sans Khmer', sans-serif;
-}
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -30,25 +25,12 @@
   --color-primary-light: #1B2A4A;
 }
 
+* {
+  font-family: 'Inter', 'Noto Sans Khmer', sans-serif;
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
   transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-@layer base {
-  :root {
-    --font-sans: "Poppins", sans-serif;
-    --font-khmer: "Kantumruy Pro", sans-serif;
-  }
-}
-
-@layer base {
-  html {
-    font-family: var(--font-sans);
-  }
-
-  :lang(km) {
-    font-family: var(--font-khmer);
-  }
 }

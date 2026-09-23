@@ -19,6 +19,18 @@
 | mileage, flat image url) silently produced blank/undefined values with
 | no console error.
 |
+| NEW: normalizeVehicle now also carries `brandId` and `brandImage`
+| (VehicleResponseDTO.brandImage = the brand's logo URL) so cards and brand
+| chips can show the logo. `image` is initialised to null so the property is
+| reactive before the cover image request resolves.
+|
+| NEW (2026-09): normalizeVehicle now also carries `status`
+| (VehicleResponseDTO.status — AVAILABLE/RESERVED/RENTED/MAINTENANCE) so
+| VehicleCard can show an "Unavailable" state, plus best-effort
+| `discountPercent`/`originalPrice` passthroughs for whenever the backend
+| adds a discount field to VehicleResponseDTO — they resolve to null today
+| and simply don't render anything until that field exists.
+|
 */
 
 import api from '@/services/api'
@@ -38,7 +50,8 @@ export function fetchVehicleById(id) {
 
 // GET /api/vehicles/{id}/booked-dates
 // Date windows already reserved for a vehicle (powers the "unavailable"
-// hints on the booking form + client-side overlap check). Public.
+// hints on the booking form + client-side overlap check + the VehicleCard
+// "unavailable until <date>" badge). Public.
 export function fetchBookedDates(vehicleId) {
   return api.get(`/vehicles/${vehicleId}/booked-dates`)
 }
@@ -69,12 +82,23 @@ export function normalizeVehicle(v) {
     id: v.id,
     name: [v.brandName, v.model].filter(Boolean).join(' ') || v.name || 'Vehicle',
     brand: v.brandName,
+    brandId: v.brandId ?? null,
+    brandImage: v.brandImage ?? null,
     type: v.type ?? v.carType ?? '—',
     price: v.pricePerDay ?? v.dailyRate ?? v.price ?? 0,
     transmission: v.transmission ?? '—',
     fuel: v.fuelType ?? v.fuel ?? '—',
     seats: v.seats ?? v.seatCount ?? '—',
+    image: null, // filled in by Home/Explore once GET /vehicle-images/{id} resolves
     favorite: false,
+    // Drives the "Unavailable" card state. VehicleResponseDTO.status is
+    // always present, so this defaults sensibly even before any booking exists.
+    status: v.status ?? 'AVAILABLE',
+    // Best-effort — VehicleResponseDTO doesn't expose a discount field yet.
+    // Stays null (renders nothing) until the backend adds one; update the
+    // fallback keys here once that DTO is confirmed.
+    discountPercent: v.discountPercent ?? v.discount?.percentage ?? null,
+    originalPrice: v.originalPrice ?? v.priceBeforeDiscount ?? null,
   }
 }
 
@@ -109,4 +133,17 @@ export function normalizeReview(r) {
     authorName: r.userName ?? r.author ?? r.user?.firstName ?? 'Anonymous',
     createdAt: r.createdAt ?? null,
   }
+}
+
+// BookedDateDTO's exact field names aren't confirmed yet (the controller
+// only declares `List<BookedDateDTO>`), so this reads several likely
+// candidates defensively — same pattern as normalizeImage above. Returns
+// { start: Date|null, end: Date|null } or null if nothing parseable.
+export function normalizeBookedDate(b) {
+  const startRaw = b.startDate ?? b.start ?? b.checkInDate ?? b.pickupDate ?? b.from ?? null
+  const endRaw = b.endDate ?? b.end ?? b.checkOutDate ?? b.returnDate ?? b.to ?? null
+  const start = startRaw ? new Date(startRaw) : null
+  const end = endRaw ? new Date(endRaw) : null
+  if (!start && !end) return null
+  return { start, end }
 }

@@ -8,7 +8,8 @@ import invoicesApi from "@/services/invoices";
 import SiteHeader from "@/components/layout/SiteHeader.vue";
 
 const router = useRouter();
-const { t } = useI18n();
+// `locale` is the app's current language (EN/KM), so dates follow the toggle in the header.
+const { t, locale } = useI18n();
 
 const reservations = ref([]);
 const loading = ref(true);
@@ -100,9 +101,11 @@ async function handleCancel(id) {
   }
 }
 
+// Uses the app language (was `undefined`, which followed the browser language
+// and ignored the EN/KM toggle).
 function formatDate(d) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(d).toLocaleDateString(locale.value, { year: "numeric", month: "short", day: "numeric" });
 }
 
 async function handleDownloadInvoice(id) {

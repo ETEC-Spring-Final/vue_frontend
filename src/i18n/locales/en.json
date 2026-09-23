@@ -145,7 +145,19 @@
     "successNoInvoice": "Reservation created. You'll be able to pay once it's confirmed.",
     "noVehicle": "No vehicle selected. Please choose a vehicle first.",
     "loadError": "Failed to load reservation data.",
-    "submitError": "Something went wrong creating your reservation."
+    "submitError": "Something went wrong creating your reservation.",
+    "back": "Back",
+    "stepDates": "Trip dates",
+    "stepLocations": "Locations",
+    "optional": "Optional",
+    "quickDuration": "Quick pick",
+    "daysUnit": "days",
+    "seats": "seats",
+    "sameLocation": "Return to the same location",
+    "missingDates": "Choose valid pick-up and return dates",
+    "missingPickup": "Choose a pick-up location",
+    "missingReturn": "Choose a return location",
+    "redirecting": "Taking you to payment…"
   },
   "payment": {
     "title": "Payment",
@@ -177,6 +189,21 @@
       "CASH": "Pay on pickup",
       "CASHSub": "Cash at counter"
     },
+    "steps": {
+      "booking": "Booking",
+      "payment": "Payment",
+      "done": "Done"
+    },
+    "status": {
+      "UNPAID": "Unpaid",
+      "PAID": "Paid",
+      "CANCELLED": "Cancelled"
+    },
+    "amountPaid": "Amount paid",
+    "secure": "Payments are confirmed automatically through Bakong.",
+    "saveQr": "Save QR",
+    "regenerateQr": "Get a new QR",
+    "cancelledMsg": "This invoice was cancelled and can no longer be paid.",
     "cashConfirmText": "You'll pay in cash when you pick up the vehicle. Your reservation stays pending until an authorised staff member records the payment.",
     "cashHint": "Note: the invoice remains unpaid until you pay at pickup.",
     "confirmCash": "I'll pay on pickup",
@@ -197,6 +224,7 @@
   "sidebar": {
     "dashboard": "Dashboard",
     "vehicles": "Vehicles",
+    "brands": "Brands",
     "locations": "Locations",
     "reservations": "Reservations",
     "rentals": "Rentals",
@@ -212,6 +240,9 @@
     "logout": "Logout",
     "settings": "Site Settings"
   },
+  "layout": {
+    "systemOnline": "System Online"
+  },
   "dashboard": {
     "title": "Dashboard",
     "totalVehicles": "Total Vehicles",
@@ -222,7 +253,39 @@
     "reservationsChart": "Reservations this week",
     "statusChart": "Vehicle status",
     "loadError": "Unable to load dashboard data.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "topRentedCars": "Top Rented Cars",
+    "popularBrands": "Popular Brands",
+    "rentals": "rentals",
+    "noData": "No data yet",
+    "mostRented": "Most Rented Vehicle",
+    "mostPopularThisPeriod": "Most popular right now",
+    "fleetUtilization": "Fleet Utilization",
+    "vehiclesLower": "vehicles rented",
+    "loading": "Loading...",
+    "period": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "sixMonths": "6 Months"
+    },
+    "search": "Search...",
+    "refresh": "Refresh",
+    "print": "Print / PDF",
+    "exportCsv": "Export CSV",
+    "reservationsChartBy": {
+      "day": "Bookings — last 14 days",
+      "week": "Bookings — last 8 weeks",
+      "month": "Bookings — last 12 months",
+      "sixMonths": "Bookings — last 6 months"
+    },
+    "status": {
+      "available": "Available",
+      "rented": "Rented",
+      "maintenance": "Maintenance",
+      "reserved": "Reserved",
+      "unavailable": "Unavailable"
+    }
   },
   "adminProfile": {
     "title": "My Profile",
@@ -285,6 +348,30 @@
     "deleteError": "Could not delete this vehicle — it may still have images or active bookings.",
     "deleting": "Deleting…",
     "done": "Done",
+    "bookedFor": "Booked {range}",
+    "availableAgain": "Available again {date}",
+    "image": "Photo",
+    "all": "All",
+    "search": "Search brand, model, plate…",
+    "allTypes": "All types",
+    "noPhotoOnly": "No photo only",
+    "noPhoto": "No photo",
+    "addPhoto": "No photo — click to add",
+    "checkingPhotos": "Checking photos…",
+    "noImageBanner": "vehicles have no photo yet",
+    "showThem": "Show them",
+    "clearFilters": "Clear filters",
+    "noResults": "No vehicles match your filters.",
+    "of": "of",
+    "perPage": "page",
+    "previous": "Previous",
+    "next": "Next",
+    "sort": {
+      "default": "Default order",
+      "priceAsc": "Price: low to high",
+      "priceDesc": "Price: high to low",
+      "brand": "Brand A–Z"
+    },
     "statusValues": {
       "AVAILABLE": "Available",
       "RESERVED": "Reserved",
@@ -292,6 +379,7 @@
       "MAINTENANCE": "Maintenance",
       "UNAVAILABLE": "Unavailable"
     },
+    
     "gallery": {
       "title": "Photos",
       "dropHint": "Drag & drop photos here, or click to select",
@@ -299,6 +387,7 @@
       "uploadError": "Some photos failed to upload.",
       "actionError": "Action failed. Please try again.",
       "tooLarge": "Each photo must be under 5MB.",
+      "tooLargeSkipped": "{count} photo(s) over 5MB were skipped.",
       "empty": "No photos yet.",
       "saveFirst": "Save the vehicle first, then you can add photos.",
       "createdHint": "Vehicle created! Add some photos below.",
@@ -353,7 +442,11 @@
     "saving": "Saving…",
     "saveError": "Could not create this reservation.",
     "statusError": "Could not update status.",
-    "confirmDelete": "Delete reservation"
+    "confirmDelete": "Delete reservation",
+    "of": "of",
+    "perPage": "page",
+    "previous": "Previous",
+    "next": "Next"
   },
   "rentals": {
     "count": "rentals",
@@ -390,7 +483,11 @@
     "uploadDocument": "Upload document",
     "uploading": "Uploading…",
     "loadError": "Failed to load your rentals.",
-    "uploadError": "Could not upload this document."
+    "uploadError": "Could not upload this document.",
+    "of": "of",
+    "perPage": "page",
+    "previous": "Previous",
+    "next": "Next"
   },
   "customers": {
     "count": "customers",
@@ -407,7 +504,29 @@
     "delete": "Delete",
     "statusError": "Could not update status.",
     "deleteError": "Could not delete this customer.",
-    "confirmDelete": "Delete customer"
+    "confirmDelete": "Delete customer",
+    "search": "Search by name, email or phone...",
+    "bookings": "Bookings",
+    "totalSpent": "Total spent",
+    "viewHistory": "View booking history",
+    "noResults": "No customers found.",
+    "noCustomers": "No customers yet.",
+    "noBookings": "No bookings yet.",
+    "filterAll": "All",
+    "sortLabel": "Sort by",
+    "sortNewest": "Newest",
+    "sortName": "Name A–Z",
+    "sortBookings": "Most bookings",
+    "sortSpent": "Highest spend",
+    "exportCsv": "Export CSV",
+    "clearFilters": "Clear filters",
+    "loadError": "Could not load customers.",
+    "retry": "Try again",
+    "page": "Page",
+    "prev": "Previous",
+    "next": "Next",
+    "perPage": "Per page",
+    "showing": "Showing {from}–{to} of {total}"
   },
   "discounts": {
     "title": "Discounts",
@@ -451,7 +570,33 @@
     "deleteError": "Could not delete this discount.",
     "confirmDelete": "Delete discount {code}?",
     "requiredFields": "Please fill in all required fields.",
-    "copied": "Code copied!"
+    "copied": "Code copied!",
+    "subtitle": "Create and manage the promo codes customers can use when booking.",
+    "filterAll": "All",
+    "discountCol": "Discount",
+    "startsCol": "Starts",
+    "endsCol": "Ends",
+    "actions": "Actions",
+    "noEnd": "No end date",
+    "endsIn": "Ends in {n} d",
+    "unlimited": "Unlimited",
+    "expiringBanner": "{n} code(s) expire within 7 days.",
+    "emptyTitle": "No discount codes yet.",
+    "emptyHint": "Create your first code to offer customers a discount.",
+    "clearFilters": "Clear filters",
+    "copy": "Copy code",
+    "duplicate": "Duplicate",
+    "generate": "Generate",
+    "previewOff": "off",
+    "previewUntil": "Until {date}",
+    "codePreview": "YOURCODE",
+    "days7": "7 days",
+    "days30": "30 days",
+    "codeTaken": "This code already exists.",
+    "valueMin": "Value must be greater than 0.",
+    "percentMax": "A percentage cannot exceed 100.",
+    "endBeforeStart": "The end date must be after the start date.",
+    "maxUsesMin": "Must be at least 1."
   },
   "invoices": {
     "title": "Invoices",
@@ -503,7 +648,31 @@
     "paidInFull": "This invoice has been paid in full.",
     "downloadInvoice": "Download invoice PDF",
     "share": "Share invoice",
-    "downloading": "Downloading…"
+    "downloading": "Downloading…",
+    "print": "Print",
+    "printHeading": "INVOICE",
+    "vehicle": "Vehicle",
+    "printThanks": "Thank you for your business.",
+    "printedOn": "Printed on",
+    "printCashier": "Cashier",
+    "printNo": "No.",
+    "printDescription": "Description",
+    "printAmount": "Amount",
+    "printTotalKhr": "Total (KHR)",
+    "printDetails": "Invoice details",
+    "printReceipt": "Print receipt (80 mm)",
+    "printA4": "Print A4 invoice / save as PDF",
+    "printCustomer": "Customer",
+    "printPhone": "Phone",
+    "printEmail": "Email",
+    "printBillTo": "Bill to",
+    "additionalServices": "Additional services",
+    "duration": "Duration",
+    "days": "days",
+    "of": "ក្នុងចំណោម",
+    "perPage": "ទំព័រ",
+    "previous": "មុន",
+    "next": "បន្ទាប់"
   },
   "reviews": {
     "title": "Reviews",
@@ -544,7 +713,12 @@
     "loadError": "Could not load reviews.",
     "deleteError": "Could not delete this review.",
     "confirmDelete": "Delete review by",
-    "visibilityError": "Could not update visibility."
+    "visibilityError": "Could not update visibility.",
+    "pickRating": "Tap a star to rate",
+    "of": "of",
+    "perPage": "page",
+    "previous": "Previous",
+    "next": "Next"
   },
   "notifications": {
     "title": "Notifications",
@@ -580,6 +754,10 @@
     "hoursAgo": "{n}h ago",
     "daysAgo": "{n}d ago",
     "viewAll": "View all notifications",
+    "of": "of",
+    "perPage": "page",
+    "previous": "Previous",
+    "next": "Next",
     "types": {
       "BOOKING_CONFIRMED": "Booking confirmed",
       "BOOKING_CANCELLED": "Booking cancelled",
@@ -792,7 +970,10 @@
     "saveSuccess": "Settings saved successfully.",
     "saveError": "Failed to save settings.",
     "cloudinaryNotConfigured": "Cloudinary is not configured (missing VITE_CLOUDINARY_* env vars).",
-    "uploadFailed": "Could not upload the image."
+    "uploadFailed": "Could not upload the image.",
+    "authBackground": "Login page background",
+    "uploadAuthBackground": "Upload background photo",
+    "authBackgroundHint": "Shown on the left side of the Login/Register pages. Use a landscape photo, at least 1600px wide, under 500KB."
   },
   "vehicleDetail": {
     "photo": "photo",
@@ -807,7 +988,8 @@
     "reviews": "Reviews",
     "noReviews": "No reviews yet — be the first to rent and review this car.",
     "notFound": "This vehicle could not be found.",
-    "loadError": "Could not load this vehicle. Please try again."
+    "loadError": "Could not load this vehicle. Please try again.",
+    "alreadyBookedFor": "This vehicle is already booked for:"
   },
   "table": {
     "actions": "Actions",
@@ -829,6 +1011,41 @@
     "lightMode": "Light",
     "darkMode": "Dark"
   },
+  "brandMgmt": {
+      "title": "Brands",
+      "subtitle": "Manage vehicle brands and their logos",
+      "add": "Add brand",
+      "addTitle": "Add new brand",
+      "editTitle": "Edit brand",
+      "name": "Brand name",
+      "namePlaceholder": "e.g. Toyota",
+      "image": "Image",
+      "chooseImage": "Choose image",
+      "changeImage": "Change image",
+      "imageHint": "PNG, JPG or WebP, up to 3 MB",
+      "actions": "Actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "empty": "No brands yet",
+      "confirmDelete": "Are you sure you want to delete",
+      "saved": "Brand saved successfully.",
+      "deleted": "Brand deleted successfully.",
+      "loadError": "Could not load brands.",
+      "saveError": "Could not save the brand.",
+      "deleteError": "Could not delete the brand. It may still be used by vehicles.",
+      "uploadError": "The brand was saved, but the image upload failed. Please try again.",
+      "imageTooLarge": "Image is too large (max 3 MB).",
+      "imageType": "Please choose a PNG, JPG or WebP image.",
+      "nameRequired": "Please enter a brand name.",
+      "dropHint": "Drag & drop an image here, or click to browse",
+      "of": "of",
+      "perPage": "page",
+      "previous": "Previous",
+      "next": "Next"
+    },
   "auth": {
     "welcomeBack": "Welcome back",
     "loginPrompt": "Sign in to continue renting your perfect vehicle.",
@@ -839,6 +1056,7 @@
     "forgotPassword": "Forgot password?",
     "orContinueWith": "or continue with",
     "continueWithGoogle": "Continue with Google",
+    "telegramFailed": "Telegram login failed. Please try again.",
     "noAccount": "Don't have an account?",
     "register": "Register",
     "createAccount": "Create account",

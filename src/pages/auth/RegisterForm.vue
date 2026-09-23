@@ -73,6 +73,17 @@
         </svg>
         {{ t('auth.continueWithGoogle') }}
       </a>
+
+      <!-- Telegram Login Widget — same as LoginForm.vue. Registering via
+           Telegram and logging in via Telegram are the same backend call
+           (TelegramAuthService finds-or-creates), so this reuses
+           loginWithTelegram() too rather than a separate "register" flow. -->
+      <TelegramLoginButton
+        v-if="showTelegramLogin"
+        bot-username="auto_rent_premium_bot"
+        @login="onTelegramLogin"
+        @error="() => (errorMessage = t('auth.telegramFailed'))"
+      />
     </div>
 
     <p class="mt-6 text-center text-sm anim-field" :style="{ color: 'var(--color-text-secondary)' }" style="animation-delay:0.42s">
@@ -88,15 +99,18 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import useAuthStore from '@/stores/auth.store'
+import TelegramLoginButton from '@/components/auth/TelegramLoginButton.vue'
 
 const { t } = useI18n()
 const router = useRouter()
-const { login, defaultRedirect } = useAuthStore()
+const { login, defaultRedirect, loginWithTelegram } = useAuthStore()
 
 const loading = ref(false)
 const errorMessage = ref('')
 const confirmPassword = ref('')
 const form = reactive({ firstName: '', lastName: '', email: '', password: '', phone: '', gender: '' })
+
+const showTelegramLogin = window.location.protocol === 'https:'
 
 const isFormValid = computed(() =>
   form.firstName && form.lastName && form.email && form.password &&
@@ -113,6 +127,19 @@ const onSubmit = async () => {
     router.push(defaultRedirect())
   } catch (err) {
     errorMessage.value = err.response?.data?.message || err.response?.data?.error || t('auth.registerFailed')
+  } finally {
+    loading.value = false
+  }
+}
+
+const onTelegramLogin = async (telegramUser) => {
+  loading.value = true
+  errorMessage.value = ''
+  try {
+    await loginWithTelegram(telegramUser)
+    router.push(defaultRedirect())
+  } catch (err) {
+    errorMessage.value = err.response?.data?.message || t('auth.telegramFailed')
   } finally {
     loading.value = false
   }

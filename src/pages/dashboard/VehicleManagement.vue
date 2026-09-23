@@ -13,10 +13,17 @@
       </div>
     </Transition>
 
+    <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <p class="text-sm" style="color: var(--color-text-secondary);">
-        {{ vehicles.length }} {{ $t('vehicles.count') }}
-      </p>
+      <div>
+        <p class="text-sm" style="color: var(--color-text-secondary);">
+          <span class="font-semibold" style="color: var(--color-text);">{{ vehicles.length }}</span>
+          {{ $t('vehicles.count') }}
+        </p>
+        <p v-if="checkingCount > 0" class="mt-0.5 text-xs animate-pulse" style="color: var(--color-text-secondary);">
+          {{ $t('vehicles.checkingPhotos', 'Checking photos…') }} {{ vehicles.length - checkingCount }}/{{ vehicles.length }}
+        </p>
+      </div>
       <button
         type="button"
         class="group flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-[var(--color-primary)]/20 active:scale-95"
@@ -28,8 +35,139 @@
       </button>
     </div>
 
+    <!-- Missing photo alert -->
+    <Transition name="fade">
+      <div
+        v-if="noImageCount > 0 && !noImageOnly"
+        class="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+      >
+        <span>
+          <span class="font-semibold">{{ noImageCount }}</span>
+          {{ $t('vehicles.noImageBanner', 'vehicles have no photo yet') }}
+        </span>
+        <button type="button" class="font-semibold underline underline-offset-2 transition hover:opacity-70" @click="noImageOnly = true">
+          {{ $t('vehicles.showThem', 'Show them') }}
+        </button>
+      </div>
+    </Transition>
+
+    <!-- Status tabs -->
+    <div class="mt-4 flex flex-wrap gap-2">
+      <button
+        v-for="tab in statusTabs"
+        :key="tab.value"
+        type="button"
+        class="rounded-full border px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95"
+        :style="
+          statusFilter === tab.value
+            ? { backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)', color: '#fff' }
+            : { borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }
+        "
+        @click="statusFilter = tab.value"
+      >
+        {{ tab.label }} <span class="opacity-70">{{ tab.count }}</span>
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="mt-3 flex flex-wrap items-center gap-3">
+      <input
+        v-model="search"
+        type="search"
+        :placeholder="$t('vehicles.search', 'Search brand, model, plate…')"
+        class="input-field !w-64"
+        :style="inputStyle"
+      />
+      <select v-model="typeFilter" class="input-field !w-40" :style="inputStyle">
+        <option value="">{{ $t('vehicles.allTypes', 'All types') }}</option>
+        <option v-for="opt in carTypes" :key="opt" :value="opt">{{ opt }}</option>
+      </select>
+      <select v-model="sortBy" class="input-field !w-48" :style="inputStyle">
+        <option value="default">{{ $t('vehicles.sort.default', 'Default order') }}</option>
+        <option value="priceAsc">{{ $t('vehicles.sort.priceAsc', 'Price: low to high') }}</option>
+        <option value="priceDesc">{{ $t('vehicles.sort.priceDesc', 'Price: high to low') }}</option>
+        <option value="brand">{{ $t('vehicles.sort.brand', 'Brand A–Z') }}</option>
+      </select>
+      <label
+        class="flex cursor-pointer select-none items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition-all duration-150"
+        :style="
+          noImageOnly
+            ? { borderColor: '#F59E0B', color: '#B45309', backgroundColor: 'rgba(245,158,11,0.12)' }
+            : { borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }
+        "
+      >
+        <input v-model="noImageOnly" type="checkbox" class="h-3.5 w-3.5 accent-amber-500" />
+        {{ $t('vehicles.noPhotoOnly', 'No photo only') }}
+      </label>
+      <button
+        v-if="hasActiveFilters"
+        type="button"
+        class="text-xs font-semibold transition hover:opacity-80"
+        style="color: var(--color-text-secondary);"
+        @click="resetFilters"
+      >
+        {{ $t('vehicles.clearFilters', 'Clear filters') }}
+      </button>
+    </div>
+
+    <!-- Table -->
     <div class="mt-4">
-      <DataTable :columns="columns" :rows="vehicles" :loading="loading">
+      <DataTable :columns="columns" :rows="paged" :loading="loading">
+        <template #cell-image="{ row }">
+          <button
+            type="button"
+            class="group/thumb relative block h-12 w-[4.5rem] overflow-hidden rounded-lg border transition-all duration-200 hover:shadow-md"
+            :style="{
+              borderColor: imageState(row) === 'missing' ? '#F59E0B' : 'var(--color-border)',
+              borderStyle: imageState(row) === 'missing' ? 'dashed' : 'solid',
+            }"
+            :title="imageState(row) === 'missing' ? $t('vehicles.addPhoto', 'No photo — click to add') : $t('vehicles.edit')"
+            @click="openEdit(row)"
+          >
+            <img
+              v-if="thumbUrl(row)"
+              :src="thumbSrc(thumbUrl(row))"
+              :alt="`${row.brandName} ${row.model}`"
+              loading="lazy"
+              class="h-full w-full object-cover transition-transform duration-300 group-hover/thumb:scale-110"
+            />
+            <div
+              v-else-if="imageState(row) === 'checking'"
+              class="h-full w-full animate-pulse"
+              style="background-color: var(--color-border);"
+            ></div>
+            <div
+              v-else
+              class="flex h-full w-full flex-col items-center justify-center gap-0.5 bg-amber-50 text-amber-600 dark:bg-amber-950/30"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-4 w-4">
+                <path stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M4 8h3l1.5-2h7L17 8h3v11H4V8Zm8 8.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+              </svg>
+              <span class="text-[9px] font-semibold leading-none">
+                {{ imageState(row) === 'unknown' ? '?' : $t('vehicles.noPhoto', 'No photo') }}
+              </span>
+            </div>
+
+            <span
+              v-if="photoCount(row) > 1"
+              class="absolute bottom-0.5 right-0.5 rounded-full bg-black/65 px-1.5 text-[9px] font-semibold leading-4 text-white"
+            >
+              {{ photoCount(row) }}
+            </span>
+          </button>
+        </template>
+        <template #cell-brandName="{ row }">
+          <span class="flex items-center gap-2">
+            <img
+              v-if="row.brandImage"
+              :src="row.brandImage"
+              :alt="row.brandName"
+              class="h-6 w-6 rounded-full border bg-white object-contain"
+              style="border-color: var(--color-border);"
+            />
+            <span>{{ row.brandName }}</span>
+          </span>
+        </template>
         <template #cell-pricePerDay="{ row }">${{ row.pricePerDay }}</template>
         <template #cell-status="{ row }">
           <span :class="statusClass(row.status)">{{ $t(`vehicles.statusValues.${row.status}`, row.status) }}</span>
@@ -47,8 +185,67 @@
           >{{ deletingId === row.id ? $t('vehicles.deleting') : $t('vehicles.delete') }}</button>
         </template>
       </DataTable>
+
+      <div v-if="!loading && filtered.length === 0" class="py-10 text-center text-sm" style="color: var(--color-text-secondary);">
+        <p>{{ $t('vehicles.noResults', 'No vehicles match your filters.') }}</p>
+        <button
+          v-if="hasActiveFilters"
+          type="button"
+          class="mt-2 font-semibold underline underline-offset-2 transition hover:opacity-70"
+          style="color: var(--color-primary);"
+          @click="resetFilters"
+        >{{ $t('vehicles.clearFilters', 'Clear filters') }}</button>
+      </div>
     </div>
 
+    <!-- Pagination -->
+    <div
+      v-if="filtered.length > 0"
+      class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm"
+      style="color: var(--color-text-secondary);"
+    >
+      <div class="flex items-center gap-3">
+        <span>{{ rangeFrom }}–{{ rangeTo }} {{ $t('vehicles.of', 'of') }} {{ filtered.length }}</span>
+        <select v-model.number="pageSize" class="input-field !w-auto !py-1.5" :style="inputStyle" :aria-label="$t('vehicles.perPage', 'Per page')">
+          <option v-for="n in pageSizes" :key="n" :value="n">{{ n }} / {{ $t('vehicles.perPage', 'page') }}</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          class="rounded-full border px-3 py-1.5 transition hover:opacity-80 disabled:opacity-40"
+          style="border-color: var(--color-border); color: var(--color-text);"
+          :disabled="page === 1"
+          @click="page--"
+        >{{ $t('vehicles.previous', 'Previous') }}</button>
+
+        <template v-for="(b, i) in pageButtons" :key="`${b}-${i}`">
+          <span v-if="b === '…'" class="px-1">…</span>
+          <button
+            v-else
+            type="button"
+            class="h-8 min-w-8 rounded-full border px-2 text-xs font-semibold transition active:scale-95"
+            :style="
+              b === page
+                ? { backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)', color: '#fff' }
+                : { borderColor: 'var(--color-border)', color: 'var(--color-text)' }
+            "
+            @click="page = b"
+          >{{ b }}</button>
+        </template>
+
+        <button
+          type="button"
+          class="rounded-full border px-3 py-1.5 transition hover:opacity-80 disabled:opacity-40"
+          style="border-color: var(--color-border); color: var(--color-text);"
+          :disabled="page >= totalPages"
+          @click="page++"
+        >{{ $t('vehicles.next', 'Next') }}</button>
+      </div>
+    </div>
+
+    <!-- ================= MODAL (unchanged) ================= -->
     <Modal :open="modalOpen" :title="editing ? $t('vehicles.editTitle') : $t('vehicles.addTitle')" @close="closeModal">
       <form id="vehicle-form" class="space-y-3" @submit.prevent="onSave">
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -274,7 +471,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DataTable from '@/components/ui/DataTable.vue'
 import Modal from '@/components/ui/Modal.vue'
@@ -289,6 +486,7 @@ const fuelTypes = ['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID']
 const statuses = ['AVAILABLE', 'RESERVED', 'RENTED', 'MAINTENANCE', 'UNAVAILABLE']
 
 const columns = computed(() => [
+  { key: 'image', label: t('vehicles.image', 'Photo') },
   { key: 'brandName', label: t('vehicles.brand') },
   { key: 'model', label: t('vehicles.model') },
   { key: 'licensePlate', label: t('vehicles.plate') },
@@ -322,6 +520,19 @@ const galleryLoading = ref(false)
 const uploading = ref(false)
 const imageActionError = ref('')
 const dragOver = ref(false)
+
+// ----- List state: filters, sort, pagination -----
+const search = ref('')
+const statusFilter = ref('')
+const typeFilter = ref('')
+const sortBy = ref('default')
+const noImageOnly = ref(false)
+const page = ref(1)
+const pageSize = ref(10)
+const pageSizes = [10, 20, 50]
+
+// ----- Photo info per vehicle: { [vehicleId]: { checked, failed, count, url } } -----
+const imageMap = reactive({})
 
 function emptyForm() {
   return {
@@ -357,6 +568,154 @@ function statusClass(status) {
   return `${base} ${map[status] || 'bg-gray-100 text-gray-500'}`
 }
 
+// ================= Photo helpers =================
+// If the backend already returns a primary image on the vehicle, use it.
+// (Recommended: add primaryImageUrl + imageCount to VehicleResponse so no extra requests are needed.)
+function directUrl(v) {
+  return v.primaryImageUrl || v.imageUrl || v.primaryImage || null
+}
+
+function thumbUrl(v) {
+  return directUrl(v) || imageMap[v.id]?.url || null
+}
+
+// Cloudinary: serve a small, optimized thumbnail instead of the full-size photo.
+function thumbSrc(url) {
+  if (url && url.includes('res.cloudinary.com') && url.includes('/upload/') && !url.includes('/upload/c_')) {
+    return url.replace('/upload/', '/upload/c_fill,w_180,h_120,q_auto,f_auto/')
+  }
+  return url
+}
+
+function photoCount(v) {
+  if (typeof v.imageCount === 'number') return v.imageCount
+  return imageMap[v.id]?.count ?? 0
+}
+
+// 'ready' | 'missing' | 'checking' | 'unknown'
+function imageState(v) {
+  if (directUrl(v)) return 'ready'
+  if (v.imageCount === 0) return 'missing'
+  const info = imageMap[v.id]
+  if (!info) return 'checking'
+  if (info.failed) return 'unknown'
+  if (!info.checked) return 'checking'
+  return info.url ? 'ready' : 'missing'
+}
+
+function sortByOrder(list) {
+  return [...list].sort((a, b) => (a.attachment?.displayOrder ?? 0) - (b.attachment?.displayOrder ?? 0))
+}
+
+function summarize(list) {
+  const sorted = sortByOrder(list)
+  const primary = sorted.find((i) => i.attachment?.isPrimary) || sorted[0]
+  return { checked: true, failed: false, count: list.length, url: primary?.attachment?.fileUrl || null }
+}
+
+async function fetchImageInfo(id) {
+  try {
+    const { data } = await api.get(`/vehicle-images/${id}`)
+    const list = Array.isArray(data) ? data : data?.content ?? []
+    imageMap[id] = summarize(list)
+  } catch (err) {
+    // 404 = this vehicle simply has no images; anything else = unknown
+    imageMap[id] = err.response?.status === 404
+      ? { checked: true, failed: false, count: 0, url: null }
+      : { checked: true, failed: true, count: 0, url: null }
+  }
+}
+
+// Load photo info in the background (4 at a time), current page first.
+async function preloadImages() {
+  const firstPage = new Set(paged.value.map((v) => v.id))
+  const queue = vehicles.value
+    .filter((v) => !directUrl(v) && typeof v.imageCount !== 'number' && !imageMap[v.id]?.checked)
+    .map((v) => v.id)
+    .sort((a, b) => Number(firstPage.has(b)) - Number(firstPage.has(a)))
+
+  const worker = async () => {
+    while (queue.length) await fetchImageInfo(queue.shift())
+  }
+  await Promise.all(Array.from({ length: 4 }, worker))
+}
+
+// ================= Derived list =================
+const hasActiveFilters = computed(
+  () => !!(search.value || statusFilter.value || typeFilter.value || noImageOnly.value || sortBy.value !== 'default')
+)
+
+const filtered = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  const list = vehicles.value.filter((v) => {
+    if (statusFilter.value && v.status !== statusFilter.value) return false
+    if (typeFilter.value && v.type !== typeFilter.value) return false
+    if (noImageOnly.value && imageState(v) !== 'missing') return false
+    if (q) {
+      const hay = [v.brandName, v.model, v.licensePlate, v.color].filter(Boolean).join(' ').toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    return true
+  })
+
+  const sorters = {
+    priceAsc: (a, b) => (a.pricePerDay ?? 0) - (b.pricePerDay ?? 0),
+    priceDesc: (a, b) => (b.pricePerDay ?? 0) - (a.pricePerDay ?? 0),
+    brand: (a, b) => `${a.brandName} ${a.model}`.localeCompare(`${b.brandName} ${b.model}`),
+  }
+  return sorters[sortBy.value] ? [...list].sort(sorters[sortBy.value]) : list
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize.value)))
+const paged = computed(() => {
+  const start = (page.value - 1) * pageSize.value
+  return filtered.value.slice(start, start + pageSize.value)
+})
+const rangeFrom = computed(() => (filtered.value.length === 0 ? 0 : (page.value - 1) * pageSize.value + 1))
+const rangeTo = computed(() => Math.min(page.value * pageSize.value, filtered.value.length))
+
+const pageButtons = computed(() => {
+  const total = totalPages.value
+  const cur = page.value
+  const nums = [...new Set([1, total, cur - 1, cur, cur + 1])].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b)
+  const out = []
+  nums.forEach((n, i) => {
+    if (i > 0 && n - nums[i - 1] > 1) out.push('…')
+    out.push(n)
+  })
+  return out
+})
+
+const statusTabs = computed(() => [
+  { value: '', label: t('vehicles.all', 'All'), count: vehicles.value.length },
+  ...statuses.map((s) => ({
+    value: s,
+    label: t(`vehicles.statusValues.${s}`, s),
+    count: vehicles.value.filter((v) => v.status === s).length,
+  })),
+])
+
+const noImageCount = computed(() => vehicles.value.filter((v) => imageState(v) === 'missing').length)
+const checkingCount = computed(() => vehicles.value.filter((v) => imageState(v) === 'checking').length)
+
+function resetFilters() {
+  search.value = ''
+  statusFilter.value = ''
+  typeFilter.value = ''
+  sortBy.value = 'default'
+  noImageOnly.value = false
+}
+
+// Back to page 1 whenever the result set changes shape
+watch([search, statusFilter, typeFilter, sortBy, noImageOnly, pageSize], () => {
+  page.value = 1
+})
+// Stay in range after deletes / filtering
+watch(totalPages, (n) => {
+  if (page.value > n) page.value = n
+})
+
+// ================= Data loading =================
 async function loadVehicles() {
   loading.value = true
   try {
@@ -367,6 +726,7 @@ async function loadVehicles() {
   } finally {
     loading.value = false
   }
+  preloadImages()
 }
 
 async function loadBrands() {
@@ -385,9 +745,9 @@ async function loadGallery(vehicleId) {
   try {
     const { data } = await api.get(`/vehicle-images/${vehicleId}`)
     const list = Array.isArray(data) ? data : data?.content ?? []
-    galleryImages.value = [...list].sort(
-      (a, b) => (a.attachment?.displayOrder ?? 0) - (b.attachment?.displayOrder ?? 0)
-    )
+    galleryImages.value = sortByOrder(list)
+    // keep the table's photo column in sync with the gallery
+    imageMap[vehicleId] = summarize(list)
   } catch {
     galleryImages.value = []
   } finally {
@@ -644,5 +1004,11 @@ onMounted(() => {
 }
 .animate-page-in {
   animation: page-in 0.3s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-in {
+    animation: none;
+  }
 }
 </style>

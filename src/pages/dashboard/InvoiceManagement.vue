@@ -47,7 +47,7 @@
     </div>
 
     <!-- Table -->
-    <DataTable :columns="columns" :rows="filtered" :loading="loading">
+    <DataTable :columns="columns" :rows="paged" :loading="loading">
       <template #cell-invoiceNumber="{ row }">
         <span class="font-mono font-semibold" style="color: var(--color-text);">{{ row.invoiceNumber }}</span>
       </template>
@@ -72,6 +72,31 @@
           <option v-for="s in statusOptions" :key="s" :value="s">{{ statusLabel(s) }}</option>
         </select>
 
+        <!-- Print: 80 mm receipt (thermal printer) -->
+        <button
+          type="button"
+          class="ml-3 inline-flex items-center gap-1 text-xs font-semibold transition hover:opacity-70"
+          style="color: var(--color-primary);"
+          :title="tr('invoices.printReceipt', 'Print receipt (80 mm)')"
+          @click="onPrint(row, 'receipt')"
+        >
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          {{ tr('invoices.print', 'Print') }}
+        </button>
+
+        <!-- Print / save as PDF: A4 invoice -->
+        <button
+          type="button"
+          class="ml-2 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold transition hover:opacity-70"
+          style="color: var(--color-text-secondary); border-color: var(--color-border);"
+          :title="tr('invoices.printA4', 'Print A4 invoice / save as PDF')"
+          @click="onPrint(row, 'a4')"
+        >
+          A4
+        </button>
+
         <button
           type="button"
           class="ml-3 text-xs font-semibold opacity-50 cursor-not-allowed"
@@ -94,6 +119,57 @@
     </p>
 
     <p v-if="actionError" class="mt-3 text-sm text-red-600">{{ actionError }}</p>
+
+    <!-- Pagination -->
+    <div
+      v-if="!loading && filtered.length > 0"
+      class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm"
+      style="color: var(--color-text-secondary);"
+    >
+      <div class="flex items-center gap-3">
+        <span>{{ rangeFrom }}–{{ rangeTo }} {{ tr('invoices.of', 'of') }} {{ filtered.length }}</span>
+        <select
+          v-model.number="pageSize"
+          class="rounded-lg border px-2 py-1.5 text-xs outline-none"
+          style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
+        >
+          <option v-for="n in pageSizes" :key="n" :value="n">{{ n }} / {{ tr('invoices.perPage', 'page') }}</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          class="rounded-full border px-3 py-1.5 transition hover:opacity-80 disabled:opacity-40"
+          style="border-color: var(--color-border); color: var(--color-text);"
+          :disabled="page === 1"
+          @click="page--"
+        >{{ tr('invoices.previous', 'Previous') }}</button>
+
+        <template v-for="(b, i) in pageButtons" :key="`${b}-${i}`">
+          <span v-if="b === '…'" class="px-1">…</span>
+          <button
+            v-else
+            type="button"
+            class="h-8 min-w-8 rounded-full border px-2 text-xs font-semibold transition active:scale-95"
+            :style="
+              b === page
+                ? { backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)', color: '#fff' }
+                : { borderColor: 'var(--color-border)', color: 'var(--color-text)' }
+            "
+            @click="page = b"
+          >{{ b }}</button>
+        </template>
+
+        <button
+          type="button"
+          class="rounded-full border px-3 py-1.5 transition hover:opacity-80 disabled:opacity-40"
+          style="border-color: var(--color-border); color: var(--color-text);"
+          :disabled="page >= totalPages"
+          @click="page++"
+        >{{ tr('invoices.next', 'Next') }}</button>
+      </div>
+    </div>
 
     <!-- Create modal -->
     <Modal :open="modalOpen" :title="t('invoices.addTitle')" @close="modalOpen = false">
@@ -189,20 +265,38 @@
         </div>
       </form>
     </Modal>
+
+    <!-- Printable receipt (teleported to <body>, only rendered while printing) -->
+    <InvoicePrintSheet
+      v-if="printData"
+      :invoice="printData.invoice"
+      :vehicle="printData.vehicle"
+      :cashier="printData.cashier"
+      :customer="printData.customer"
+      :rental="printData.rental"
+      :paper="printData.paper"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTheme } from '@/composables/useTheme'
+import { usePrintInvoice } from '@/composables/usePrintInvoice'
 import DataTable from '@/components/ui/DataTable.vue'
 import Modal from '@/components/ui/Modal.vue'
+import InvoicePrintSheet from '@/components/ui/InvoicePrintSheet.vue'
+import useAuthStore from '@/stores/auth.store'
 import invoiceService from '@/services/invoice.service'
 import api from '@/services/api'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const { isDark } = useTheme()
+const { printData, printInvoice } = usePrintInvoice()
+
+// Translate with a fallback so a missing key never shows "invoices.xxx" on screen.
+const tr = (key, fallback) => (te(key) ? t(key) : fallback)
 
 const columns = computed(() => [
   { key: 'invoiceNumber', label: t('invoices.invoiceNumber') },
@@ -290,6 +384,41 @@ const filtered = computed(() => {
   return list
 })
 
+// ----- Pagination (client-side, applied after search + status filter) -----
+const page = ref(1)
+const pageSize = ref(10)
+const pageSizes = [10, 20, 50]
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize.value)))
+const paged = computed(() => {
+  const start = (page.value - 1) * pageSize.value
+  return filtered.value.slice(start, start + pageSize.value)
+})
+const rangeFrom = computed(() => (filtered.value.length === 0 ? 0 : (page.value - 1) * pageSize.value + 1))
+const rangeTo = computed(() => Math.min(page.value * pageSize.value, filtered.value.length))
+
+// 1 … 4 5 6 … 9
+const pageButtons = computed(() => {
+  const total = totalPages.value
+  const cur = page.value
+  const nums = [...new Set([1, total, cur - 1, cur, cur + 1])].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b)
+  const out = []
+  nums.forEach((n, i) => {
+    if (i > 0 && n - nums[i - 1] > 1) out.push('…')
+    out.push(n)
+  })
+  return out
+})
+
+// Back to page 1 whenever the result set changes shape
+watch([search, statusFilter, pageSize], () => {
+  page.value = 1
+})
+// Stay in range after deleting the last row on a page
+watch(totalPages, (n) => {
+  if (page.value > n) page.value = n
+})
+
 // Only COMPLETED rentals that don't already have an invoice
 const eligibleRentals = computed(() => {
   const invoicedRentalIds = new Set(invoices.value.map((i) => i.rentalId))
@@ -300,7 +429,7 @@ const eligibleRentals = computed(() => {
 
 function vehicleLabel(id) {
   const v = vehicles.value.find((x) => x.id === id)
-  return v ? `${v.brand} ${v.model}` : `#${id}`
+  return v ? `${v.brandName ?? v.brand} ${v.model}` : `#${id}`
 }
 
 function formatDate(value) {
@@ -392,6 +521,44 @@ async function onDelete(row) {
   } catch {
     actionError.value = t('invoices.deleteError')
   }
+}
+
+// Logged-in admin/staff = cashier printed on the receipt
+const { state: authState } = useAuthStore()
+const cashierName = computed(() => {
+  const u = authState.user
+  const full = [u?.firstName, u?.lastName].filter(Boolean).join(' ')
+  return full || u?.email || ''
+})
+
+// The backend now returns customerName / customerEmail / customerPhone
+// directly on the invoice and rental, so prefer those; fall back to a
+// nested customer/user object just in case.
+function customerFor(row, rental) {
+  const c = row?.customer ?? rental?.customer ?? rental?.user ?? {}
+  const pick = (...vals) => vals.find((v) => v !== undefined && v !== null && v !== '') ?? ''
+  return {
+    name: pick(
+      row?.customerName, rental?.customerName, c.fullName, c.name,
+      [c.firstName, c.lastName].filter(Boolean).join(' '),
+    ),
+    email: pick(row?.customerEmail, rental?.customerEmail, c.email),
+    phone: pick(row?.customerPhone, rental?.customerPhone, c.phoneNumber, c.phone),
+  }
+}
+
+// paper: 'receipt' = thermal receipt printer, 'a4' = A4 invoice (good for saving as PDF)
+function onPrint(row, paper = 'receipt') {
+  const rental = rentals.value.find((r) => r.id === row.rentalId)
+  printInvoice(row, {
+    vehicle: rental ? vehicleLabel(rental.vehicleId) : '',
+    cashier: cashierName.value,
+    customer: customerFor(row, rental),
+    rental: rental
+      ? { pickUpDateTime: rental.pickUpDateTime, expectedReturnDateTime: rental.expectedReturnDateTime }
+      : null,
+    paper,
+  })
 }
 
 onMounted(() => {

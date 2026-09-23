@@ -163,6 +163,71 @@
         </div>
       </section>
 
+      <!-- ===== Login page background card ===== -->
+      <section
+        class="rounded-2xl border p-5 transition-shadow duration-300 hover:shadow-md lg:p-6 anim-card"
+        style="background-color: var(--color-surface); border-color: var(--color-border); animation-delay: 0.08s;"
+      >
+        <label class="mb-2 block text-sm font-semibold" style="color: var(--color-text);">{{ $t('settings.authBackground') }}</label>
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            class="group relative flex aspect-video w-full max-w-xs shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 transition-all duration-300 hover:shadow-lg"
+            style="border-color: var(--color-border); background-color: var(--color-bg);"
+            :disabled="uploadingAuthBg"
+            @click="authBgInput?.click()"
+          >
+            <transition name="crossfade" mode="out-in">
+              <img
+                v-if="form.authBackgroundUrl && !authBgPreviewError"
+                :key="form.authBackgroundUrl"
+                :src="form.authBackgroundUrl"
+                alt="Login background preview"
+                class="h-full w-full object-cover"
+                @error="authBgPreviewError = true"
+              />
+              <span v-else key="empty" class="text-xs" style="color: var(--color-text-secondary);">{{ $t('settings.none') }}</span>
+            </transition>
+            <span class="absolute inset-0 flex items-center justify-center bg-black/50 text-xs font-medium text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <svg v-if="uploadingAuthBg" class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"/>
+              </svg>
+              <span v-else>{{ $t('settings.changeImage') }}</span>
+            </span>
+          </button>
+
+          <div class="flex-1">
+            <input ref="authBgInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" @change="(e) => onPickImage(e, 'authBackgroundUrl')" />
+            <div class="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                class="rounded-full border px-4 py-2 text-xs font-semibold transition-all duration-200 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                style="border-color: var(--color-border); color: var(--color-text);"
+                :disabled="uploadingAuthBg"
+                @click="authBgInput?.click()"
+              >
+                {{ uploadingAuthBg ? $t('settings.uploading') : $t('settings.uploadAuthBackground') }}
+              </button>
+              <transition name="fade">
+                <button
+                  v-if="form.authBackgroundUrl"
+                  type="button"
+                  class="text-xs font-semibold text-[#DC2626] transition-opacity hover:opacity-70"
+                  @click="form.authBackgroundUrl = ''; authBgPreviewError = false"
+                >
+                  {{ $t('settings.remove') }}
+                </button>
+              </transition>
+            </div>
+            <transition name="fade">
+              <p v-if="authBgUploadError" class="mt-1.5 text-xs text-[#DC2626]">{{ authBgUploadError }}</p>
+            </transition>
+            <p class="mt-1.5 text-xs" style="color: var(--color-text-secondary);">{{ $t('settings.authBackgroundHint') }}</p>
+          </div>
+        </div>
+      </section>
+
       <!-- ===== General info card ===== -->
       <section
         class="rounded-2xl border p-5 transition-shadow duration-300 hover:shadow-md lg:p-6 anim-card"
@@ -293,7 +358,7 @@
       <div class="flex justify-end anim-card" style="animation-delay: 0.2s;">
         <button
           type="submit"
-          :disabled="saving || uploadingLogo || uploadingFavicon"
+          :disabled="saving || uploadingLogo || uploadingFavicon || uploadingAuthBg"
           class="flex items-center gap-2 rounded-full px-8 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:brightness-110 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
           style="background-color: var(--color-primary);"
         >
@@ -327,6 +392,7 @@ const form = reactive({
   siteName: '',
   logoUrl: '',
   faviconUrl: '',
+  authBackgroundUrl: '',
   contactEmail: '',
   contactPhone: '',
   address: '',
@@ -343,6 +409,7 @@ function syncFormFromStore() {
   form.siteName = siteSettings.siteName || ''
   form.logoUrl = siteSettings.logoUrl || ''
   form.faviconUrl = siteSettings.faviconUrl || ''
+  form.authBackgroundUrl = siteSettings.authBackgroundUrl || ''
   form.contactEmail = siteSettings.contactEmail || ''
   form.contactPhone = siteSettings.contactPhone || ''
   form.address = siteSettings.address || ''
@@ -362,29 +429,41 @@ onMounted(async () => {
   loading.value = false
 })
 
-// ===== Image upload (via backend POST /api/uploads) =====
+// ===== Image upload (direct to Cloudinary) =====
 
 const logoInput = ref(null)
 const faviconInput = ref(null)
+const authBgInput = ref(null)
+
 const uploadingLogo = ref(false)
 const uploadingFavicon = ref(false)
+const uploadingAuthBg = ref(false)
+
 const logoUploadError = ref('')
 const faviconUploadError = ref('')
+const authBgUploadError = ref('')
+
 const logoPreviewError = ref(false)
 const faviconPreviewError = ref(false)
+const authBgPreviewError = ref(false)
+
+// One entry per uploadable image field: which refs belong to it.
+const stateByField = {
+  logoUrl: { uploading: uploadingLogo, uploadError: logoUploadError, previewError: logoPreviewError },
+  faviconUrl: { uploading: uploadingFavicon, uploadError: faviconUploadError, previewError: faviconPreviewError },
+  authBackgroundUrl: { uploading: uploadingAuthBg, uploadError: authBgUploadError, previewError: authBgPreviewError },
+}
 
 async function onPickImage(e, field) {
   const file = e.target.files?.[0]
   e.target.value = ''
   if (!file) return
 
-  const isLogo = field === 'logoUrl'
-  const uploading = isLogo ? uploadingLogo : uploadingFavicon
-  const uploadError = isLogo ? logoUploadError : faviconUploadError
-  const previewError = isLogo ? logoPreviewError : faviconPreviewError
+  const { uploading, uploadError, previewError } = stateByField[field]
 
   uploadError.value = ''
 
+  // Show the picked file instantly while it uploads
   const localPreviewUrl = URL.createObjectURL(file)
   const previousValue = form[field]
   form[field] = localPreviewUrl
