@@ -3,6 +3,7 @@
     "home": "Home",
     "explore": "Explore",
     "favorites": "Favorites",
+    "myReservations": "My Reservations",
     "about": "About",
     "contact": "Contact",
     "bookings": "My bookings",
@@ -107,6 +108,7 @@
     "past": "Past",
     "cancel": "Cancel",
     "cancelling": "Cancelling…",
+    "viewInvoice": "View Invoice",
     "pay": "Pay now",
     "vehicle": "Vehicle",
     "location": "Location",
@@ -900,6 +902,17 @@
     "memberSince": "Member since {date}",
     "logout": "Log out",
     "logoutConfirm": "Are you sure you want to log out?",
+    "telegram": {
+      "title": "Telegram Notifications",
+      "subtitle": "Link your Telegram to receive booking and payment updates instantly.",
+      "connected": "Connected to Telegram",
+      "disconnect": "Disconnect",
+      "disconnectConfirm": "Stop receiving Telegram notifications?",
+      "connectError": "Could not connect Telegram. Please try again.",
+      "disconnectError": "Could not disconnect Telegram.",
+      "httpsRequired": "HTTPS required to connect Telegram (use the ngrok tunnel).",
+      "connect": "Connect Telegram"
+    },
     "tabs": {
       "info": "Info",
       "history": "Login history",
@@ -1104,7 +1117,11 @@
     "resetFailed": "This link may have expired or already been used. Request a new one.",
     "signingIn": "Signing you in…",
     "oauthNoToken": "No token was returned from Google sign-in.",
-    "oauthFailed": "Could not complete sign-in. Please try logging in again."
+    "oauthFailed": "Could not complete sign-in. Please try logging in again.",
+    "continueWithTelegram": "Continue with Telegram",
+    "telegramProcessing": "Signing you in with Telegram...",
+    "backToLogin": "Back to login",
+    "telegramFailed": "Telegram sign-in failed. Please try again."
   },
   "about": {
     "eyebrow": "About us",

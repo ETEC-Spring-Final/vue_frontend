@@ -37,14 +37,30 @@
         <span :class="statusClass(row.status)">{{ row.status }}</span>
       </template>
       <template #actions="{ row }">
-        <select
-          class="rounded-lg border px-2 py-1 text-xs outline-none"
-          style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
-          :value="row.status"
-          @change="onStatusChange(row, $event.target.value)"
-        >
-          <option v-for="s in statusOptions" :key="s" :value="s">{{ s }}</option>
-        </select>
+        <span class="inline-flex items-center gap-1.5">
+          <select
+            class="rounded-lg border px-2 py-1 text-xs outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
+            :value="row.status"
+            :disabled="isPaidLocked(row)"
+            :title="isPaidLocked(row) ? $t('reservations.statusLockedTitle', 'Invoice already paid — status is locked to protect the customer record') : ''"
+            @change="onStatusChange(row, $event.target.value)"
+          >
+            <option v-for="s in statusOptions" :key="s" :value="s">{{ s }}</option>
+          </select>
+
+          <!-- Lock indicator: only shown once the linked invoice is PAID -->
+          <span
+            v-if="isPaidLocked(row)"
+            class="inline-flex items-center"
+            :title="$t('reservations.statusLockedTitle', 'Invoice already paid — status is locked to protect the customer record')"
+          >
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #22C55E;">
+              <rect x="3" y="11" width="18" height="10" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </span>
+        </span>
+
         <button
           class="ml-3 text-xs font-semibold text-red-600 hover:text-red-700"
           @click="onDelete(row)"
@@ -207,6 +223,18 @@ const locations = ref([])
 const loading = ref(true)
 const actionError = ref('')
 
+// reservationId -> true when the reservation's rental has an invoice marked
+// PAID. Chain is Reservation -> Rental (rental.reservationId) -> Invoice
+// (invoice.rentalId), same link used by RentalManagement.vue's
+// eligibleReservations / InvoiceManagement.vue's eligibleRentals filters.
+// Locking here stops a staff member from moving a paid reservation back to
+// PENDING/CANCELLED, which would desync it from the payment already taken.
+const paidReservationIds = ref(new Set())
+
+function isPaidLocked(row) {
+  return paidReservationIds.value.has(Number(row.id))
+}
+
 const modalOpen = ref(false)
 const saving = ref(false)
 const saveError = ref('')
@@ -290,7 +318,9 @@ async function loadReservations() {
   loading.value = true
   try {
     const { data } = await api.get('/reservations')
-    reservations.value = Array.isArray(data) ? data : data?.content ?? []
+    const list = Array.isArray(data) ? data : data?.content ?? []
+    // ថ្មីបំផុត (id ធំបំផុត) នៅលើគេ
+    reservations.value = list.sort((a, b) => b.id - a.id)
   } finally {
     loading.value = false
   }
@@ -311,6 +341,36 @@ async function loadLocations() {
     locations.value = Array.isArray(data) ? data : data?.content ?? []
   } catch {
     locations.value = []
+  }
+}
+
+// Builds the Reservation -> Rental -> Invoice(PAID) chain:
+//   1. Load all rentals, keep only { id, reservationId }
+//   2. Load all invoices, keep only rentalId of the PAID ones
+//   3. A reservation is locked when some rental has
+//      rental.reservationId === reservation.id AND that rental's id is in
+//      the paid-invoice rentalId set.
+async function loadPaidReservationIds() {
+  try {
+    const [rentalsRes, invoicesRes] = await Promise.all([
+      api.get('/rentals'),
+      api.get('/invoices'),
+    ])
+    const rentalList = Array.isArray(rentalsRes.data) ? rentalsRes.data : (rentalsRes.data?.content ?? [])
+    const invoiceList = Array.isArray(invoicesRes.data) ? invoicesRes.data : (invoicesRes.data?.content ?? [])
+
+    const paidRentalIds = new Set(
+      invoiceList.filter((inv) => inv.status === 'PAID').map((inv) => Number(inv.rentalId))
+    )
+
+    paidReservationIds.value = new Set(
+      rentalList
+        .filter((r) => paidRentalIds.has(Number(r.id)))
+        .map((r) => Number(r.reservationId))
+    )
+  } catch {
+    // Non-fatal — if this fails, no rows get locked (fails open, not closed).
+    paidReservationIds.value = new Set()
   }
 }
 
@@ -346,6 +406,10 @@ async function onSave() {
 }
 
 async function onStatusChange(row, newStatus) {
+  // Guard against a locked row even if the disabled attribute is somehow
+  // bypassed (e.g. stale DOM during a fast re-render).
+  if (isPaidLocked(row)) return
+
   actionError.value = ''
   try {
     await api.patch(`/reservations/${row.id}/status`, null, { params: { status: newStatus } })
@@ -365,6 +429,7 @@ onMounted(() => {
   loadReservations()
   loadVehicles()
   loadLocations()
+  loadPaidReservationIds()
 })
 </script>
 

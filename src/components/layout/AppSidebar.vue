@@ -16,7 +16,11 @@
     ]"
     style="background-color: var(--color-surface); border-color: var(--color-border);"
   >
-    <div class="flex h-16 items-center justify-between px-4">
+    <!-- Logo / branding area — separated from nav by a border -->
+    <div
+      class="flex h-16 shrink-0 items-center justify-between border-b px-4"
+      style="border-color: var(--color-border);"
+    >
       <RouterLink to="/dashboard" class="group flex min-w-0 items-center gap-2 transition-transform duration-200 hover:scale-[1.03]" @click="closeMobile">
         <span
           class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-sm font-bold text-white shadow-md transition-transform duration-300 group-hover:rotate-6"
@@ -57,37 +61,58 @@
       </button>
     </div>
 
-    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-      <RouterLink
-        v-for="item in visibleItems"
-        :key="item.path"
-        :to="item.path"
-        class="group relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-1"
-        :class="isActive(item.path) ? 'font-semibold' : ''"
-        :style="isActive(item.path)
-          ? `background-color: var(--color-primary-light); color: var(--color-primary);`
-          : `color: var(--color-text-secondary);`"
-        @click="closeMobile"
-      >
-        <span
-          class="flex h-5 w-5 shrink-0 items-center justify-center transition-transform duration-200 group-hover:scale-110"
-          v-html="item.icon"
-        ></span>
-        <span v-if="!collapsed" class="truncate">{{ $t(`sidebar.${item.key}`) }}</span>
-        <transition name="dot-pop">
-          <span
-            v-if="isActive(item.path)"
-            class="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full"
-            style="background-color: var(--color-primary);"
-          ></span>
-        </transition>
-        <!-- subtle hover fill for inactive items -->
-        <span
-          v-if="!isActive(item.path)"
-          class="pointer-events-none absolute inset-0 -z-10 scale-95 rounded-xl opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100"
-          style="background-color: var(--color-primary-light);"
-        ></span>
-      </RouterLink>
+    <nav class="flex-1 overflow-y-auto px-3 py-4">
+      <template v-for="(group, gi) in groupedItems" :key="group.label">
+        <p
+          v-if="!collapsed && group.items.length"
+          class="mb-1.5 mt-4 px-3 text-[10px] font-semibold uppercase tracking-wider first:mt-0"
+          style="color: var(--color-text-secondary); opacity: 0.65;"
+        >
+          {{ group.label }}
+        </p>
+        <div v-else-if="collapsed && gi > 0 && group.items.length" class="my-2 mx-3 border-t" style="border-color: var(--color-border);"></div>
+
+        <div class="space-y-1">
+          <RouterLink
+            v-for="item in group.items"
+            :key="item.path"
+            :to="item.path"
+            class="group relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-1"
+            :class="isActive(item.path) ? 'font-semibold shadow-sm' : ''"
+            :style="isActive(item.path)
+              ? `background-color: var(--color-primary-light); color: var(--color-primary);`
+              : `color: var(--color-text-secondary);`"
+            @click="closeMobile"
+          >
+            <span
+              class="flex h-5 w-5 shrink-0 items-center justify-center transition-transform duration-200 group-hover:scale-110"
+              v-html="item.icon"
+            ></span>
+            <span v-if="!collapsed" class="truncate">{{ $t(`sidebar.${item.key}`) }}</span>
+
+            <!-- Badge: unread notifications, pending reservations, low-rated reviews -->
+            <span
+              v-if="badgeCounts[item.key] > 0"
+              class="badge-pop ml-auto flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
+              style="background-color: #EF4444;"
+            >{{ badgeCounts[item.key] > 99 ? '99+' : badgeCounts[item.key] }}</span>
+
+            <transition name="dot-pop">
+              <span
+                v-if="isActive(item.path)"
+                class="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full"
+                style="background-color: var(--color-primary);"
+              ></span>
+            </transition>
+            <!-- subtle hover fill for inactive items -->
+            <span
+              v-if="!isActive(item.path)"
+              class="pointer-events-none absolute inset-0 -z-10 scale-95 rounded-xl opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100"
+              style="background-color: var(--color-primary-light);"
+            ></span>
+          </RouterLink>
+        </div>
+      </template>
     </nav>
 
     <div class="border-t px-3 py-3" style="border-color: var(--color-border);">
@@ -162,6 +187,8 @@ import { useRoute, useRouter } from 'vue-router'
 import useAuthStore from '@/stores/auth.store'
 import useSiteSettingsStore from '@/stores/siteSettings.store'
 import { useSidebar } from '@/composables/useSidebar'
+import notificationsService from '@/services/notifications.service'
+import api from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -173,6 +200,53 @@ const { collapsed, mobileOpen, toggleCollapsed, closeMobile } = useSidebar()
 const menuOpen = ref(false)
 const menuRef = ref(null)
 const logoError = ref(false)
+
+// ----- Badge counts (only for lists that need admin action) -----
+const unreadCount = ref(0)
+const pendingReservationsCount = ref(0)
+const lowRatedReviewsCount = ref(0)
+let pollTimer = null
+
+const badgeCounts = computed(() => ({
+  notifications: unreadCount.value,
+  reservations: pendingReservationsCount.value,
+  reviews: lowRatedReviewsCount.value,
+}))
+
+async function loadUnreadCount() {
+  try {
+    const { data } = await notificationsService.unreadCount()
+    unreadCount.value = typeof data === 'number' ? data : data?.count ?? 0
+  } catch {
+    // badge just won't update this cycle
+  }
+}
+
+async function loadPendingReservationsCount() {
+  try {
+    const { data } = await api.get('/reservations')
+    const list = Array.isArray(data) ? data : data?.content ?? []
+    pendingReservationsCount.value = list.filter((r) => r.status === 'PENDING').length
+  } catch {
+    // badge just won't update this cycle
+  }
+}
+
+async function loadLowRatedReviewsCount() {
+  try {
+    const { data } = await api.get('/reviews', { params: { page: 0, size: 1000 } })
+    const list = Array.isArray(data) ? data : data?.content ?? []
+    lowRatedReviewsCount.value = list.filter((r) => r.rating <= 2 && r.isVisible).length
+  } catch {
+    // badge just won't update this cycle
+  }
+}
+
+function loadAllBadgeCounts() {
+  loadUnreadCount()
+  loadPendingReservationsCount()
+  loadLowRatedReviewsCount()
+}
 
 const initialsFromSiteName = computed(() => {
   const name = siteSettings.siteName || 'CarRental'
@@ -202,7 +276,6 @@ const initials = computed(() => {
 const icon = {
   dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>',
   vehicles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l2-6h14l2 6"/><path d="M5 13h14v5H5z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg>',
-  // NEW: "award" badge icon for Brands
   brands: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 12.9L17 22l-5-3-5 3 1.5-9.1"/></svg>',
   locations: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6-7-11a7 7 0 0114 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
   reservations: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
@@ -218,26 +291,53 @@ const icon = {
   loginHistory: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
 }
 
+// Grouped for the sidebar section labels — matches the shape of the app's
+// domain (booking flow -> people -> money -> back-office).
 const navItems = [
-  { path: '/dashboard', key: 'dashboard', icon: icon.dashboard },
-  { path: '/dashboard/vehicles', key: 'vehicles', icon: icon.vehicles },
-  // NEW: no `roles` => visible to ADMIN, MANAGER and STAFF, same as BrandController's @PreAuthorize
-  { path: '/dashboard/brands', key: 'brands', icon: icon.brands },
-  { path: '/dashboard/locations', key: 'locations', icon: icon.locations },
-  { path: '/dashboard/reservations', key: 'reservations', icon: icon.reservations },
-  { path: '/dashboard/rentals', key: 'rentals', icon: icon.rentals },
-  { path: '/dashboard/customers', key: 'customers', icon: icon.customers, roles: ['ADMIN'] },
-  { path: '/dashboard/discounts', key: 'discounts', icon: icon.discounts, roles: ['ADMIN'] },
-  { path: '/dashboard/invoices', key: 'invoices', icon: icon.invoices },
-  { path: '/dashboard/reviews', key: 'reviews', icon: icon.reviews },
-  { path: '/dashboard/notifications', key: 'notifications', icon: icon.notifications },
-  { path: '/dashboard/maintenance', key: 'maintenance', icon: icon.maintenance },
-  { path: '/dashboard/services', key: 'services', icon: icon.services },
-  { path: '/dashboard/audit-logs', key: 'auditLogs', icon: icon.auditLogs, roles: ['ADMIN', 'MANAGER'] },
-  { path: '/dashboard/login-history', key: 'loginHistory', icon: icon.loginHistory, roles: ['ADMIN', 'MANAGER'] },
+  { path: '/dashboard', key: 'dashboard', icon: icon.dashboard, group: 'overview' },
+
+  { path: '/dashboard/reservations', key: 'reservations', icon: icon.reservations, group: 'operations' },
+  { path: '/dashboard/rentals', key: 'rentals', icon: icon.rentals, group: 'operations' },
+  { path: '/dashboard/vehicles', key: 'vehicles', icon: icon.vehicles, group: 'operations' },
+  { path: '/dashboard/brands', key: 'brands', icon: icon.brands, group: 'operations' },
+  { path: '/dashboard/locations', key: 'locations', icon: icon.locations, group: 'operations' },
+
+  { path: '/dashboard/customers', key: 'customers', icon: icon.customers, roles: ['ADMIN'], group: 'people' },
+  { path: '/dashboard/reviews', key: 'reviews', icon: icon.reviews, group: 'people' },
+
+  { path: '/dashboard/invoices', key: 'invoices', icon: icon.invoices, group: 'finance' },
+  { path: '/dashboard/discounts', key: 'discounts', icon: icon.discounts, roles: ['ADMIN'], group: 'finance' },
+
+  { path: '/dashboard/notifications', key: 'notifications', icon: icon.notifications, group: 'system' },
+  { path: '/dashboard/maintenance', key: 'maintenance', icon: icon.maintenance, group: 'system' },
+  { path: '/dashboard/services', key: 'services', icon: icon.services, group: 'system' },
+  { path: '/dashboard/audit-logs', key: 'auditLogs', icon: icon.auditLogs, roles: ['ADMIN', 'MANAGER'], group: 'system' },
+  { path: '/dashboard/login-history', key: 'loginHistory', icon: icon.loginHistory, roles: ['ADMIN', 'MANAGER'], group: 'system' },
 ]
 
+const GROUP_LABELS = {
+  overview: '',
+  operations: 'Operations',
+  people: 'People',
+  finance: 'Finance',
+  system: 'System',
+}
+
 const visibleItems = computed(() => navItems.filter((item) => !item.roles || hasRole(...item.roles)))
+
+// Roll the flat, role-filtered list up into { label, items } groups, in a
+// fixed order, dropping any group that ends up empty (e.g. Customers hidden
+// for non-admins shouldn't leave a naked "People" label with 1 leftover item
+// — it still shows if Reviews remains, which is correct).
+const groupedItems = computed(() => {
+  const order = ['overview', 'operations', 'people', 'finance', 'system']
+  return order
+    .map((key) => ({
+      label: GROUP_LABELS[key],
+      items: visibleItems.value.filter((item) => item.group === key),
+    }))
+    .filter((g) => g.items.length > 0)
+})
 
 function isActive(path) {
   return route.path === path
@@ -256,8 +356,15 @@ function onClickOutside(e) {
   }
 }
 
-onMounted(() => document.addEventListener('click', onClickOutside))
-onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
+onMounted(() => {
+  document.addEventListener('click', onClickOutside)
+  loadAllBadgeCounts()
+  pollTimer = setInterval(loadAllBadgeCounts, 30000)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickOutside)
+  if (pollTimer) clearInterval(pollTimer)
+})
 </script>
 
 <style scoped>
@@ -273,4 +380,13 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
 
 .dot-pop-enter-active { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .dot-pop-enter-from { transform: translateY(-50%) scaleY(0); }
+
+/* One-shot pop when a badge count first appears, drawing the eye without
+   looping forever like a distracting infinite pulse. */
+@keyframes badge-pop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.badge-pop { animation: badge-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
 </style>

@@ -270,6 +270,7 @@ const routes = [
    * this page, this route is what logs them in.
    */
   { path: '/oauth2/redirect', component: OAuth2Redirect },
+  { path: '/telegram/redirect', component: () => import('@/pages/auth/TelegramRedirect.vue') },
 
   /**
    * Catch-all route

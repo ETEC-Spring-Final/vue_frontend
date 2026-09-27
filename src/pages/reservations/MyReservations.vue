@@ -19,6 +19,8 @@ const downloadingId = ref(null);
 
 const vehicleNames = ref({});
 const locationNames = ref({});
+// invoiceId -> 'UNPAID' | 'PAID' | 'CANCELLED'
+const invoiceStatuses = ref({});
 
 // Status -> style mapping using theme tokens (not hardcoded hex) so this
 // respects dark/light mode and any future palette change automatically.
@@ -47,10 +49,19 @@ async function loadReservations() {
     // Backend returns flat IDs (vehicleId / pickUpLocationId /
     // returnLocationId), not nested objects. Resolve display names once
     // (both endpoints are public) so the list renders readable labels.
+    // Also resolve each invoice's payment status so Pay Now / View Invoice
+    // can be decided from the INVOICE, not the reservation — reservation
+    // status (CONFIRMED etc.) stays CONFIRMED even after payment, so it
+    // can't tell us whether the customer already paid.
     try {
-      const [vehiclesRaw, locationsRaw] = await Promise.all([fetchVehicles(), getLocations()]);
+      const [vehiclesRaw, locationsRaw, invoicesRaw] = await Promise.all([
+        fetchVehicles(),
+        getLocations(),
+        invoicesApi.myInvoices(),
+      ]);
       const vehicles = Array.isArray(vehiclesRaw.data) ? vehiclesRaw.data : (vehiclesRaw.data?.content ?? []);
       const locations = Array.isArray(locationsRaw.data) ? locationsRaw.data : (locationsRaw.data?.content ?? []);
+      const invoicesList = Array.isArray(invoicesRaw.data) ? invoicesRaw.data : (invoicesRaw.data?.content ?? []);
 
       vehicleNames.value = Object.fromEntries(
         vehicles.map((v) => [v.id, normalizeVehicle(v).name])
@@ -58,8 +69,11 @@ async function loadReservations() {
       locationNames.value = Object.fromEntries(
         locations.map((l) => [l.id, l.name ?? l.city ?? `#${l.id}`])
       );
+      invoiceStatuses.value = Object.fromEntries(
+        invoicesList.map((inv) => [inv.id, inv.status])
+      );
     } catch {
-      // Non-fatal — labels fall back to the raw id below.
+      // Non-fatal — labels/buttons fall back to safe defaults below.
     }
   } catch (e) {
     error.value = e?.response?.data?.message || t("myReservations.loadError");
@@ -81,8 +95,20 @@ function canCancel(r) {
   return r.status === "PENDING";
 }
 
+// Pay Now only when there IS an invoice, the reservation itself is still
+// active, AND the invoice is still UNPAID. If the invoice status hasn't
+// loaded yet (undefined) we fall back to the old reservation-only check so
+// the button doesn't flash/disappear before the invoice fetch resolves.
 function canPay(r) {
-  return !!r.invoiceId && r.status !== "CANCELLED" && r.status !== "COMPLETED";
+  if (!r.invoiceId || r.status === "CANCELLED" || r.status === "COMPLETED") return false;
+  const invStatus = invoiceStatuses.value[r.invoiceId];
+  if (invStatus === undefined) return true;
+  return invStatus === "UNPAID";
+}
+
+// View Invoice replaces Pay Now once the invoice is PAID.
+function canViewInvoice(r) {
+  return !!r.invoiceId && invoiceStatuses.value[r.invoiceId] === "PAID";
 }
 
 async function handleCancel(id) {
@@ -218,6 +244,8 @@ function locationLabel(id) {
                 <span v-if="r.totalPrice != null" class="text-sm font-semibold" :style="{ color: 'var(--color-text)' }">
                   ${{ Number(r.totalPrice).toFixed(2) }}
                 </span>
+
+                <!-- Not paid yet -->
                 <button
                   v-if="canPay(r)" type="button"
                   @click="router.push(`/payment/${r.invoiceId}`)"
@@ -226,6 +254,17 @@ function locationLabel(id) {
                 >
                   {{ t('myReservations.pay') }}
                 </button>
+
+                <!-- Already paid: View Invoice instead of Pay Now -->
+                <button
+                  v-else-if="canViewInvoice(r)" type="button"
+                  @click="router.push(`/my-invoices/${r.invoiceId}`)"
+                  class="rounded-full border px-4 py-2 text-xs font-semibold transition-all duration-200 hover:shadow-sm active:scale-95"
+                  :style="{ borderColor: 'var(--color-border)', color: 'var(--color-primary)' }"
+                >
+                  {{ t('myReservations.viewInvoice') }}
+                </button>
+
                 <button
                   v-if="canCancel(r)" type="button" :disabled="cancellingId === r.id"
                   @click="handleCancel(r.id)"

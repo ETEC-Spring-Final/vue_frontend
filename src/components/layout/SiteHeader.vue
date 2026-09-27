@@ -263,6 +263,7 @@ const links = computed(() => [
   { to: '/', label: t('nav.home') },
   { to: '/explore', label: t('nav.explore') },
   { to: '/favorites', label: t('nav.favorites') },
+  { to: '/my-reservations', label: t('nav.myReservations') },
   { to: '/about', label: t('nav.about') },
   { to: '/contact', label: t('nav.contact') },
 ])

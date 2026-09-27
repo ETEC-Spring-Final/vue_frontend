@@ -442,7 +442,11 @@ async function loadInvoices() {
   actionError.value = ''
   try {
     const { data } = await invoiceService.getAll()
-    invoices.value = Array.isArray(data) ? data : data?.content ?? []
+    const list = Array.isArray(data) ? data : data?.content ?? []
+    // ថ្មីបំផុតនៅលើគេ — invoice មាន issueDate/createdAt ស្រាប់
+    invoices.value = list.sort(
+      (a, b) => new Date(b.issueDate) - new Date(a.issueDate)
+    )
   } catch {
     actionError.value = t('invoices.loadError')
   } finally {
@@ -495,18 +499,43 @@ async function onSave() {
   }
 }
 
+// Reverting an already-PAID invoice back to UNPAID/CANCELLED is dangerous:
+//   - markPaid() has side effects (paidAt, customer notification, Telegram
+//     PDF) that do NOT get undone by moving status away from PAID.
+//   - The linked Rental/Reservation status-lock (see RentalManagement.vue /
+//     ReservationManagement.vue) unlocks the instant this flips away from
+//     PAID, even though the customer really did pay — desyncing the
+//     dashboard from what the customer sees on their own invoice page.
+// So: any change FROM PAID needs an explicit confirmation naming what it
+// actually means (a refund/correction), not a silent dropdown flip that
+// could be a misclick.
 async function onStatusChange(row, newStatus) {
   actionError.value = ''
+
+  if (row.status === 'PAID' && newStatus !== 'PAID') {
+    const confirmed = window.confirm(
+      tr(
+        'invoices.confirmRevertPaid',
+        'This invoice is already PAID. Changing its status will NOT undo the payment, the customer notification, or the PDF already sent — it only changes the label shown here, and will unlock the linked rental/reservation status for editing again. Continue?'
+      )
+    )
+    if (!confirmed) return
+  }
+
   try {
-    await invoiceService.update(row.id, {
-      rentalId: row.rentalId,
-      dueDate: row.dueDate,
-      subtotal: row.subtotal,
-      discountAmount: row.discountAmount,
-      taxAmount: row.taxAmount,
-      lateFee: row.lateFee,
-      status: newStatus,
-    })
+    if (newStatus === 'PAID') {
+      await invoiceService.markPaid(row.id)
+    } else {
+      await invoiceService.update(row.id, {
+        rentalId: row.rentalId,
+        dueDate: row.dueDate,
+        subtotal: row.subtotal,
+        discountAmount: row.discountAmount,
+        taxAmount: row.taxAmount,
+        lateFee: row.lateFee,
+        status: newStatus,
+      })
+    }
     await loadInvoices()
   } catch (err) {
     actionError.value = err.response?.data?.message || t('invoices.statusError')

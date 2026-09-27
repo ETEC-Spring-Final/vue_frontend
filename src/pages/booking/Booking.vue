@@ -539,7 +539,7 @@ const pillInput = { backgroundColor: "var(--color-border)", color: "var(--color-
               <span class="ml-auto text-xs" :style="{ color: 'var(--color-text-secondary)' }">{{ tr('booking.optional', 'Optional') }} · {{ t('booking.perDay') }}</span>
             </header>
 
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="grid grid-cols-2 gap-3">
               <button
                 v-for="s in services" :key="s.id" type="button"
                 :aria-pressed="form.selectedServiceIds.includes(s.id)"

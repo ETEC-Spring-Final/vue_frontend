@@ -142,12 +142,30 @@ async function onGenerateQr() {
   paymentError.value = "";
   notice.value = "";
   try {
-    const payload = {
-      currency: "USD",
-      amount: Number(invoice.value.totalAmount ?? 0),
-      billNumber: invoice.value.invoiceNumber ?? `INV-${invoice.value.id}`,
-      storeLabel: storeName.value,
-    };
+    // ⚠️ DEV/TEST ONLY: when VITE_PAYMENT_TEST_MODE=true, the QR asks for a
+    // tiny fixed amount (100 KHR) so a real device can complete the full
+    // scan → pay → poll → confirm → redirect flow without spending the
+    // invoice's real total. The invoice record itself is untouched — only
+    // what the QR requests changes. MUST be unset/false before production:
+    // it would let any customer pay 100 KHR for any invoice amount.
+    const isTestMode = import.meta.env.VITE_PAYMENT_TEST_MODE === "true";
+    // TEMP DEBUG — remove once test mode is confirmed working.
+    console.log("VITE_PAYMENT_TEST_MODE raw value:", import.meta.env.VITE_PAYMENT_TEST_MODE, "| isTestMode:", isTestMode);
+
+    const payload = isTestMode
+      ? {
+          currency: "KHR",
+          amount: 100,
+          billNumber: invoice.value.invoiceNumber ?? `INV-${invoice.value.id}`,
+          storeLabel: storeName.value,
+        }
+      : {
+          currency: "USD",
+          amount: Number(invoice.value.totalAmount ?? 0),
+          billNumber: invoice.value.invoiceNumber ?? `INV-${invoice.value.id}`,
+          storeLabel: storeName.value,
+        };
+
     const { data } = await invoicesApi.generateQr(payload);
     const qrInfo = data?.data || null;
     if (!qrInfo || !qrInfo.qr) {
