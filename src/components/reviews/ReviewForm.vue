@@ -4,7 +4,6 @@
 
     <div class="mt-3">
       <StarRating v-model="rating" editable />
-      <!-- Tells the customer why Submit is still disabled instead of leaving a silent grey button -->
       <p v-if="rating === 0" class="mt-1.5 text-xs" :style="{ color: 'var(--color-text-secondary)' }">
         {{ t('reviews.pickRating', 'Tap a star to rate') }}
       </p>
@@ -47,6 +46,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StarRating from './StarRating.vue'
 import reviewsApi from '@/services/reviews'
+import { getMyRentals } from '@/services/rentals'
 
 const { t } = useI18n()
 const props = defineProps({
@@ -60,17 +60,37 @@ const comment = ref(props.existingReview?.comment ?? '')
 const submitting = ref(false)
 const errorMessage = ref('')
 
+// Find a COMPLETED/RETURNED rental of this vehicle belonging to the current
+// user — that's the rentalId the backend requires (see ReviewServiceImpl.createReview).
+async function findReviewableRentalId() {
+  const rentals = await getMyRentals()
+  const match = rentals.find(
+    (r) =>
+      Number(r.vehicleId) === Number(props.vehicleId) &&
+      (r.status === 'COMPLETED' || r.status === 'RETURNED')
+  )
+  return match?.id ?? null
+}
+
 async function onSubmit() {
   submitting.value = true
   errorMessage.value = ''
   try {
-    // NOTE: confirm exact request field names (rating/comment vs
-    // rating/text/description) against ReviewRequestDTO on the backend.
-    const payload = { vehicleId: props.vehicleId, rating: rating.value, comment: comment.value }
     if (props.existingReview) {
-      await reviewsApi.update(props.existingReview.id, payload)
+      await reviewsApi.update(props.existingReview.id, {
+        rating: rating.value,
+        comment: comment.value,
+      })
     } else {
-      await reviewsApi.create(payload)
+      const rentalId = await findReviewableRentalId()
+      if (!rentalId) {
+        errorMessage.value = t(
+          'reviews.noCompletedRental',
+          'You can only review a vehicle after completing a rental for it.'
+        )
+        return
+      }
+      await reviewsApi.create({ rentalId, rating: rating.value, comment: comment.value })
     }
     emit('submitted')
   } catch (err) {

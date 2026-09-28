@@ -74,15 +74,15 @@
         {{ t('auth.continueWithGoogle') }}
       </a>
 
-      <!-- Telegram Login Widget — renders its own styled button once the
-           script loads; onTelegramLogin() posts the widget's payload to
-           the backend for hash verification, same flow shape as
-           OAuth2Redirect.vue's Google handling. -->
+      <!-- ⬅ CHANGED: custom button (plain top-level redirect), replaces the
+           iframe-based official widget so it renders with the SAME
+           page-controlled style as the Google button above — no more
+           Telegram-imposed box-shadow. -->
       <TelegramLoginButton
         v-if="showTelegramLogin"
-        bot-username="auto_rent_premium_bot"
-        @login="onTelegramLogin"
-        @error="() => (errorMessage = t('auth.telegramFailed'))"
+        bot-id="8629032435"
+        return-path="/telegram/redirect"
+        :label="t('auth.continueWithTelegram')"
       />
     </div>
 
@@ -104,14 +104,18 @@ import TelegramLoginButton from '@/components/auth/TelegramLoginButton.vue'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
-const { login, defaultRedirect, loginWithTelegram } = useAuthStore()
+const { login, defaultRedirect } = useAuthStore()
 
 const loading = ref(false)
 const errorMessage = ref('')
 const showPassword = ref(false)
 const form = reactive({ email: '', password: '' })
 
-const showTelegramLogin = window.location.protocol === 'https:'
+// ⬅ CHANGED: no longer gated on https-only — oauth.telegram.org's redirect
+// flow works the same as Google's (a plain top-level navigation), so it
+// works over http://localhost too. Kept as a computed-style constant in
+// case you want to re-gate it later; safe to always show for now.
+const showTelegramLogin = true
 
 const onSubmit = async () => {
   if (!form.email || !form.password) return
@@ -123,19 +127,6 @@ const onSubmit = async () => {
     router.push(route.query.redirect || defaultRedirect())
   } catch (err) {
     errorMessage.value = err.response?.data?.message || err.response?.data?.error || t('auth.loginFailed')
-  } finally {
-    loading.value = false
-  }
-}
-
-const onTelegramLogin = async (telegramUser) => {
-  loading.value = true
-  errorMessage.value = ''
-  try {
-    await loginWithTelegram(telegramUser)
-    router.push(route.query.redirect || defaultRedirect())
-  } catch (err) {
-    errorMessage.value = err.response?.data?.message || t('auth.telegramFailed')
   } finally {
     loading.value = false
   }

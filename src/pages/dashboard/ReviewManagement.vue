@@ -286,7 +286,11 @@ async function loadReviews() {
     // so we pull a large page and filter/search client-side (same pattern as
     // InvoiceManagement, which relies on a full, unpaginated list).
     const { data } = await reviewService.getAll(0, 1000)
-    reviews.value = Array.isArray(data) ? data : data?.content ?? []
+    const list = Array.isArray(data) ? data : data?.content ?? []
+    // ថ្មីបំផុតនៅលើគេ
+    reviews.value = list.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    )
   } catch {
     actionError.value = t('reviews.loadError')
   } finally {

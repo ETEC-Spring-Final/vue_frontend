@@ -669,6 +669,17 @@
     "memberSince": "ជាសមាជិកតាំងពី {date}",
     "logout": "ចាកចេញ",
     "logoutConfirm": "តើអ្នកពិតជាចង់ចាកចេញមែនទេ?",
+    "telegram": {
+      "title": "ការជូនដំណឹង Telegram",
+      "subtitle": "ភ្ជាប់ Telegram របស់អ្នកដើម្បីទទួលបានព័ត៌មានអំពីការកក់ និងការទូទាត់ភ្លាមៗ។",
+      "connected": "បានភ្ជាប់ជាមួយ Telegram រួចហើយ",
+      "disconnect": "ផ្តាច់ការភ្ជាប់",
+      "disconnectConfirm": "បញ្ឈប់ការទទួលការជូនដំណឹងតាម Telegram?",
+      "connectError": "មិនអាចភ្ជាប់ Telegram បានទេ សូមព្យាយាមម្តងទៀត។",
+      "disconnectError": "មិនអាចផ្តាច់ការភ្ជាប់ Telegram បានទេ។",
+      "httpsRequired": "ត្រូវការ HTTPS ដើម្បីភ្ជាប់ Telegram (ប្រើ ngrok tunnel)។",
+      "connect": "ភ្ជាប់ Telegram"
+    },
     "tabs": {
       "info": "ព័ត៌មាន",
       "history": "ប្រវត្តិចូលប្រើ",
@@ -819,6 +830,7 @@
     "home": "ទំព័រដើម",
     "explore": "រុករក",
     "favorites": "ចំណូលចិត្ត",
+    "myReservations": "ការកក់របស់ខ្ញុំ",
     "about": "អំពីយើង",
     "contact": "ទំនាក់ទំនង",
     "bookings": "ការកក់របស់ខ្ញុំ",
@@ -894,6 +906,7 @@
     "past": "កន្លងទៅ",
     "cancel": "បោះបង់",
     "cancelling": "កំពុងបោះបង់…",
+    "viewInvoice": "មើលវិក្កយបត្រលម្អិត",
     "pay": "ទូទាត់ប្រាក់",
     "vehicle": "រថយន្ត",
     "location": "ទីតាំង",
@@ -1090,7 +1103,11 @@
     "resetFailed": "តំណនេះអាចផុតកំណត់ ឬត្រូវបានប្រើរួចទៅហើយ។ សូមស្នើសុំថ្មី។",
     "signingIn": "កំពុងចូល…",
     "oauthNoToken": "មិនមាន token ត្រឡប់ពីការចូលជាមួយ Google ទេ។",
-    "oauthFailed": "មិនអាចបញ្ចប់ការចូលបានទេ។ សូមព្យាយាមចូលម្តងទៀត។"
+    "oauthFailed": "មិនអាចបញ្ចប់ការចូលបានទេ។ សូមព្យាយាមចូលម្តងទៀត។",
+    "continueWithTelegram": "ចូលដោយ Telegram",
+    "telegramProcessing": "កំពុងចូលគណនីតាម Telegram...",
+    "backToLogin": "ត្រឡប់ទៅទំព័រចូល",
+    "telegramFailed": "ការចូលតាម Telegram បរាជ័យ សូមព្យាយាមម្តងទៀត។"
   },
   "about": {
     "eyebrow": "អំពីយើង",

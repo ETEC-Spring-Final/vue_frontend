@@ -290,7 +290,11 @@ async function loadNotifications() {
   actionError.value = ''
   try {
     const { data } = await notificationsService.getAll()
-    notifications.value = Array.isArray(data) ? data : data?.content ?? []
+    const list = Array.isArray(data) ? data : data?.content ?? []
+    // ថ្មីបំផុតនៅលើគេ — notification នេះមាន createdAt ស្រាប់ ប្រើវាឲ្យត្រឹមត្រូវជាង id
+    notifications.value = list.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    )
   } catch {
     actionError.value = t('notifications.loadError')
   } finally {

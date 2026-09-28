@@ -119,54 +119,109 @@
             <!-- Profile info -->
             <div v-if="activeTab === 'info'" key="info" class="mt-6">
               <div v-if="loadingProfile" class="h-48 animate-pulse rounded-2xl" :style="{ backgroundColor: 'var(--color-border)' }"></div>
-              <form v-else class="space-y-4" @submit.prevent="onSaveProfile">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('profile.firstName') }}</label>
-                    <input
-                      v-model="form.firstName"
-                      class="mt-1 w-full rounded-full px-5 py-3 text-sm outline-none transition-shadow focus:shadow-sm"
-                      :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
-                    />
+              <template v-else>
+                <form class="space-y-4" @submit.prevent="onSaveProfile">
+                  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('profile.firstName') }}</label>
+                      <input
+                        v-model="form.firstName"
+                        class="mt-1 w-full rounded-full px-5 py-3 text-sm outline-none transition-shadow focus:shadow-sm"
+                        :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
+                      />
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('profile.lastName') }}</label>
+                      <input
+                        v-model="form.lastName"
+                        class="mt-1 w-full rounded-full px-5 py-3 text-sm outline-none transition-shadow focus:shadow-sm"
+                        :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
+                      />
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('profile.phone') }}</label>
+                      <input
+                        v-model="form.phone"
+                        class="mt-1 w-full rounded-full px-5 py-3 text-sm outline-none transition-shadow focus:shadow-sm"
+                        :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
+                      />
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('profile.email') }}</label>
+                      <input
+                        :value="form.email" disabled
+                        class="mt-1 w-full rounded-full px-5 py-3 text-sm outline-none"
+                        :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('profile.lastName') }}</label>
-                    <input
-                      v-model="form.lastName"
-                      class="mt-1 w-full rounded-full px-5 py-3 text-sm outline-none transition-shadow focus:shadow-sm"
-                      :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
-                    />
-                  </div>
-                  <div>
-                    <label class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('profile.phone') }}</label>
-                    <input
-                      v-model="form.phone"
-                      class="mt-1 w-full rounded-full px-5 py-3 text-sm outline-none transition-shadow focus:shadow-sm"
-                      :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }"
-                    />
-                  </div>
-                  <div>
-                    <label class="text-xs font-semibold uppercase" :style="{ color: 'var(--color-text-secondary)' }">{{ $t('profile.email') }}</label>
-                    <input
-                      :value="form.email" disabled
-                      class="mt-1 w-full rounded-full px-5 py-3 text-sm outline-none"
-                      :style="{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }"
-                    />
-                  </div>
-                </div>
 
-                <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
-                <p v-if="saveSuccess" class="text-sm text-green-600">{{ $t('profile.saveSuccess') }}</p>
+                  <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
+                  <p v-if="saveSuccess" class="text-sm text-green-600">{{ $t('profile.saveSuccess') }}</p>
 
-                <button
-                  type="submit"
-                  :disabled="saving"
-                  class="rounded-full px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:shadow-md active:scale-95 disabled:opacity-50"
-                  :style="{ backgroundColor: 'var(--color-primary)' }"
+                  <button
+                    type="submit"
+                    :disabled="saving"
+                    class="rounded-full px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:shadow-md active:scale-95 disabled:opacity-50"
+                    :style="{ backgroundColor: 'var(--color-primary)' }"
+                  >
+                    {{ saving ? $t('profile.saving') : $t('profile.save') }}
+                  </button>
+                </form>
+
+                <!-- ⬅ Connect Telegram section — CHANGED: uses the redirect-based
+                     TelegramLoginButton (bot-id + return-path), NOT the old
+                     iframe widget (bot-username + @login/@error). No more
+                     Telegram-imposed box-shadow; button now matches the
+                     Google button's page-controlled styling. -->
+                <div
+                  class="mt-8 rounded-2xl border p-5"
+                  :style="{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }"
                 >
-                  {{ saving ? $t('profile.saving') : $t('profile.save') }}
-                </button>
-              </form>
+                  <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#229ED9">
+                      <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71l-4.14-3.05-2 1.93c-.23.23-.42.42-.86.42z"/>
+                    </svg>
+                    <p class="text-sm font-semibold" :style="{ color: 'var(--color-text)' }">
+                      {{ $t('profile.telegram.title') }}
+                    </p>
+                  </div>
+                  <p class="mt-1 text-xs" :style="{ color: 'var(--color-text-secondary)' }">
+                    {{ $t('profile.telegram.subtitle') }}
+                  </p>
+
+                  <p v-if="telegramConnected" class="mt-3 flex items-center gap-2 text-sm text-green-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    {{ $t('profile.telegram.connected') }}
+                  </p>
+
+                  <button
+                    v-if="telegramConnected"
+                    type="button"
+                    :disabled="telegramBusy"
+                    class="mt-3 rounded-full border px-4 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-600 hover:text-white disabled:opacity-50"
+                    style="border-color: #dc2626;"
+                    @click="onDisconnectTelegram"
+                  >
+                    {{ $t('profile.telegram.disconnect') }}
+                  </button>
+
+                  <!-- ⬅ CHANGED: redirect-based button (see TelegramLoginButton.vue).
+                       mode=connect tells /telegram/redirect to call
+                       connect-telegram instead of the login endpoint. -->
+                  <TelegramLoginButton
+                    v-else
+                    bot-id="8629032435"
+                    return-path="/telegram/redirect?mode=connect"
+                    :label="t('profile.telegram.connect')"
+                    class="mt-3"
+                  />
+
+                  <p v-if="telegramError" class="mt-2 text-xs text-red-600">{{ telegramError }}</p>
+                </div>
+              </template>
             </div>
 
             <!-- Login history -->
@@ -243,8 +298,10 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import SiteHeader from '@/components/layout/SiteHeader.vue'
 import StarRating from '@/components/reviews/StarRating.vue'
+import TelegramLoginButton from '@/components/auth/TelegramLoginButton.vue'
 import profileApi from '@/services/profile'
 import reviewsApi from '@/services/reviews'
+import api from '@/services/api'
 import { getMyReservations } from '@/services/reservations'
 import { fetchMyFavorites } from '@/services/vehicles'
 import { uploadToCloudinary } from '@/services/cloudinary'
@@ -295,6 +352,7 @@ async function loadProfile() {
       profilePicture: data.profilePicture ?? '',
       createdAt: data.createdAt ?? null,
     })
+    telegramConnected.value = Boolean(data.isTelegramConnected)
   } finally {
     loadingProfile.value = false
   }
@@ -429,6 +487,31 @@ async function loadStats() {
     favoritesCount.value = list.length
   } catch {
     favoritesCount.value = null
+  }
+}
+
+// ===== Connect Telegram =====
+// ⬅ CHANGED: no more `showTelegramLogin` https-only gate, no more
+// `connectTelegram(telegramUser)` event handler wired to a `@login` event.
+// The redirect-based TelegramLoginButton does a plain top-level navigation;
+// the actual connect API call now happens in TelegramRedirect.vue
+// (?mode=connect) after Telegram redirects back. Only disconnect stays here
+// since that's a normal API call with no redirect involved.
+const telegramConnected = ref(false)
+const telegramBusy = ref(false)
+const telegramError = ref('')
+
+async function onDisconnectTelegram() {
+  if (!window.confirm(t('profile.telegram.disconnectConfirm'))) return
+  telegramBusy.value = true
+  telegramError.value = ''
+  try {
+    await api.delete('/user-profiles/me/connect-telegram')
+    telegramConnected.value = false
+  } catch (err) {
+    telegramError.value = err.response?.data?.message || t('profile.telegram.disconnectError')
+  } finally {
+    telegramBusy.value = false
   }
 }
 

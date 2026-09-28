@@ -123,7 +123,7 @@ async function loadHistory() {
   loading.value = true
   loadError.value = ''
   try {
-    const params = { page: page.value, size: 20 }
+    const params = { page: page.value, size: 20, sort: 'loggedInAt,desc' }
     if (filters.email) params.email = filters.email
 
     const { data } = await api.get('/admin/login-history', { params })
